@@ -26,22 +26,23 @@ async def init_models():
 
         def sync_sqlite_columns(connection):
             try:
-                cursor = connection.connection.cursor()
-                cursor.execute("PRAGMA table_info(organizations)")
-                cols = [r[1] for r in cursor.fetchall()]
-                needed_cols = [
-                    ("is_msp", "BOOLEAN DEFAULT 0"),
-                    ("parent_org_id", "INTEGER"),
-                    ("logo_path", "VARCHAR"),
-                    ("slack_webhook_url", "VARCHAR"),
-                    ("siem_webhook_url", "VARCHAR"),
-                    ("is_trial", "BOOLEAN DEFAULT 0"),
-                    ("trial_ends_at", "DATETIME"),
-                ]
-                for c_name, c_def in needed_cols:
-                    if c_name not in cols:
-                        cursor.execute(f"ALTER TABLE organizations ADD COLUMN {c_name} {c_def}")
-                connection.connection.commit()
+                if "sqlite" in str(connection.engine.url):
+                    cursor = connection.connection.cursor()
+                    cursor.execute("PRAGMA table_info(organizations)")
+                    cols = [r[1] for r in cursor.fetchall()]
+                    needed_cols = [
+                        ("is_msp", "BOOLEAN DEFAULT 0"),
+                        ("parent_org_id", "INTEGER"),
+                        ("logo_path", "VARCHAR"),
+                        ("slack_webhook_url", "VARCHAR"),
+                        ("siem_webhook_url", "VARCHAR"),
+                        ("is_trial", "BOOLEAN DEFAULT 0"),
+                        ("trial_ends_at", "DATETIME"),
+                    ]
+                    for c_name, c_def in needed_cols:
+                        if c_name not in cols:
+                            cursor.execute(f"ALTER TABLE organizations ADD COLUMN {c_name} {c_def}")
+                    connection.connection.commit()
             except Exception as e:
                 logger.debug(f"Schema sync check: {e}")
 

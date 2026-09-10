@@ -27,6 +27,13 @@ class Settings(BaseSettings):
             url = url.replace("postgres://", "postgresql+asyncpg://", 1)
         elif url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        
+        # Automatic IPv4 Pooler routing for Supabase on IPv4-only cloud platforms (like Vercel)
+        if "db.eqcpazrhhplewwzjnxod.supabase.co" in url:
+            url = url.replace("db.eqcpazrhhplewwzjnxod.supabase.co:5432", "aws-0-ap-southeast-1.pooler.supabase.com:5432")
+            url = url.replace("db.eqcpazrhhplewwzjnxod.supabase.co", "aws-0-ap-southeast-1.pooler.supabase.com:5432")
+            if "postgres:" in url and "postgres.eqcpazrhhplewwzjnxod" not in url:
+                url = url.replace("postgres:", "postgres.eqcpazrhhplewwzjnxod:", 1)
         return url
 
 settings = Settings()

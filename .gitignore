@@ -56,5 +56,7 @@ htmlcov/
 *.log
 *.log.*
 *.txt
+!requirements.txt
+!backend/requirements.txt
 !README.md
 *.tsbuildinfo

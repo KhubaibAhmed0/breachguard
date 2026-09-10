@@ -77,6 +77,9 @@ BreachGuard is an **External Cyber Risk & Perimeter Monitoring Platform** built 
    * BOLA/IDOR protection, SSRF socket pinning, webhook HMAC-SHA256 signatures, cryptographic API key system (`bg_live_`), and zero secret leakage.
 6. **Modern Typography & Styling**:
    * Clean **Inter** and **Roboto** typography with enlarged button badges (`text-sm px-3.5 py-1.5`) across all dashboard interfaces.
+7. **Dynamic API & Universal CORS Resolution**:
+   * Dynamic runtime host detection in `frontend/src/lib/api.ts` (`getApiBaseUrl()`) automatically routes requests to `localhost:8000` on dev machines and `https://breachguard-w88w.vercel.app/api` in production/Vercel previews without compile-time baking.
+   * Universal CORS in `backend/main.py` allowing all Vercel preview/production domains and local development origins with full HTTP 200 preflight support.
 
 ---
 

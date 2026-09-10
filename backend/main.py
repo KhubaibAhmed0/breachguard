@@ -99,31 +99,29 @@ async def autonomous_scan_scheduler():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure static directories exist
-    try:
-        os.makedirs("uploads/logos", exist_ok=True)
-    except OSError:
-        pass
-
-    try:
-        await init_models()
-    except Exception as e:
-        logger.warning(f"init_models warning: {e}")
-
-    # Launch background scheduler if not in serverless environment
-    scheduler_task = None
     if not os.environ.get("VERCEL"):
+        try:
+            os.makedirs("uploads/logos", exist_ok=True)
+        except OSError:
+            pass
+
+        try:
+            await init_models()
+        except Exception as e:
+            logger.warning(f"init_models warning: {e}")
+
         scheduler_task = asyncio.create_task(autonomous_scan_scheduler())
-    
-    try:
-        yield
-    finally:
-        if scheduler_task:
+        try:
+            yield
+        finally:
             scheduler_task.cancel()
             try:
                 await scheduler_task
             except asyncio.CancelledError:
                 pass
+    else:
+        # Serverless environment (Vercel): zero-blocking startup
+        yield
 
 app = FastAPI(
     title="BreachGuard Dark Web & Exposure Monitoring API",
@@ -139,9 +137,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ensure uploads directory exists before mounting
-os.makedirs("uploads/logos", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads", html=True), name="uploads")
+# Static file mount (safely skipped in serverless read-only mode)
+if not os.environ.get("VERCEL"):
+    try:
+        os.makedirs("uploads/logos", exist_ok=True)
+        app.mount("/uploads", StaticFiles(directory="uploads", html=True), name="uploads")
+    except Exception as e:
+        logger.debug(f"Uploads mount skipped: {e}")
 
 # Include Core & New Routers
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])

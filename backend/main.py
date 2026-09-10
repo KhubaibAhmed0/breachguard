@@ -14,7 +14,7 @@ from models.domain import MonitoredDomain
 from services.scan_service import run_domain_scan
 from routers import (
     auth, domains, exposures, reports, prospect, billing,
-    identities, integrations, msp
+    identities, integrations, msp, api_keys
 )
 
 logger = logging.getLogger(__name__)
@@ -179,7 +179,7 @@ app.add_middleware(
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-BreachGuard-Signature", "Stripe-Signature"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-BreachGuard-Signature", "Stripe-Signature", "X-API-Key"],
 )
 
 from core.redactor import SensitiveDataFilter
@@ -196,8 +196,8 @@ async def add_security_headers(request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=(), payment=()"
-    if is_production or request.url.scheme == "https":
-        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    response.headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'; object-src 'none'"
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
     return response
 
 # Static file mount (safely skipped in serverless read-only mode)
@@ -218,6 +218,7 @@ app.include_router(billing.router, prefix="/api/billing", tags=["billing"])
 app.include_router(identities.router, prefix="/api/identities", tags=["identities"])
 app.include_router(integrations.router, prefix="/api/settings", tags=["settings"])
 app.include_router(msp.router, prefix="/api/msp", tags=["msp"])
+app.include_router(api_keys.router)
 
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 BLOCKED_HOSTS = {
     "localhost",
     "127.0.0.1",
-    "0.0.0.0",
+    "0.0.0.0",  # nosec B104
     "::1",
     "metadata.google.internal",
     "instance-data",

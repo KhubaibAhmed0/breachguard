@@ -1,29 +1,48 @@
-FROM python:3.12-slim
+# Build Stage
+FROM python:3.12-slim AS builder
 
-WORKDIR /app
+WORKDIR /install
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+# Final Production Minimal Image
+FROM python:3.12-slim AS runner
+
+# Security: Dedicated unprivileged non-root system user
+RUN groupadd -g 10001 breachguard && \
+    useradd -u 10001 -g breachguard -s /bin/false -m appuser
+
+# Install only minimal runtime shared libraries
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Hugging Face Spaces / standard non-root user
-RUN useradd -m -u 1000 user
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+WORKDIR /app
 
-WORKDIR $HOME/app
+# Copy installed packages from builder
+COPY --from=builder /install /usr/local
 
-COPY --chown=user requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Copy application source code with unprivileged ownership
+COPY --chown=appuser:breachguard . .
 
-COPY --chown=user . .
+# Security: Drop root, run strictly as non-root user
+USER appuser
 
-USER user
+ENV PORT=7860 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-ENV PORT=7860
 EXPOSE 7860
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-7860}"]
+# Health check verifies local API availability
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:7860/api/health || exit 1
+
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-7860} --workers 2 --no-server-header"]

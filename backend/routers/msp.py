@@ -174,7 +174,7 @@ async def switch_tenant(
 
     return SwitchTenantResponse(
         access_token=scoped_token,
-        token_type="bearer",
+        token_type="bearer",  # nosec B106
         tenant={
             "id": target_org.id,
             "name": target_org.name,

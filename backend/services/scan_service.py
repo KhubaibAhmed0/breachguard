@@ -52,8 +52,8 @@ def calculate_severity(exposure_data: Dict[str, Any]) -> str:
                 year = int(breach_date.split("-")[0])
                 if year <= 2016 and not has_financial:
                     return "medium"
-            except Exception:
-                pass
+            except Exception as parse_err:
+                logger.debug(f"Date parsing skipped in calculate_severity: {parse_err}")
         return "high"
         
     # 3. MEDIUM: Password hints, security questions
@@ -109,8 +109,8 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
                 if breach.get("breach_date"):
                     try:
                         first_seen = datetime.fromisoformat(breach["breach_date"].replace("Z", "+00:00"))
-                    except Exception:
-                        pass
+                    except Exception as err:
+                        logger.debug(f"Breach date ISO parse skipped: {err}")
                 
                 sanitized_meta = {
                     "provider": "hibp",
@@ -177,8 +177,8 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
                 if res.get("breach_date"):
                     try:
                         first_seen = datetime.fromisoformat(res["breach_date"].replace("Z", "+00:00"))
-                    except:
-                        pass
+                    except Exception as err:
+                        logger.debug(f"Email breach date parse skipped: {err}")
                 
                 raw_meta = res.get("raw_data") or {}
                 clean_meta = {

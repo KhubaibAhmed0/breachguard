@@ -96,7 +96,7 @@ async def scan_prospect(req: ProspectScanRequest, request: Request):
         domain = re.sub(r"/.*$", "", domain)
         domain = re.sub(r"^www\.", "", domain).split(":")[0]
 
-        if not DOMAIN_REGEX.match(domain) or domain in ("localhost", "127.0.0.1", "0.0.0.0") or domain.endswith(".internal"):
+        if not DOMAIN_REGEX.match(domain) or domain in ("localhost", "127.0.0.1", "0.0.0.0") or domain.endswith(".internal"):  # nosec B104
             scanner_monitor.record_scan_attempt(client_ip, domain, status="invalid_input")
             raise HTTPException(status_code=400, detail="Invalid domain format or restricted host.")
 
@@ -143,8 +143,8 @@ async def scan_prospect(req: ProspectScanRequest, request: Request):
                         severity_breakdown["high"] += 1
                     else:
                         severity_breakdown["medium"] += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"Prospect query parsing error: {e}")
 
         # If zero findings from exact domain match, provide an estimated risk baseline
         if total_exposures == 0:

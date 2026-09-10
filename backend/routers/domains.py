@@ -9,7 +9,7 @@ from models.domain import MonitoredDomain, MonitoredEmail
 from models.exposure import Exposure
 from models.scan_job import ScanJob
 from schemas.domain import DomainCreate, DomainResponse, DomainScanStatus
-from routers.deps import get_current_user
+from routers.deps import get_current_user, require_scope
 from services.scan_service import run_domain_scan
 from datetime import datetime
 from typing import List
@@ -20,7 +20,7 @@ DOMAIN_REGEX = re.compile(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)
 router = APIRouter()
 
 @router.post("", response_model=DomainResponse)
-async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(require_scope("write:domains"))):
     clean_domain = domain_in.domain.strip().lower()
     clean_domain = clean_domain.replace("https://", "").replace("http://", "").split("/")[0].split(":")[0]
 
@@ -32,7 +32,7 @@ async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db)
         )
 
     # Prevent loopback or internal names
-    if clean_domain in ("localhost", "127.0.0.1", "0.0.0.0") or clean_domain.endswith(".local") or clean_domain.endswith(".internal"):
+    if clean_domain in ("localhost", "127.0.0.1", "0.0.0.0") or clean_domain.endswith(".local") or clean_domain.endswith(".internal"):  # nosec B104
         raise HTTPException(status_code=400, detail="Internal or localhost domains are prohibited.")
 
     # Check if already exists for this org
@@ -94,7 +94,7 @@ async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db)
     return resp
 
 @router.get("", response_model=List[DomainResponse])
-async def list_domains(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def list_domains(db: AsyncSession = Depends(get_db), current_user: User = Depends(require_scope("read:domains"))):
     result = await db.execute(select(MonitoredDomain).where(MonitoredDomain.org_id == current_user.org_id))
     domains = result.scalars().all()
     

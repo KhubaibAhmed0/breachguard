@@ -7,7 +7,7 @@ from models.user import User
 from models.exposure import Exposure
 from models.domain import MonitoredEmail
 from schemas.exposure import ExposureResponse, ExposureUpdate, ExposureStats, ExposureStatus, SeverityLevel
-from routers.deps import get_current_user
+from routers.deps import get_current_user, require_scope
 from services.risk_score_service import calculate_risk_score
 from typing import List, Optional, Literal
 from datetime import datetime, timedelta
@@ -21,7 +21,7 @@ async def list_exposures(
     limit: int = Query(50, ge=1, le=100, description="Pagination page limit (max 100)"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_scope("read:exposures"))
 ):
     query = (
         select(Exposure, MonitoredEmail.email)
@@ -93,7 +93,12 @@ async def get_stats(db: AsyncSession = Depends(get_db), current_user: User = Dep
     }
 
 @router.patch("/{id}/status", response_model=ExposureResponse)
-async def update_exposure_status(id: int, exp_in: ExposureUpdate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def update_exposure_status(
+    id: int,
+    exp_in: ExposureUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_scope("write:exposures"))
+):
     result = await db.execute(select(Exposure).where(Exposure.id == id, Exposure.org_id == current_user.org_id))
     exp = result.scalars().first()
     if not exp:

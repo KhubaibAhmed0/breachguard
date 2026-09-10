@@ -124,25 +124,25 @@ export default function DashboardPage() {
         <div className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-zinc-800/60">
             <div className="space-y-2">
-              <span className="text-[11px] font-mono text-zinc-400 uppercase tracking-widest">Platform Telemetry Index</span>
+              <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider font-roboto">Platform Telemetry Index</span>
               <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-3">
                 External Cyber Risk Score
                 <span className={`text-xs px-3 py-1 rounded-full font-roboto uppercase font-semibold border ${riskBadgeBg}`}>
                   {riskLevel}
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400 max-w-xl leading-relaxed">
+              <p className="text-sm text-zinc-400 max-w-xl leading-relaxed font-roboto">
                 Deterministic risk score derived across your public attack surface, email security configuration, threat intelligence records, and credential exposure.
               </p>
             </div>
 
             <div className="flex items-center gap-4 bg-zinc-950/60 p-4 border border-zinc-800/80 rounded-xl shrink-0">
               <div className="text-center">
-                <div className={`text-4xl font-extrabold font-mono ${riskColor}`}>
+                <div className={`text-4xl font-extrabold font-roboto ${riskColor}`}>
                   {overallScore}
-                  <span className="text-sm font-normal text-zinc-500"> / 100</span>
+                  <span className="text-base font-normal text-zinc-500 font-roboto"> / 100</span>
                 </div>
-                <div className="text-[10px] font-mono uppercase text-zinc-400 mt-1">
+                <div className="text-xs font-medium uppercase text-zinc-400 mt-1 font-roboto">
                   Overall Risk Rating
                 </div>
               </div>
@@ -154,18 +154,18 @@ export default function DashboardPage() {
             {/* 1. Attack Surface */}
             <Link href="/dashboard/attack-surface" className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all group">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5">
-                  <Network className="w-3.5 h-3.5 text-zinc-400" />
+                <span className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5">
+                  <Network className="w-4 h-4 text-zinc-400" />
                   Attack Surface
                 </span>
-                <span className="text-xs font-mono font-bold text-zinc-200">
+                <span className="text-sm font-bold font-roboto text-zinc-200">
                   {categories.attack_surface}/100
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
                 {summary.discovered_assets} asset(s) discovered in certificate registries and DNS.
               </p>
-              <div className="text-[10px] font-mono text-zinc-400 group-hover:text-zinc-200 flex items-center gap-1 pt-1">
+              <div className="text-xs font-medium text-zinc-400 group-hover:text-zinc-200 flex items-center gap-1 pt-1 font-roboto">
                 View perimeter &rarr;
               </div>
             </Link>
@@ -173,18 +173,18 @@ export default function DashboardPage() {
             {/* 2. Email Security */}
             <Link href="/dashboard/email-security" className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all group">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5">
-                  <MailCheck className="w-3.5 h-3.5 text-zinc-400" />
+                <span className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5">
+                  <MailCheck className="w-4 h-4 text-zinc-400" />
                   Email Security
                 </span>
-                <span className="text-xs font-mono font-bold text-zinc-200">
+                <span className="text-sm font-bold font-roboto text-zinc-200">
                   {categories.email_security}/100
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
                 DMARC, SPF, and transport encryption posture.
               </p>
-              <div className="text-[10px] font-mono text-zinc-400 group-hover:text-zinc-200 flex items-center gap-1 pt-1">
+              <div className="text-xs font-medium text-zinc-400 group-hover:text-zinc-200 flex items-center gap-1 pt-1 font-roboto">
                 Inspect anti-spoofing &rarr;
               </div>
             </Link>
@@ -192,18 +192,18 @@ export default function DashboardPage() {
             {/* 3. Threat Intelligence */}
             <Link href="/dashboard/threat-intelligence" className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all group">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5">
-                  <Radar className="w-3.5 h-3.5 text-zinc-400" />
+                <span className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5">
+                  <Radar className="w-4 h-4 text-zinc-400" />
                   Threat Intel
                 </span>
-                <span className="text-xs font-mono font-bold text-zinc-200">
+                <span className="text-sm font-bold font-roboto text-zinc-200">
                   {categories.threat_intelligence}/100
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
                 Public breach index correlation & reputation flags.
               </p>
-              <div className="text-[10px] font-mono text-zinc-400 group-hover:text-zinc-200 flex items-center gap-1 pt-1">
+              <div className="text-xs font-medium text-zinc-400 group-hover:text-zinc-200 flex items-center gap-1 pt-1 font-roboto">
                 View disclosures &rarr;
               </div>
             </Link>
@@ -211,18 +211,18 @@ export default function DashboardPage() {
             {/* 4. Credential Exposure */}
             <Link href="/exposures" className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all group">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-zinc-400" />
+                <span className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5">
+                  <KeyRound className="w-4 h-4 text-zinc-400" />
                   Credential Exposure
                 </span>
-                <span className="text-xs font-mono font-bold text-zinc-200">
+                <span className="text-sm font-bold font-roboto text-zinc-200">
                   {categories.credential_exposure}/100
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-500">
+              <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
                 {summary.exposed_identities} identity exposure(s) under active monitoring.
               </p>
-              <div className="text-[10px] font-mono text-zinc-400 group-hover:text-zinc-200 flex items-center gap-1 pt-1">
+              <div className="text-xs font-medium text-zinc-400 group-hover:text-zinc-200 flex items-center gap-1 pt-1 font-roboto">
                 View credentials &rarr;
               </div>
             </Link>
@@ -231,25 +231,25 @@ export default function DashboardPage() {
 
         {/* Summary Metric Counters */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div className="p-3.5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl">
-            <span className="text-[11px] text-zinc-500 font-mono">Discovered Assets</span>
-            <div className="text-xl font-bold font-mono text-white mt-1">{summary.discovered_assets}</div>
+          <div className="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-xl">
+            <span className="text-xs text-zinc-400 font-medium font-roboto">Discovered Assets</span>
+            <div className="text-2xl font-bold font-roboto text-white mt-1">{summary.discovered_assets}</div>
           </div>
-          <div className="p-3.5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl">
-            <span className="text-[11px] text-zinc-500 font-mono">Open Findings</span>
-            <div className="text-xl font-bold font-mono text-white mt-1">{summary.open_findings}</div>
+          <div className="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-xl">
+            <span className="text-xs text-zinc-400 font-medium font-roboto">Open Findings</span>
+            <div className="text-2xl font-bold font-roboto text-white mt-1">{summary.open_findings}</div>
           </div>
-          <div className="p-3.5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl">
-            <span className="text-[11px] text-zinc-500 font-mono">High / Critical</span>
-            <div className="text-xl font-bold font-mono text-orange-400 mt-1">{summary.critical_findings + summary.high_findings}</div>
+          <div className="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-xl">
+            <span className="text-xs text-zinc-400 font-medium font-roboto">High / Critical</span>
+            <div className="text-2xl font-bold font-roboto text-orange-400 mt-1">{summary.critical_findings + summary.high_findings}</div>
           </div>
-          <div className="p-3.5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl">
-            <span className="text-[11px] text-zinc-500 font-mono">Monitored Domains</span>
-            <div className="text-xl font-bold font-mono text-white mt-1">{domains?.length ?? 0}</div>
+          <div className="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-xl">
+            <span className="text-xs text-zinc-400 font-medium font-roboto">Monitored Domains</span>
+            <div className="text-2xl font-bold font-roboto text-white mt-1">{domains?.length ?? 0}</div>
           </div>
-          <div className="p-3.5 bg-zinc-900/30 border border-zinc-800/60 rounded-xl">
-            <span className="text-[11px] text-zinc-500 font-mono">Email Score</span>
-            <div className="text-xl font-bold font-mono text-white mt-1">{summary.email_score}/100</div>
+          <div className="p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-xl">
+            <span className="text-xs text-zinc-400 font-medium font-roboto">Email Score</span>
+            <div className="text-2xl font-bold font-roboto text-white mt-1">{summary.email_score}/100</div>
           </div>
         </div>
 
@@ -260,16 +260,16 @@ export default function DashboardPage() {
               <ShieldAlert className="w-4 h-4 text-amber-400" />
               Prioritized Security Findings ({findings.length})
             </h2>
-            <Link href="/dashboard/attack-surface" className="text-[11px] text-zinc-400 hover:text-white transition-colors">
+            <Link href="/dashboard/attack-surface" className="text-xs font-medium font-roboto text-zinc-400 hover:text-white transition-colors">
               View all &rarr;
             </Link>
           </div>
 
           <div className="divide-y divide-zinc-800/40">
             {loadingOverview ? (
-              <div className="py-8 text-center text-zinc-500 text-xs">Loading findings...</div>
+              <div className="py-8 text-center text-zinc-500 text-xs font-roboto">Loading findings...</div>
             ) : findings.length === 0 ? (
-              <div className="py-8 text-center text-zinc-500 text-xs">
+              <div className="py-8 text-center text-zinc-500 text-xs font-roboto">
                 No active security findings detected across monitored perimeter.
               </div>
             ) : (
@@ -281,27 +281,27 @@ export default function DashboardPage() {
                   'bg-zinc-800 text-zinc-400 border-zinc-700';
 
                 return (
-                  <div key={f.id} className="p-4 hover:bg-zinc-800/20 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div key={f.id} className="p-4 hover:bg-zinc-800/20 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-roboto">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2.5">
                         <span className={`px-2.5 py-0.5 rounded text-xs font-roboto uppercase font-semibold border ${sevColor}`}>
                           {f.severity}
                         </span>
-                        <span className="text-xs font-semibold text-white">
+                        <span className="text-sm font-semibold text-white">
                           {f.title}
                         </span>
-                        <span className="text-[11px] font-mono text-zinc-500">
+                        <span className="text-xs font-medium font-roboto text-zinc-400">
                           {f.finding_id}
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-zinc-400 font-roboto">
                         {f.description}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[11px] font-mono text-zinc-400">
-                        <code>{f.asset}</code>
+                      <span className="text-xs font-roboto text-zinc-300">
+                        {f.asset}
                       </span>
                     </div>
                   </div>
@@ -316,7 +316,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-2 bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-5 sm:p-6">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-4 flex items-center justify-between">
               <span>Historical Threat Exposure Ingestion</span>
-              <span className="text-[11px] font-normal text-zinc-500">Last 30 days telemetry</span>
+              <span className="text-xs font-medium font-roboto text-zinc-400">Last 30 days telemetry</span>
             </h2>
             <div className="h-64 sm:h-72 w-full">
               <ExposureChart />

@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 const roboto = Roboto({ 
-  weight: ["400", "500", "700"],
+  weight: ["300", "400", "500", "700", "900"],
   subsets: ["latin"],
   variable: "--font-roboto",
   display: "swap"
@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${roboto.variable} ${inter.className} bg-gray-950 text-gray-100 min-h-screen antialiased`}>
+      <body className={`${inter.variable} ${roboto.variable} ${roboto.className} bg-gray-950 text-gray-100 min-h-screen antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

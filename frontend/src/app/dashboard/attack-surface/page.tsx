@@ -106,8 +106,8 @@ export default function AttackSurfacePage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-950/50 text-zinc-400 border-b border-zinc-800/60 font-mono text-[11px]">
+            <table className="w-full text-left text-xs font-roboto">
+              <thead className="bg-zinc-950/50 text-zinc-400 border-b border-zinc-800/60 font-roboto font-medium text-xs">
                 <tr>
                   <th className="py-2.5 px-4">Hostname</th>
                   <th className="py-2.5 px-4">Resolved IP</th>
@@ -116,45 +116,45 @@ export default function AttackSurfacePage() {
                   <th className="py-2.5 px-4 text-right">Observation</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/40 text-zinc-300">
+              <tbody className="divide-y divide-zinc-800/40 text-zinc-300 font-roboto">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-zinc-500">
+                    <td colSpan={5} className="py-8 text-center text-zinc-500 font-roboto">
                       Enumerating external attack surface...
                     </td>
                   </tr>
                 ) : filteredAssets.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-zinc-500">
+                    <td colSpan={5} className="py-8 text-center text-zinc-500 font-roboto">
                       No assets found matching current filter criteria.
                     </td>
                   </tr>
                 ) : (
                   filteredAssets.map((asset) => (
                     <tr key={asset.id} className="hover:bg-zinc-800/20 transition-colors">
-                      <td className="py-3 px-4 font-mono text-zinc-100 font-medium">
+                      <td className="py-3 px-4 font-roboto text-zinc-100 font-medium text-sm">
                         {asset.hostname}
                       </td>
-                      <td className="py-3 px-4 font-mono text-zinc-400">
+                      <td className="py-3 px-4 font-roboto text-zinc-300">
                         {asset.ip_address || <span className="text-zinc-600">Unresolved</span>}
                       </td>
                       <td className="py-3 px-4">
                         {asset.open_ports && asset.open_ports.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {asset.open_ports.map((p: number) => (
-                              <span key={p} className="px-1.5 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-300 rounded text-[10px] font-mono">
+                              <span key={p} className="px-2 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-200 rounded text-xs font-roboto font-medium">
                                 {p}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-zinc-600 text-[11px]">None open</span>
+                          <span className="text-zinc-500 text-xs font-roboto">None open</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-zinc-400 text-[11px]">
+                      <td className="py-3 px-4 text-zinc-400 text-xs font-roboto">
                         {asset.source}
                       </td>
-                      <td className="py-3 px-4 text-right text-zinc-500 text-[11px] font-mono">
+                      <td className="py-3 px-4 text-right text-zinc-400 text-xs font-roboto">
                         {asset.last_seen_at ? new Date(asset.last_seen_at).toLocaleDateString() : 'Active'}
                       </td>
                     </tr>
@@ -197,28 +197,28 @@ export default function AttackSurfacePage() {
                         <span className={`px-2.5 py-0.5 rounded text-xs font-roboto uppercase font-semibold border ${sevColor}`}>
                           {finding.severity}
                         </span>
-                        <span className="text-xs font-semibold text-white">
+                        <span className="text-sm font-semibold text-white">
                           {finding.title}
                         </span>
-                        <span className="text-[11px] font-mono text-zinc-500">
+                        <span className="text-xs font-medium font-roboto text-zinc-400">
                           {finding.finding_id}
                         </span>
                       </div>
-                      <span className="text-[11px] font-mono text-zinc-400">
-                        Asset: <code className="text-zinc-200">{finding.asset}</code>
+                      <span className="text-xs font-roboto text-zinc-400">
+                        Asset: <span className="text-zinc-200 font-medium font-roboto">{finding.asset}</span>
                       </span>
                     </div>
 
-                    <p className="text-xs text-zinc-400 leading-relaxed">
+                    <p className="text-xs text-zinc-400 leading-relaxed font-roboto">
                       {finding.description}
                     </p>
 
-                    <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-lg text-xs space-y-1">
-                      <div className="text-[11px] text-zinc-500">
-                        <strong className="text-zinc-400">Observed Evidence:</strong> {finding.evidence}
+                    <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-lg text-xs space-y-1 font-roboto">
+                      <div className="text-xs text-zinc-400 font-roboto">
+                        <strong className="text-zinc-300">Observed Evidence:</strong> {finding.evidence}
                       </div>
-                      <div className="text-[11px] text-zinc-500">
-                        <strong className="text-zinc-400">Remediation:</strong> {finding.recommended_remediation}
+                      <div className="text-xs text-zinc-400 font-roboto">
+                        <strong className="text-zinc-300">Remediation:</strong> {finding.recommended_remediation}
                       </div>
                     </div>
                   </div>

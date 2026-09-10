@@ -85,31 +85,31 @@ export default function ThreatIntelligencePage() {
                 <div key={f.id} className="p-4 hover:bg-zinc-800/20 transition-colors space-y-2">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/60">
+                      <span className="px-2.5 py-0.5 rounded text-xs font-roboto uppercase font-semibold bg-amber-950/60 text-amber-400 border border-amber-800/60">
                         {f.severity}
                       </span>
-                      <span className="text-xs font-semibold text-white">
+                      <span className="text-sm font-semibold text-white">
                         {f.title}
                       </span>
-                      <span className="text-[11px] font-mono text-zinc-500">
+                      <span className="text-xs font-medium font-roboto text-zinc-400">
                         {f.finding_id}
                       </span>
                     </div>
-                    <span className="text-[11px] font-mono text-zinc-400">
-                      Confidence: <strong className="text-zinc-200">{f.confidence.toUpperCase()}</strong>
+                    <span className="text-xs font-roboto text-zinc-400">
+                      Confidence: <strong className="text-zinc-200 font-semibold font-roboto">{f.confidence.toUpperCase()}</strong>
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-zinc-400 leading-relaxed font-roboto">
                     {f.description}
                   </p>
 
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-lg text-xs space-y-1">
-                    <div className="text-[11px] text-zinc-500">
-                      <strong className="text-zinc-400">Observed Evidence:</strong> {f.evidence}
+                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-lg text-xs space-y-1 font-roboto">
+                    <div className="text-xs text-zinc-400 font-roboto">
+                      <strong className="text-zinc-300">Observed Evidence:</strong> {f.evidence}
                     </div>
-                    <div className="text-[11px] text-zinc-500">
-                      <strong className="text-zinc-400">Remediation:</strong> {f.recommended_remediation}
+                    <div className="text-xs text-zinc-400 font-roboto">
+                      <strong className="text-zinc-300">Remediation:</strong> {f.recommended_remediation}
                     </div>
                   </div>
                 </div>
@@ -125,12 +125,12 @@ export default function ThreatIntelligencePage() {
               <Lock className="w-4 h-4 text-zinc-400" />
               Corporate Identity Exposure History (Masked)
             </h2>
-            <span className="text-[11px] text-zinc-500">Zero Raw Credential Storage</span>
+            <span className="text-xs text-zinc-400 font-roboto font-medium">Zero Raw Credential Storage</span>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-950/50 text-zinc-400 border-b border-zinc-800/60 font-mono text-[11px]">
+            <table className="w-full text-left text-xs font-roboto">
+              <thead className="bg-zinc-950/50 text-zinc-400 border-b border-zinc-800/60 font-roboto font-medium text-xs">
                 <tr>
                   <th className="py-2.5 px-4">Masked Identity</th>
                   <th className="py-2.5 px-4">Breach / Incident</th>
@@ -139,30 +139,30 @@ export default function ThreatIntelligencePage() {
                   <th className="py-2.5 px-4 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/40 text-zinc-300">
+              <tbody className="divide-y divide-zinc-800/40 text-zinc-300 font-roboto">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-zinc-500">
+                    <td colSpan={5} className="py-8 text-center text-zinc-500 font-roboto">
                       Loading identity records...
                     </td>
                   </tr>
                 ) : exposures.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-zinc-500">
+                    <td colSpan={5} className="py-8 text-center text-zinc-500 font-roboto">
                       No corporate identities currently observed in exposure telemetry.
                     </td>
                   </tr>
                 ) : (
                   exposures.slice(0, 10).map((exp) => (
                     <tr key={exp.id} className="hover:bg-zinc-800/20 transition-colors">
-                      <td className="py-3 px-4 font-mono text-zinc-200">
+                      <td className="py-3 px-4 font-roboto font-medium text-sm text-zinc-200">
                         {exp.email ? (exp.email.length > 5 ? `${exp.email[0]}***@${exp.email.split('@')[1] || 'domain'}` : exp.email) : 'identity@monitored.com'}
                       </td>
-                      <td className="py-3 px-4 text-zinc-300 font-medium">
+                      <td className="py-3 px-4 text-zinc-200 font-medium text-sm font-roboto">
                         {exp.source}
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                        <span className={`px-2.5 py-0.5 rounded text-xs font-roboto font-semibold ${
                           exp.severity === 'critical' ? 'text-red-400 bg-red-950/40 border border-red-800/40' :
                           exp.severity === 'high' ? 'text-orange-400 bg-orange-950/40 border border-orange-800/40' :
                           'text-amber-400 bg-amber-950/40 border border-amber-800/40'
@@ -170,10 +170,10 @@ export default function ThreatIntelligencePage() {
                           {exp.severity?.toUpperCase()}
                         </span>
                       </td>
-                      <td className="py-3 px-4 text-zinc-400 text-[11px]">
+                      <td className="py-3 px-4 text-zinc-400 text-xs font-roboto">
                         {exp.credentialType || 'Breach metadata'}
                       </td>
-                      <td className="py-3 px-4 text-right font-mono text-[11px] text-zinc-400">
+                      <td className="py-3 px-4 text-right font-roboto text-xs text-zinc-400 font-medium">
                         {exp.status?.toUpperCase() || 'OPEN'}
                       </td>
                     </tr>

@@ -97,11 +97,11 @@ export default function EmailSecurityPage() {
 
               <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-zinc-800 pt-4 md:pt-0 md:pl-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold font-mono text-white">
+                  <div className="text-4xl font-bold font-roboto text-white">
                     {active.score}
-                    <span className="text-sm font-normal text-zinc-500"> / 100</span>
+                    <span className="text-base font-normal text-zinc-500 font-roboto"> / 100</span>
                   </div>
-                  <div className="text-[10px] font-mono uppercase text-zinc-400 mt-0.5">
+                  <div className="text-xs font-medium uppercase text-zinc-400 mt-1 font-roboto">
                     {active.score >= 75 ? 'Strong Posture' : active.score >= 50 ? 'Moderate Protection' : 'Needs Enforcement'}
                   </div>
                 </div>

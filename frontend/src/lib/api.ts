@@ -1,30 +1,43 @@
 import axios from 'axios';
 
-const getBaseHost = (): string => {
+export const getApiBaseUrl = (): string => {
+  // 1. Explicit override via environment variable
   if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
+    const raw = process.env.NEXT_PUBLIC_API_URL.trim().replace(/\/$/, '');
+    return raw.endsWith('/api') ? raw : `${raw}/api`;
   }
+  
+  // 2. Client-side runtime: detect current window hostname dynamically
   if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:8000';
+    const { hostname } = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000/api';
     }
-    return 'https://breachguard-w88w.vercel.app';
+    return 'https://breachguard-w88w.vercel.app/api';
   }
-  return 'http://localhost:8000';
+  
+  // 3. Server-side rendering (SSR) or build-time default:
+  // In production builds (Vercel), default to the live backend URL so static pages never bake in localhost:8000
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    return 'https://breachguard-w88w.vercel.app/api';
+  }
+
+  return 'http://localhost:8000/api';
 };
 
-const rawUrl = getBaseHost().trim().replace(/\/$/, '');
-export const API_BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
-
+export const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 api.interceptors.request.use((config) => {
+  // Update baseURL dynamically per request to ensure correct host in all environments
+  config.baseURL = getApiBaseUrl();
+
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
     if (token) {
@@ -72,7 +85,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post(`${API_BASE_URL}/auth/login`, {
+        const res = await axios.post(`${getApiBaseUrl()}/auth/login`, {
           email: 'admin@acme.com',
           password: 'password123',
         });

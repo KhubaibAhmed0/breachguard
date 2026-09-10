@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Search, Loader2 } from 'lucide-react';
-import { API_BASE_URL } from '@/lib/api';
+import { getApiBaseUrl } from '@/lib/api';
 
 export interface ScanResultData {
   domain: string;
@@ -40,7 +40,7 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
     setError(null);
 
     try {
-      const endpoint = `${API_BASE_URL}/prospect/scan`;
+      const endpoint = `${getApiBaseUrl()}/prospect/scan`;
 
       const res = await fetch(endpoint, {
         method: 'POST',

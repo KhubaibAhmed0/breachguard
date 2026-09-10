@@ -22,7 +22,13 @@ export default function LoginPage() {
       await login(email, password);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Invalid email or password. Please try again.');
+      if (err?.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err?.message === 'Network Error' || !err?.response) {
+        setError('Unable to connect to authentication server. Please check your network or server connectivity.');
+      } else {
+        setError('Invalid email or password. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

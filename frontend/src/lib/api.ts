@@ -1,10 +1,20 @@
 import axios from 'axios';
 
-const rawUrl = (
-  process.env.NEXT_PUBLIC_API_URL || 
-  (typeof window !== 'undefined' ? '' : 'http://localhost:8000')
-).trim().replace(/\/$/, '');
-export const API_BASE_URL = rawUrl.endsWith('/api') ? rawUrl : (rawUrl ? `${rawUrl}/api` : '/api');
+const getBaseHost = (): string => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:8000';
+    }
+    return 'https://breachguard-w88w.vercel.app';
+  }
+  return 'http://localhost:8000';
+};
+
+const rawUrl = getBaseHost().trim().replace(/\/$/, '');
+export const API_BASE_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
 
 
 const api = axios.create({

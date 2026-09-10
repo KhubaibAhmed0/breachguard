@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Search, Loader2 } from 'lucide-react';
+import { API_BASE_URL } from '@/lib/api';
 
 export interface ScanResultData {
   domain: string;
@@ -30,11 +31,7 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
     setError(null);
 
     try {
-      const rawApi = (
-        process.env.NEXT_PUBLIC_API_URL || 
-        (typeof window !== 'undefined' ? '' : 'http://localhost:8000')
-      ).trim().replace(/\/api$/, '').replace(/\/$/, '');
-      const endpoint = rawApi ? `${rawApi}/api/prospect/scan` : '/api/prospect/scan';
+      const endpoint = `${API_BASE_URL}/prospect/scan`;
 
       const res = await fetch(endpoint, {
         method: 'POST',

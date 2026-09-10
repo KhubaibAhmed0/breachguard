@@ -28,8 +28,8 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
     setIsScanning(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${apiUrl}/api/prospect/scan`, {
+      const rawApi = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').trim().replace(/\/api$/, '').replace(/\/$/, '');
+      const res = await fetch(`${rawApi}/api/prospect/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: cleanTarget }),

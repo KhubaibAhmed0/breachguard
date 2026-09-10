@@ -44,7 +44,7 @@ export default function ExposuresPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">Threat Exposures</h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Complete inventory of compromised credentials, session tokens, and breach records.
+            Complete inventory of compromised credentials, infostealer detections, and breach records.
           </p>
         </div>
         
@@ -95,7 +95,7 @@ export default function ExposuresPage() {
             <div>
               <span className="font-semibold text-white">Infostealer botnet telemetry requires Business tier: </span>
               <span className="text-zinc-300">
-                RedLine, LummaC2, and Vidar session tokens, browser cookies, and device fingerprints are locked.
+                RedLine, LummaC2, and Vidar malware botnet logs, exfiltrated credentials, and threat forensic details are locked.
               </span>
             </div>
           </div>

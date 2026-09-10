@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/lib/api';
+import api, { API_BASE_URL } from '@/lib/api';
 import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity } from '@/types';
 
 export function useDomains() {
@@ -64,7 +64,7 @@ export function useExposures() {
           email: 'cfo-vault@acme-corp.com',
           source: 'RedLine Stealer Botnet Log [Tele-C2-404]',
           severity: 'critical',
-          credentialType: 'Session Token / OAuth Tokens',
+          credentialType: 'Infostealer Log / Exfiltrated Credentials',
           firstSeenAt: new Date(Date.now() - 86400000 * 2).toISOString(),
           detectedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
           status: 'open',
@@ -107,7 +107,7 @@ export function useReports() {
         type: r.report_type || 'Executive',
         domainName: r.domain_name || null,
         generatedAt: r.generated_at,
-        downloadUrl: `http://localhost:8000/api/reports/${r.id}/download`,
+        downloadUrl: `${API_BASE_URL}/reports/${r.id}/download`,
       }));
     },
   });

@@ -29,9 +29,8 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-7 text-sm text-zinc-400">
             <a href="#features" className="hover:text-zinc-200 transition-colors">Capabilities</a>
-            <a href="#compliance" className="hover:text-zinc-200 transition-colors">Compliance</a>
+            <a href="#compliance" className="hover:text-zinc-200 transition-colors">Architecture</a>
             <a href="#pricing" className="hover:text-zinc-200 transition-colors">Pricing</a>
-            <a href="http://localhost:8000/docs" target="_blank" className="hover:text-zinc-200 transition-colors">Documentation</a>
           </div>
 
           <div className="flex items-center gap-3">
@@ -143,6 +142,17 @@ export default function LandingPage() {
                 </div>
               )}
 
+              {/* Clean Scan Completed Confirmation */}
+              {scanResult.total_exposures === 0 && (
+                <div className="mb-6 p-4 rounded-xl bg-zinc-950/80 border border-zinc-800 flex items-center gap-3">
+                  <Check className="w-4 h-4 text-zinc-300 shrink-0" />
+                  <div>
+                    <div className="text-xs font-semibold text-white">Scan completed — no exposure detected</div>
+                    <div className="text-xs text-zinc-400 mt-0.5">No exposed corporate accounts or credentials were found across indexed threat archives for this target.</div>
+                  </div>
+                </div>
+              )}
+
               {/* Redacted Forensics Teaser */}
               {scanResult.total_exposures > 0 && (
                 <div className="mb-6 p-4 rounded-xl bg-zinc-950/80 border border-zinc-800/80">
@@ -202,17 +212,17 @@ export default function LandingPage() {
           </section>
         )}
 
-        {/* Compliance & Audit Support */}
+        {/* Compliance & Governance Alignment */}
         <section id="compliance" className="py-16 border-y border-zinc-900 bg-zinc-900/20">
           <div className="max-w-5xl mx-auto px-4 text-center">
             <p className="text-xs font-medium uppercase tracking-wider text-zinc-500 mb-4">
-              Designed for compliance &amp; risk governance
+              Security architecture aligned with industry standards
             </p>
             <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 text-sm text-zinc-400 font-medium">
-              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-400" /> SOC 2 Type II</span>
-              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-400" /> ISO 27001</span>
-              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-400" /> Cyber Insurance Underwriting</span>
-              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-400" /> NIST CSF</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-400" /> SOC 2 Aligned Controls</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-400" /> ISO 27001 Control Mapping</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-400" /> Cyber Insurance Due-Diligence Ready</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-zinc-400" /> NIST CSF Aligned</span>
             </div>
           </div>
         </section>
@@ -233,9 +243,9 @@ export default function LandingPage() {
               <div className="w-9 h-9 rounded-lg bg-zinc-800/60 border border-zinc-700/60 flex items-center justify-center mb-5 text-zinc-200">
                 <Lock className="w-4 h-4" />
               </div>
-              <h3 className="text-base font-semibold text-white mb-2">Infostealer &amp; session detection</h3>
+              <h3 className="text-base font-semibold text-white mb-2">Infostealer &amp; botnet intelligence</h3>
               <p className="text-zinc-400 text-xs leading-relaxed">
-                Detect compromised browser cookies and active authentication tokens exfiltrated by malware families before session replay attacks occur.
+                Detect corporate accounts and employee credentials compromised by infostealer malware families (such as RedLine, Vidar, and Lumma) before threat actors exploit exfiltrated access.
               </p>
             </div>
 
@@ -255,7 +265,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-base font-semibold text-white mb-2">Auditable executive reports</h3>
               <p className="text-zinc-400 text-xs leading-relaxed">
-                Generate structured, documented PDF reports for board members, auditors, and insurance brokers demonstrating ongoing due diligence.
+                Generate structured technical PDF reports to assist security teams, auditors, and leadership during identity risk assessments.
               </p>
             </div>
           </div>
@@ -448,7 +458,6 @@ export default function LandingPage() {
           <div className="flex gap-6">
             <a href="#" className="hover:text-zinc-300 transition-colors">Privacy</a>
             <a href="#" className="hover:text-zinc-300 transition-colors">Terms</a>
-            <a href="http://localhost:8000/docs" target="_blank" className="hover:text-zinc-300 transition-colors">API Docs</a>
           </div>
         </div>
       </footer>

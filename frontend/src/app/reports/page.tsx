@@ -49,7 +49,8 @@ export default function ReportsPage() {
       })
       .catch(() => {
         if (isMounted) {
-          setPreviewBlobUrl(`http://localhost:8000/api/reports/${previewId}/download`);
+          const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim().replace(/\/api$/, '').replace(/\/$/, '');
+          setPreviewBlobUrl(`${baseUrl}/api/reports/${previewId}/download`);
         }
       })
       .finally(() => {
@@ -122,7 +123,7 @@ export default function ReportsPage() {
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">Audit &amp; Compliance Reports</h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Generate and export genuine PDF audit reports for SOC 2 compliance, executive boards, or domain-specific investigations.
+            Generate and export structured PDF reports to support compliance reviews, board updates, and domain-specific investigations.
           </p>
         </div>
         <button 
@@ -388,7 +389,7 @@ export default function ReportsPage() {
                   {[
                     { id: 'Executive', title: 'Executive', desc: 'Board-level posture score & summary' },
                     { id: 'Technical', title: 'Technical', desc: 'Deep credential & IOC telemetry' },
-                    { id: 'Compliance', title: 'Compliance', desc: 'SOC 2 / ISO audit proof' },
+                    { id: 'Compliance', title: 'Compliance', desc: 'Security review documentation' },
                   ].map((t) => (
                     <button
                       key={t.id}

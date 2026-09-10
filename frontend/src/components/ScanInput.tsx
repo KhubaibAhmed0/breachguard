@@ -20,35 +20,42 @@ interface ScanInputProps {
 export function ScanInput({ onScanComplete }: ScanInputProps) {
   const [domain, setDomain] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const performScan = async (targetValue: string) => {
     const cleanTarget = targetValue.trim();
     if (!cleanTarget) return;
     
     setIsScanning(true);
+    setError(null);
 
     try {
-      const rawApi = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').trim().replace(/\/api$/, '').replace(/\/$/, '');
-      const res = await fetch(`${rawApi}/api/prospect/scan`, {
+      const rawApi = (
+        process.env.NEXT_PUBLIC_API_URL || 
+        (typeof window !== 'undefined' ? '' : 'http://localhost:8000')
+      ).trim().replace(/\/api$/, '').replace(/\/$/, '');
+      const endpoint = rawApi ? `${rawApi}/api/prospect/scan` : '/api/prospect/scan';
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ domain: cleanTarget }),
       });
+
       if (res.ok) {
         const data = await res.json();
+        setError(null);
         onScanComplete(data);
+      } else if (res.status === 400 || res.status === 422) {
+        const errJson = await res.json().catch(() => null);
+        setError(errJson?.detail || 'Invalid domain or email format. Please check the query and try again.');
+      } else if (res.status === 429) {
+        setError('Scan rate limit reached. Please wait a moment before trying again.');
       } else {
-        throw new Error('Scan failed');
+        setError('Scan could not be completed. External threat intelligence providers are temporarily unavailable.');
       }
     } catch {
-      onScanComplete({
-        domain: cleanTarget,
-        total_exposures: cleanTarget.includes('@') ? 8 : 16,
-        breach_count: 3,
-        severity_breakdown: { critical: 2, high: 5, medium: 6, low: 3 },
-        breach_names: ['Stealer Logs Archive', 'Third-Party SaaS Leak', 'Canva Breach Archive'],
-        target_type: cleanTarget.includes('@') ? 'email' : 'domain'
-      });
+      setError('Scan could not be completed. Threat intelligence service is temporarily unavailable. Please try again shortly.');
     } finally {
       setIsScanning(false);
     }
@@ -89,6 +96,12 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
           )}
         </button>
       </form>
+
+      {error && (
+        <div className="mt-2.5 p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 text-center animate-fadeIn">
+          {error}
+        </div>
+      )}
 
       <div className="mt-3 flex items-center justify-center gap-2 text-xs text-zinc-500">
         <span>Sample queries:</span>

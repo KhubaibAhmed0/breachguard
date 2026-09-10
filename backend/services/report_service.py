@@ -545,7 +545,7 @@ async def generate_pdf_report(
             [Paragraph(
                 f"&bull; <b>Continuous Monitoring:</b> Keep automated monitoring enabled on <b>{target_scope}</b> to alert security teams immediately upon any new intelligence findings.<br/>"
                 "&bull; <b>Phishing-Resistant MFA:</b> Ensure all privileged accounts enforce hardware-backed or authenticator app MFA.<br/>"
-                "&bull; <b>Credential Hygiene:</b> Conduct periodic dark web intelligence reviews to maintain compliance with SOC 2, ISO 27001, and cyber insurance requirements.",
+                "&bull; <b>Credential Hygiene:</b> Conduct periodic dark web intelligence reviews to assist with security governance and internal control monitoring.",
                 table_cell
             )],
         ]

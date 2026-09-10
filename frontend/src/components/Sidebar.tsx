@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Globe, AlertTriangle, FileText, Settings, LogOut, 
-  Shield, Building2, ChevronDown, Check, Plus, X, Loader2 
+  Shield, Building2, ChevronDown, Check, Plus, X, Loader2,
+  Network, MailCheck, Radar, KeyRound
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
@@ -46,8 +47,11 @@ export function Sidebar() {
 
   const navItems = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { href: '/dashboard/attack-surface', label: 'Attack Surface', icon: Network },
+    { href: '/dashboard/email-security', label: 'Email Security', icon: MailCheck },
+    { href: '/dashboard/threat-intelligence', label: 'Threat Intel', icon: Radar },
+    { href: '/exposures', label: 'Credential Exposure', icon: KeyRound },
     { href: '/domains', label: 'Monitored Domains', icon: Globe },
-    { href: '/exposures', label: 'Threat Exposures', icon: AlertTriangle },
     { href: '/reports', label: 'Audit Reports', icon: FileText },
     { href: '/settings', label: 'Organization Settings', icon: Settings },
   ];

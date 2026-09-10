@@ -12,6 +12,15 @@ export interface ScanResultData {
   breach_names?: string[];
   recent_breach?: string;
   target_type?: string;
+  overall_risk_score?: number;
+  risk_level?: string;
+  discovered_assets_count?: number;
+  findings_count?: number;
+  email_security_score?: number;
+  categories?: Record<string, number>;
+  sample_findings?: Array<{ title: string; severity: string; category?: string; asset?: string; evidence?: string }>;
+  conversion_title?: string;
+  conversion_features?: string[];
 }
 
 interface ScanInputProps {

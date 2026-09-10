@@ -14,7 +14,8 @@ from models.domain import MonitoredDomain
 from services.scan_service import run_domain_scan
 from routers import (
     auth, domains, exposures, reports, prospect, billing,
-    identities, integrations, msp, api_keys
+    identities, integrations, msp, api_keys,
+    attack_surface, email_security, findings, risk
 )
 
 logger = logging.getLogger(__name__)
@@ -220,6 +221,10 @@ app.include_router(identities.router, prefix="/api/identities", tags=["identitie
 app.include_router(integrations.router, prefix="/api/settings", tags=["settings"])
 app.include_router(msp.router, prefix="/api/msp", tags=["msp"])
 app.include_router(api_keys.router)
+app.include_router(attack_surface.router)
+app.include_router(email_security.router)
+app.include_router(findings.router)
+app.include_router(risk.router)
 
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError

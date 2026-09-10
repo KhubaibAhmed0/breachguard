@@ -43,9 +43,10 @@ export default function ThreatIntelligencePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-mono px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-300">
-              {findings.length} Intelligence Indicators
-            </span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-zinc-900 border border-zinc-700/80 rounded-lg text-sm font-medium text-zinc-200 font-roboto shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-blue-400" />
+              <span><strong className="text-white font-semibold">{findings.length}</strong> Intelligence Indicators</span>
+            </div>
           </div>
         </div>
 

@@ -40,16 +40,16 @@ export default function EmailSecurityPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status?.toLowerCase()) {
       case 'pass':
-        return <span className="px-2 py-0.5 bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 rounded text-[10px] font-mono font-semibold">PASS</span>;
+        return <span className="px-2.5 py-0.5 bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 rounded-md text-xs font-roboto font-semibold">PASS</span>;
       case 'warning':
-        return <span className="px-2 py-0.5 bg-amber-950/60 border border-amber-800/60 text-amber-400 rounded text-[10px] font-mono font-semibold">WARNING</span>;
+        return <span className="px-2.5 py-0.5 bg-amber-950/60 border border-amber-800/60 text-amber-400 rounded-md text-xs font-roboto font-semibold">WARNING</span>;
       case 'fail':
-        return <span className="px-2 py-0.5 bg-red-950/60 border border-red-800/60 text-red-400 rounded text-[10px] font-mono font-semibold">FAIL</span>;
+        return <span className="px-2.5 py-0.5 bg-red-950/60 border border-red-800/60 text-red-400 rounded-md text-xs font-roboto font-semibold">FAIL</span>;
       default:
-        return <span className="px-2 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-400 rounded text-[10px] font-mono">NOT DETECTED</span>;
+        return <span className="px-2.5 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-400 rounded-md text-xs font-roboto">NOT DETECTED</span>;
     }
   };
 
@@ -70,9 +70,9 @@ export default function EmailSecurityPage() {
           <button
             onClick={handleReAudit}
             disabled={reAuditing || !active}
-            className="flex items-center gap-2 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2.5 px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-100 border border-zinc-700/80 rounded-lg text-sm font-medium font-roboto transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
           >
-            {reAuditing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+            {reAuditing ? <Loader2 className="w-4 h-4 animate-spin text-zinc-400" /> : <RefreshCw className="w-4 h-4 text-zinc-400" />}
             {reAuditing ? 'Auditing DNS...' : 'Re-Audit DNS Records'}
           </button>
         </div>

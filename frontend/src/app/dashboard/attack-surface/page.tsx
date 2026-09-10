@@ -56,12 +56,14 @@ export default function AttackSurfacePage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-300">
-              {assets.length} Assets Discovered
-            </span>
-            <span className="text-xs font-mono px-2.5 py-1 bg-red-950/40 border border-red-800/40 text-red-400 rounded-md">
-              {findings.length} Findings Active
-            </span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-zinc-900 border border-zinc-700/80 rounded-lg text-sm font-medium text-zinc-200 font-roboto shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span><strong className="text-white font-semibold">{assets.length}</strong> Assets Discovered</span>
+            </div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-red-950/40 border border-red-800/60 text-red-300 rounded-lg text-sm font-medium font-roboto shadow-sm">
+              <span className={`w-2 h-2 rounded-full ${findings.length > 0 ? 'bg-red-400 animate-pulse' : 'bg-zinc-500'}`} />
+              <span><strong className="text-red-200 font-semibold">{findings.length}</strong> Findings Active</span>
+            </div>
           </div>
         </div>
 
@@ -192,7 +194,7 @@ export default function AttackSurfacePage() {
                   <div key={finding.id} className="p-4 hover:bg-zinc-800/20 transition-colors space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono uppercase font-semibold border ${sevColor}`}>
+                        <span className={`px-2.5 py-0.5 rounded text-xs font-roboto uppercase font-semibold border ${sevColor}`}>
                           {finding.severity}
                         </span>
                         <span className="text-xs font-semibold text-white">

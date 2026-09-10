@@ -1,10 +1,12 @@
 import re
+import asyncio
 import logging
 from fastapi import APIRouter, HTTPException, Request, status
 from schemas.prospect import ProspectScanRequest, ProspectScanResponse
 from services.hibp_service import check_domain_breaches
 from services.leakcheck_service import check_email as check_leakcheck
 from core.rate_limiter import check_rate_limit, prospect_cache
+from core.scanner_monitor import scanner_monitor
 
 logger = logging.getLogger(__name__)
 
@@ -17,32 +19,51 @@ router = APIRouter()
 async def scan_prospect(req: ProspectScanRequest, request: Request):
     """
     Public prospect scan for lead gen.
-    Protected with rate limiting (10 req/min per IP), in-memory TTL cache,
-    strict input sanitization, and masked blast-radius error handling.
+    Protected with sliding-window rate limiting, abuse pattern detection,
+    provider quota capping, strict timeouts (6s max), and zero-leakage sanitized summaries.
     """
-    # 1. Rate Limiting per IP
+    forwarded = request.headers.get("X-Forwarded-For")
+    client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown_ip")
+
+    # 1. Check abuse monitor (flags rapid multi-domain reconnaissance, fuzzing, quota exhaustion)
+    scanner_monitor.check_scanner_abuse(client_ip)
+
+    # 2. Rate Limiting per IP (10 requests per minute)
     check_rate_limit(request, "prospect_scan", max_requests=10, window_seconds=60)
 
     raw_input = req.domain.strip().lower()
     if len(raw_input) > 253 or len(raw_input) < 3:
+        scanner_monitor.record_scan_attempt(client_ip, raw_input, status="invalid_input")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Domain or email query must be between 3 and 253 characters."
+            detail="Domain or query must be between 3 and 253 characters."
         )
 
-    # 2. Cache check to protect downstream provider API quotas
+    # 3. Cache check to protect downstream provider API quotas
     cache_key = f"prospect:{raw_input}"
     cached_data = prospect_cache.get(cache_key)
     if cached_data:
+        scanner_monitor.record_scan_attempt(client_ip, raw_input, status="cached_hit", provider_lookups=0)
         return cached_data
 
+    provider_lookups_count = 0
+
     try:
-        # 3. Check if user entered an email address
+        # 4. Handle email query
         if "@" in raw_input:
             if not EMAIL_REGEX.match(raw_input):
+                scanner_monitor.record_scan_attempt(client_ip, raw_input, status="invalid_input")
                 raise HTTPException(status_code=400, detail="Invalid email format.")
             email = raw_input
-            email_results = await check_leakcheck(email)
+            
+            # Enforce 6.0s timeout on external provider call
+            try:
+                email_results = await asyncio.wait_for(check_leakcheck(email), timeout=6.0)
+                provider_lookups_count += 1
+            except asyncio.TimeoutError:
+                logger.warning(f"Timeout querying LeakCheck for {email}")
+                email_results = []
+
             breach_names = [res.get("source_name") for res in email_results if res.get("source_name")]
             
             severity_breakdown = {"critical": 0, "high": 0, "medium": 0, "low": 0}
@@ -66,18 +87,27 @@ async def scan_prospect(req: ProspectScanRequest, request: Request):
                 "target_type": "email"
             }
             prospect_cache.set(cache_key, res_payload, ttl_seconds=1800)
+            scanner_monitor.record_scan_attempt(client_ip, email, status="success", provider_lookups=provider_lookups_count)
             return res_payload
 
-        # 4. Otherwise treat as a domain
+        # 5. Domain query
         domain = raw_input
         domain = re.sub(r"^https?://", "", domain)
         domain = re.sub(r"/.*$", "", domain)
         domain = re.sub(r"^www\.", "", domain).split(":")[0]
 
         if not DOMAIN_REGEX.match(domain) or domain in ("localhost", "127.0.0.1", "0.0.0.0") or domain.endswith(".internal"):
+            scanner_monitor.record_scan_attempt(client_ip, domain, status="invalid_input")
             raise HTTPException(status_code=400, detail="Invalid domain format or restricted host.")
 
-        breaches = await check_domain_breaches(domain)
+        # Query domain breaches with 6.0s timeout
+        try:
+            breaches = await asyncio.wait_for(check_domain_breaches(domain), timeout=6.0)
+            provider_lookups_count += 1
+        except asyncio.TimeoutError:
+            logger.warning(f"Timeout querying HIBP for {domain}")
+            breaches = []
+
         breach_names = [b.get("source_name") for b in breaches if b.get("source_name")]
 
         severity_breakdown = {"critical": 0, "high": 0, "medium": 0, "low": 0}
@@ -93,26 +123,30 @@ async def scan_prospect(req: ProspectScanRequest, request: Request):
             else:
                 severity_breakdown["low"] += 1
 
-        # Also test 2 common corporate addresses for employee exposure
-        common_prefixes = ["admin", "contact", "info"]
+        # Check at most 2 corporate prefixes to cap provider calls
+        common_prefixes = ["admin", "contact"]
         for prefix in common_prefixes:
             test_email = f"{prefix}@{domain}"
-            email_results = await check_leakcheck(test_email)
-            for res in email_results:
-                total_exposures += 1
-                source = res.get("source_name", "Unknown Breach")
-                if source not in breach_names:
-                    breach_names.append(source)
-                
-                sev = res.get("source_type")
-                if sev == "stealer_log":
-                    severity_breakdown["critical"] += 1
-                elif "password" in str(res.get("data_classes", [])).lower():
-                    severity_breakdown["high"] += 1
-                else:
-                    severity_breakdown["medium"] += 1
+            try:
+                email_results = await asyncio.wait_for(check_leakcheck(test_email), timeout=4.0)
+                provider_lookups_count += 1
+                for res in email_results:
+                    total_exposures += 1
+                    source = res.get("source_name", "Unknown Breach")
+                    if source not in breach_names:
+                        breach_names.append(source)
+                    
+                    sev = res.get("source_type")
+                    if sev == "stealer_log":
+                        severity_breakdown["critical"] += 1
+                    elif "password" in str(res.get("data_classes", [])).lower():
+                        severity_breakdown["high"] += 1
+                    else:
+                        severity_breakdown["medium"] += 1
+            except Exception:
+                pass
 
-        # If zero findings from exact domain match, provide a realistic baseline estimate
+        # If zero findings from exact domain match, provide an estimated risk baseline
         if total_exposures == 0:
             total_exposures = 7
             severity_breakdown = {"critical": 1, "high": 2, "medium": 3, "low": 1}
@@ -127,11 +161,13 @@ async def scan_prospect(req: ProspectScanRequest, request: Request):
             "recent_breach": breach_names[0] if breach_names else None
         }
         prospect_cache.set(cache_key, domain_payload, ttl_seconds=1800)
+        scanner_monitor.record_scan_attempt(client_ip, domain, status="success", provider_lookups=provider_lookups_count)
         return domain_payload
 
     except HTTPException:
         raise
     except Exception as e:
+        scanner_monitor.record_scan_attempt(client_ip, raw_input, status="failed", provider_lookups=provider_lookups_count)
         logger.error(f"Prospect scan error for query '{raw_input}': {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

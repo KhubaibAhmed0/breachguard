@@ -6,20 +6,20 @@ from core.database import get_db
 from models.user import User
 from models.exposure import Exposure
 from models.domain import MonitoredEmail
-from schemas.exposure import ExposureResponse, ExposureUpdate, ExposureStats
+from schemas.exposure import ExposureResponse, ExposureUpdate, ExposureStats, ExposureStatus, SeverityLevel
 from routers.deps import get_current_user
 from services.risk_score_service import calculate_risk_score
-from typing import List, Optional
+from typing import List, Optional, Literal
 from datetime import datetime, timedelta
 
 router = APIRouter()
 
 @router.get("", response_model=List[ExposureResponse])
 async def list_exposures(
-    severity: Optional[str] = None,
-    status: Optional[str] = None,
-    limit: int = 50,
-    offset: int = 0,
+    severity: Optional[SeverityLevel] = None,
+    status: Optional[ExposureStatus] = None,
+    limit: int = Query(50, ge=1, le=100, description="Pagination page limit (max 100)"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

@@ -1,10 +1,12 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Dict, List, Optional
 
 class ProspectScanRequest(BaseModel):
-    domain: str
+    model_config = ConfigDict(extra="forbid")
+    domain: str = Field(..., min_length=3, max_length=253, description="Target domain for threat reconnaissance")
 
 class ProspectScanResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     domain: str
     total_exposures: int
     breach_count: int

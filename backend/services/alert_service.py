@@ -23,16 +23,17 @@ async def send_email_alert(org_id: int, new_exposures: List[Any], db: AsyncSessi
     
     await db.commit()
 
+from core.ssrf_guard import safe_http_post
+
 async def send_webhook_alert(webhook_url: str, payload: dict):
     """
-    POST JSON payload to webhook URL.
+    POST JSON payload to webhook URL using safe_http_post with SSRF and DNS rebinding defense.
     """
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(webhook_url, json=payload, timeout=10.0)
-            if response.status_code >= 400:
-                logger.error(f"Webhook alert failed with status {response.status_code}: {response.text}")
-            else:
-                logger.info(f"Webhook sent successfully to {webhook_url}")
-        except Exception as e:
-            logger.error(f"Failed to send webhook to {webhook_url}: {str(e)}")
+    try:
+        response = await safe_http_post(webhook_url, json_payload=payload, timeout=10.0)
+        if response.status_code >= 400:
+            logger.warning(f"Webhook alert failed with HTTP status {response.status_code}")
+        else:
+            logger.info("Webhook alert dispatched successfully.")
+    except Exception as e:
+        logger.error(f"Failed to dispatch webhook alert safely: {e}")

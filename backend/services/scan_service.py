@@ -14,16 +14,17 @@ from services.alert_service import send_email_alert
 
 logger = logging.getLogger(__name__)
 
+from core.ssrf_guard import safe_http_post
+
 async def send_webhook_alert(webhook_url: str, payload: dict) -> bool:
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(webhook_url, json=payload)
-            if resp.status_code >= 400:
-                logger.warning(f"Webhook alert to {webhook_url} returned HTTP {resp.status_code}")
-                return False
-            return True
+        resp = await safe_http_post(webhook_url, json_payload=payload, timeout=10.0)
+        if resp.status_code >= 400:
+            logger.warning(f"Webhook alert to {webhook_url} returned HTTP {resp.status_code}")
+            return False
+        return True
     except Exception as e:
-        logger.error(f"Failed to dispatch webhook alert to {webhook_url}: {e}")
+        logger.error(f"Failed to dispatch webhook alert safely: {e}")
         return False
 
 def calculate_severity(exposure_data: Dict[str, Any]) -> str:

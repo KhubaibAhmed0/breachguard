@@ -1,17 +1,20 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
 from typing import Optional
 
 class UserCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128, description="Password must be at least 8 characters.")
     org_name: str = Field(..., min_length=2, max_length=100)
 
 class UserLogin(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     email: EmailStr
     password: str = Field(..., min_length=1, max_length=128)
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
     email: EmailStr
     org_id: int
@@ -22,9 +25,8 @@ class UserResponse(BaseModel):
     trial_days_remaining: Optional[int] = None
     trial_ends_at: Optional[datetime] = None
     created_at: datetime
-    class Config:
-        from_attributes = True
 
 class Token(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     access_token: str
     token_type: str

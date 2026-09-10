@@ -123,9 +123,24 @@ async def lifespan(app: FastAPI):
         # Serverless environment (Vercel): zero-blocking startup
         yield
 
+is_production = bool(
+    os.environ.get("VERCEL") 
+    or os.environ.get("ENVIRONMENT") == "production"
+    or os.environ.get("NODE_ENV") == "production"
+)
+enable_docs = os.environ.get("ENABLE_DOCS", "").lower() in ("true", "1")
+
+# Restrict OpenAPI & Swagger documentation in production environments
+docs_url = "/docs" if (not is_production or enable_docs) else None
+redoc_url = "/redoc" if (not is_production or enable_docs) else None
+openapi_url = "/openapi.json" if (not is_production or enable_docs) else None
+
 app = FastAPI(
     title="BreachGuard Dark Web & Exposure Monitoring API",
     version="1.0.0",
+    docs_url=docs_url,
+    redoc_url=redoc_url,
+    openapi_url=openapi_url,
     lifespan=lifespan
 )
 application = app
@@ -159,11 +174,25 @@ app.include_router(integrations.router, prefix="/api/settings", tags=["settings"
 app.include_router(msp.router, prefix="/api/msp", tags=["msp"])
 
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
+
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request, exc):
+    """
+    Catches SQL and database exceptions to prevent leaking database tables,
+    column names, or connection strings.
+    """
+    logger.error(f"Database error on {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "A database error occurred. The incident has been securely logged."}
+    )
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
     """
-    Catches unhandled server exceptions to prevent leaking raw tracebacks or SQL errors.
+    Catches unhandled server exceptions to prevent leaking raw tracebacks,
+    filesystem paths, or third-party provider responses.
     """
     logger.error(f"Unhandled server exception on {request.url.path}: {exc}", exc_info=True)
     return JSONResponse(

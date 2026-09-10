@@ -7,30 +7,27 @@ from pydantic import BaseModel
 from typing import Optional
 
 from core.database import get_db
-from core.ssrf_guard import validate_url_for_ssrf
+from core.ssrf_guard import validate_url_for_ssrf, safe_http_post
 from models.user import User
 from models.organization import Organization
+from schemas.settings import WebhookTestRequest, IntegrationsUpdateRequest, IntegrationsResponse
 from routers.deps import get_current_user
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-class TestWebhookRequest(BaseModel):
-    webhook_url: Optional[str] = None
-
-class IntegrationsUpdateRequest(BaseModel):
-    slack_webhook_url: Optional[str] = None
-    siem_webhook_url: Optional[str] = None
-
 @router.post("/test-webhook")
 async def test_webhook(
-    req: TestWebhookRequest = None,
+    req: Optional[WebhookTestRequest] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """
     Dispatches formatted Slack test alert:
     {"text": "🚨 *BreachGuard Security Alert Test*\nYour integration is connected successfully. Real-time exposure alerts will appear here."}
-    Protected with SSRF validation against loopback, private IPs, and cloud metadata.
+    Protected with SSRF validation, DNS rebinding defense, and redirect restriction.
     """
     target_url = None
     if req and req.webhook_url:
@@ -47,32 +44,24 @@ async def test_webhook(
             detail="No webhook URL provided or configured in settings."
         )
 
-    # Validate for SSRF
-    target_url = validate_url_for_ssrf(target_url)
-
     payload = {
         "text": "🚨 *BreachGuard Security Alert Test*\nYour integration is connected successfully. Real-time exposure alerts will appear here."
     }
 
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(target_url, json=payload)
-            if resp.status_code >= 400:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Webhook delivery failed with HTTP {resp.status_code}: {resp.text[:200]}"
-                )
-    except httpx.RequestError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Webhook delivery failed due to network error: {str(e)}"
-        )
+        resp = await safe_http_post(target_url, json_payload=payload, timeout=10.0)
+        if resp.status_code >= 400:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Webhook delivery failed with HTTP status {resp.status_code}."
+            )
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Failed to dispatch test webhook: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to dispatch test alert: {str(e)}"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Webhook delivery failed due to network connection error."
         )
 
     return {"status": "success", "message": "Test alert dispatched"}

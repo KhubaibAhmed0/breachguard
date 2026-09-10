@@ -12,30 +12,10 @@ from models.user import User
 from models.organization import Organization
 from models.domain import MonitoredDomain
 from models.exposure import Exposure
+from schemas.msp import TenantCreate, TenantResponse, SwitchTenantResponse
 from routers.deps import get_current_user
 
 router = APIRouter()
-
-class TenantCreate(BaseModel):
-    name: str
-
-class TenantResponse(BaseModel):
-    id: int
-    name: str
-    plan: str
-    parent_org_id: Optional[int] = None
-    domains_count: int = 0
-    exposures_count: int = 0
-    logo_path: Optional[str] = None
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class SwitchTenantResponse(BaseModel):
-    access_token: str
-    token_type: str
-    tenant: dict
 
 def verify_msp_access(current_user: User):
     """

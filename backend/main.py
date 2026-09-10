@@ -62,6 +62,13 @@ async def autonomous_scan_scheduler():
         try:
             now = datetime.utcnow()
             async with AsyncSessionLocal() as session:
+                # Automated retention enforcement sweep
+                try:
+                    from services.retention_service import enforce_retention_policy
+                    await enforce_retention_policy(session)
+                except Exception as ret_err:
+                    logger.error(f"Automated retention enforcement error: {ret_err}")
+
                 result = await session.execute(select(MonitoredDomain))
                 domains_list = result.scalars().all()
 
@@ -146,13 +153,52 @@ app = FastAPI(
 application = app
 handler = app
 
+# Trusted frontend origins (Measure 28)
+DEFAULT_DEV_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
+DEFAULT_PROD_ORIGINS = [
+    "https://breachguard.vercel.app",
+    "https://breachguard-w88w.vercel.app",
+]
+
+env_allowed = os.environ.get("ALLOWED_ORIGINS")
+if env_allowed:
+    allowed_origins = [orig.strip() for orig in env_allowed.split(",") if orig.strip()]
+elif is_production:
+    allowed_origins = DEFAULT_PROD_ORIGINS
+else:
+    allowed_origins = DEFAULT_DEV_ORIGINS + DEFAULT_PROD_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-BreachGuard-Signature", "Stripe-Signature"],
 )
+
+from core.redactor import SensitiveDataFilter
+logging.getLogger().addFilter(SensitiveDataFilter())
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    """
+    Applies defense-in-depth HTTP security headers (Measure 29).
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=(), payment=()"
+    if is_production or request.url.scheme == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    return response
 
 # Static file mount (safely skipped in serverless read-only mode)
 if not os.environ.get("VERCEL"):

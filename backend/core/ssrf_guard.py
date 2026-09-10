@@ -147,12 +147,18 @@ class PinnedDNSBackend(httpcore.AsyncNetworkBackend):
     async def connect_tls(self, *args, **kwargs):
         return await self._backend.connect_tls(*args, **kwargs)
 
-async def safe_http_post(url: str, json_payload: Dict[str, Any], timeout: float = 10.0) -> httpx.Response:
+async def safe_http_post(
+    url: str, 
+    json_payload: Dict[str, Any], 
+    timeout: float = 10.0,
+    headers: Optional[Dict[str, str]] = None
+) -> httpx.Response:
     """
     Safely executes an outbound HTTP POST request with:
     1. Full SSRF URL and IP validation against private/metadata addresses.
     2. DNS Rebinding defense via IP pinning (connecting directly to the pre-verified IP).
     3. Disabled redirects (follow_redirects=False) to prevent 3xx bounce attacks.
+    4. Custom authentication & signature headers support.
     """
     validated_url = validate_url_for_ssrf(url, resolve_dns=False)
     parsed = urllib.parse.urlsplit(validated_url)
@@ -193,6 +199,6 @@ async def safe_http_post(url: str, json_payload: Dict[str, Any], timeout: float 
 
     # Dispatch request with follow_redirects=False (Strict redirect boundary)
     async with httpx.AsyncClient(transport=transport, timeout=timeout, follow_redirects=False) as client:
-        response = await client.post(validated_url, json=json_payload)
+        response = await client.post(validated_url, json=json_payload, headers=headers)
         return response
 

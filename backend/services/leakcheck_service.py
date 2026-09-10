@@ -46,14 +46,15 @@ async def check_email(email: str) -> List[Dict[str, Any]]:
                         cred_type = "plaintext" if is_pro and "password" in r and not r.get("hashed") else "hashed"
                         data_classes = ["Email", "Passwords"] if "password" in r or not is_pro else ["Email"]
 
-                    # Sanitize sensitive fields before storage
-                    sanitized_r = dict(r) if isinstance(r, dict) else {}
-                    if "password" in sanitized_r and sanitized_r["password"]:
-                        p = str(sanitized_r["password"])
-                        sanitized_r["password"] = f"{p[:2]}****{p[-1]}" if len(p) > 3 else "****"
-                    if "hash" in sanitized_r and sanitized_r["hash"]:
-                        h = str(sanitized_r["hash"])
-                        sanitized_r["hash"] = f"{h[:4]}****{h[-2:]}" if len(h) > 6 else "****"
+                    # Technical evidence metadata only - Zero Credential Storage (Measure 21)
+                    evidence_metadata = {
+                        "provider": "leakcheck",
+                        "source_name": source,
+                        "evidence_type": "infostealer_telemetry" if is_stealer else "breach_record",
+                        "has_credentials": bool("password" in r or is_stealer),
+                        "confidence": "high" if (is_stealer or "password" in r) else "moderate",
+                        "compromise_date": r.get("date")
+                    }
 
                     normalized.append({
                         "source_name": source,
@@ -61,7 +62,7 @@ async def check_email(email: str) -> List[Dict[str, Any]]:
                         "data_classes": data_classes,
                         "credential_type": cred_type,
                         "breach_date": r.get("date"),
-                        "raw_data": sanitized_r
+                        "raw_data": evidence_metadata
                     })
                 return normalized
             elif response.status_code == 429:

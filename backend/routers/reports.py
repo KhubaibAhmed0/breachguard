@@ -78,7 +78,10 @@ async def download_report(
         content_disposition_type=disposition,
         headers={
             "Content-Disposition": f'{disposition}; filename="{dl_filename}"',
-            "Access-Control-Allow-Origin": "*",
+            "X-Robots-Tag": "noindex, nofollow, noarchive",
+            "Cache-Control": "private, no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
             "Access-Control-Expose-Headers": "Content-Disposition"
         }
     )

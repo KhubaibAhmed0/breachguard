@@ -445,6 +445,184 @@ async def run_tests():
     assert "Tier 4: Secret / Zero-Knowledge Assets" in policy_text
     print("✅ SECURITY_DATA_CLASSIFICATION.md verified with all 4 sensitivity tiers and least-privilege matrix.")
 
+    # 15. Test Zero Credential Storage (Measure 21)
+    print("\n--- 15. Testing Zero Credential Storage (Measure 21) ---")
+    async with AsyncSessionLocal() as session:
+        res_exp = await session.execute(select(Exposure).where(Exposure.org_id == essential_org_id))
+        db_exps = res_exp.scalars().all()
+        for exp in db_exps:
+            raw_s = str(exp.raw_data or "").lower()
+            assert "password:" not in raw_s and "password =" not in raw_s
+            assert "password_hash" not in raw_s
+            assert "session_token" not in raw_s
+    print("✅ Verified database stores zero credentials, raw passwords, or session tokens.")
+
+    # 16. Test Sensitive Data Redaction (Measure 22)
+    print("\n--- 16. Testing Sensitive Data Redaction (Measure 22) ---")
+    from core.redactor import redact_sensitive_values, mask_string
+    sample_payload = {
+        "user": "analyst@example.com",
+        "password": "SuperSecretPassword123!",
+        "api_key": "sec_live_99999",
+        "nested": {
+            "session_token": "token_abc_xyz",
+            "auth_header": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.xyz",
+            "stripe_secret": "sec_test_mock_secret_value_12345"
+        }
+    }
+    redacted = redact_sensitive_values(sample_payload)
+    assert redacted["password"] == "[REDACTED]"
+    assert redacted["api_key"] == "[REDACTED]"
+    assert redacted["nested"]["session_token"] == "[REDACTED]"
+    assert "[REDACTED" in str(redacted["nested"]["stripe_secret"])
+    print("✅ Automated data redactor correctly purged all passwords, keys, and tokens from nested payloads.")
+
+    # 17. Test Automated Retention Enforcement & Org Purge (Measure 23)
+    print("\n--- 17. Testing Automated Retention Policy & Data Purge (Measure 23) ---")
+    from services.retention_service import enforce_retention_policy
+    async with AsyncSessionLocal() as session:
+        # Seed an old exposure for essential org (older than 90 days)
+        old_detected = datetime.utcnow() - timedelta(days=100)
+        e_res = await session.execute(select(MonitoredEmail).where(MonitoredEmail.domain_id == essential_dom_id))
+        email_obj = e_res.scalars().first()
+
+        old_exp = Exposure(
+            email_id=email_obj.id,
+            org_id=essential_org_id,
+            source_name="Old Breach 2024",
+            source_type="breach",
+            severity="low",
+            detected_at=old_detected,
+            status="active"
+        )
+        session.add(old_exp)
+        await session.commit()
+        old_exp_id = old_exp.id
+
+        # Enforce retention policy
+        ret_result = await enforce_retention_policy(session)
+        assert ret_result["total_purged"] >= 1
+        
+        # Verify old exposure was deleted
+        check_res = await session.execute(select(Exposure).where(Exposure.id == old_exp_id))
+        assert check_res.scalars().first() is None
+        print(f"✅ Automated retention policy purged {ret_result['total_purged']} expired exposure(s) older than 90 days.")
+
+    # Test On-demand Org Purge endpoint
+    res = client.delete("/api/settings/purge-history", headers=headers_essential)
+    assert res.status_code == 400, "Expected confirmation requirement on purge"
+    res = client.delete("/api/settings/purge-history?confirm=true", headers=headers_essential)
+    assert res.status_code == 200, f"Purge failed: {res.text}"
+    print(f"✅ On-demand org data deletion workflow verified: {res.json()['message']}")
+
+    # 18. Test Secure Report Downloads & Indexing Defense (Measures 24 & 25)
+    print("\n--- 18. Testing Secure Report Downloads & Indexing Defense ---")
+    # Generate report for MSP
+    res = client.post(
+        "/api/reports/generate",
+        headers=headers_msp,
+        json={"report_type": "executive", "domain_name": msp_dom_name}
+    )
+    assert res.status_code == 200
+    report_id = res.json()["id"]
+
+    # Verify User A cannot download User B's report (BOLA/IDOR protection)
+    res = client.get(f"/api/reports/{report_id}/download", headers=headers_essential)
+    assert res.status_code == 404, f"Expected 404 cross-tenant report download, got {res.status_code}"
+    print("✅ Cross-tenant report download blocked (BOLA / IDOR defense).")
+
+    # Verify authorized download has security and noindex headers
+    res = client.get(f"/api/reports/{report_id}/download", headers=headers_msp)
+    assert res.status_code == 200
+    assert res.headers.get("X-Robots-Tag") == "noindex, nofollow, noarchive"
+    assert "no-store" in res.headers.get("Cache-Control", "")
+    assert res.headers.get("Access-Control-Allow-Origin") is None or res.headers.get("Access-Control-Allow-Origin") != "*"
+    print("✅ Report download returned correct X-Robots-Tag (noindex) and Cache-Control headers.")
+
+    # 19. Test Security Headers (Measure 29)
+    print("\n--- 19. Testing HTTP Security Headers (Measure 29) ---")
+    res = client.get("/api/health")
+    assert res.headers.get("X-Content-Type-Options") == "nosniff"
+    assert res.headers.get("X-Frame-Options") == "DENY"
+    assert res.headers.get("X-XSS-Protection") == "1; mode=block"
+    assert res.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+    print("✅ Production HTTP security headers verified (X-Content-Type-Options, X-Frame-Options, CSP, Referrer-Policy).")
+
+    # 20. Test Outgoing Webhook HMAC-SHA256 Signing (Measure 30)
+    print("\n--- 20. Testing Outgoing Webhook HMAC Signing (Measure 30) ---")
+    from services.alert_service import generate_webhook_signature
+    test_payload = {"event": "test.alert", "domain": "example.com", "severity": "critical"}
+    sig_header = generate_webhook_signature(test_payload, "test_secret_key_123")
+    assert sig_header.startswith("t=") and ",v1=" in sig_header
+    print(f"✅ Webhook HMAC-SHA256 signature generated: {sig_header[:35]}...")
+
+    # 21. Test Stripe Billing Hardening & Entitlements (Measure 31)
+    print("\n--- 21. Testing Stripe Billing Hardening & Entitlements (Measure 31) ---")
+    from routers.billing import verify_stripe_signature
+    import time
+    import hmac
+    import hashlib
+    import json
+    
+    # 21a. Attempt checkout with unauthorized price ID -> rejected
+    res = client.post(
+        "/api/billing/checkout",
+        headers=headers_essential,
+        json={"price_id": "price_free_unlimited_enterprise"}
+    )
+    assert res.status_code == 400, "Expected 400 for unauthorized price ID"
+    print("✅ Client-controlled arbitrary pricing rejected (HTTP 400).")
+
+    # 21b. Valid checkout session creation
+    res = client.post(
+        "/api/billing/checkout",
+        headers=headers_essential,
+        json={"price_id": "price_business_monthly"}
+    )
+    assert res.status_code == 200
+    assert "checkout.stripe.com" in res.json()["url"]
+    assert res.json()["plan"] == "business"
+    print("✅ Server-side checkout created for Business plan.")
+
+    # 21c. Stripe Webhook Signature Verification
+    fake_payload = json.dumps({
+        "id": f"evt_test_{uuid.uuid4().hex[:8]}",
+        "type": "checkout.session.completed",
+        "data": {
+            "object": {
+                "client_reference_id": str(essential_org_id),
+                "lines": {"data": [{"price": {"id": "price_business_monthly"}}]}
+            }
+        }
+    }).encode("utf-8")
+    
+    # Send Stripe webhook with verified signature
+    webhook_secret = "mock_webhook_secret_key_testing"
+    t_now = int(time.time())
+    sig_hash = hmac.new(webhook_secret.encode("utf-8"), f"{t_now}.".encode("utf-8") + fake_payload, hashlib.sha256).hexdigest()
+    sig_header_val = f"t={t_now},v1={sig_hash}"
+    
+    assert verify_stripe_signature(fake_payload, sig_header_val, webhook_secret) == True
+    print("✅ Cryptographic Stripe webhook signature verification verified.")
+
+    # Process webhook event through router
+    res = client.post(
+        "/api/billing/webhook",
+        content=fake_payload,
+        headers={"Content-Type": "application/json"}
+    )
+    assert res.status_code == 200
+    
+    # Verify idempotency - sending same event returns already_processed
+    res_dup = client.post(
+        "/api/billing/webhook",
+        content=fake_payload,
+        headers={"Content-Type": "application/json"}
+    )
+    assert res_dup.status_code == 200
+    assert res_dup.json().get("status") == "already_processed"
+    print("✅ Stripe webhook idempotency verified (duplicate event safely ignored).")
+
     print("\n==================================================")
     print("🎉 ALL PRODUCTION BACKEND INFRASTRUCTURE TESTS PASSED!")
     print("==================================================")

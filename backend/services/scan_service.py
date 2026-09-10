@@ -111,6 +111,14 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
                         first_seen = datetime.fromisoformat(breach["breach_date"].replace("Z", "+00:00"))
                     except Exception:
                         pass
+                
+                sanitized_meta = {
+                    "provider": "hibp",
+                    "source_name": source,
+                    "evidence_type": "domain_breach",
+                    "confidence": "high" if severity in ["critical", "high"] else "moderate",
+                    "breach_date": breach.get("breach_date")
+                }
                 new_exp = Exposure(
                     email_id=primary_email.id,
                     org_id=domain.org_id,
@@ -120,7 +128,7 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
                     severity=severity,
                     credential_type=breach.get("credential_type", "domain_breach"),
                     first_seen_at=first_seen,
-                    raw_data=breach
+                    raw_data=sanitized_meta
                 )
                 db.add(new_exp)
                 new_exposures_count += 1
@@ -172,6 +180,15 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
                     except:
                         pass
                 
+                raw_meta = res.get("raw_data") or {}
+                clean_meta = {
+                    "provider": raw_meta.get("provider", "threat_intel"),
+                    "source_name": source,
+                    "evidence_type": raw_meta.get("evidence_type", res.get("source_type", "breach")),
+                    "confidence": raw_meta.get("confidence", "high" if severity in ["critical", "high"] else "moderate"),
+                    "has_credentials": bool(raw_meta.get("has_credentials", False)),
+                    "compromise_date": res.get("breach_date")
+                }
                 new_exposure = Exposure(
                     email_id=email_record.id,
                     org_id=domain.org_id,
@@ -181,7 +198,7 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
                     severity=severity,
                     credential_type=res.get("credential_type"),
                     first_seen_at=first_seen,
-                    raw_data=res.get("raw_data")
+                    raw_data=clean_meta
                 )
                 db.add(new_exposure)
                 new_exposures_count += 1

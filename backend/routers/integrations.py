@@ -162,3 +162,34 @@ async def upload_logo(
         "logo_path": file_path,
         "logo_url": logo_url
     }
+
+@router.delete("/purge-history")
+async def purge_history(
+    confirm: bool = False,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    On-demand organization data deletion workflow (Measure 23):
+    Allows organization administrators to purge all historical exposure and alert records.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only organization administrators may execute data deletion workflows."
+        )
+
+    if not confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Confirmation required. Set query parameter confirm=true to purge historical exposure records."
+        )
+
+    from services.retention_service import purge_organization_history
+    deleted_count = await purge_organization_history(current_user.org_id, db)
+
+    return {
+        "status": "success",
+        "message": f"Successfully purged {deleted_count} historical exposure records.",
+        "purged_count": deleted_count
+    }

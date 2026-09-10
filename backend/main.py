@@ -100,19 +100,30 @@ async def autonomous_scan_scheduler():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure static directories exist
-    os.makedirs("uploads/logos", exist_ok=True)
-    await init_models()
+    try:
+        os.makedirs("uploads/logos", exist_ok=True)
+    except OSError:
+        pass
 
-    # Launch background scheduler
-    scheduler_task = asyncio.create_task(autonomous_scan_scheduler())
+    try:
+        await init_models()
+    except Exception as e:
+        logger.warning(f"init_models warning: {e}")
+
+    # Launch background scheduler if not in serverless environment
+    scheduler_task = None
+    if not os.environ.get("VERCEL"):
+        scheduler_task = asyncio.create_task(autonomous_scan_scheduler())
+    
     try:
         yield
     finally:
-        scheduler_task.cancel()
-        try:
-            await scheduler_task
-        except asyncio.CancelledError:
-            pass
+        if scheduler_task:
+            scheduler_task.cancel()
+            try:
+                await scheduler_task
+            except asyncio.CancelledError:
+                pass
 
 app = FastAPI(
     title="BreachGuard Dark Web & Exposure Monitoring API",

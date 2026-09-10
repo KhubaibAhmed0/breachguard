@@ -1,4 +1,4 @@
-﻿---
+---
 title: Breachguard API
 emoji: 🛡️
 colorFrom: blue

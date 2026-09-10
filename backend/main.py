@@ -170,11 +170,11 @@ def root():
 async def health_check():
     from core.database import AsyncSessionLocal
     from models.user import User
+    host = settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else "sqlite_default"
     try:
         async with AsyncSessionLocal() as session:
             result = await session.execute(select(User))
             users = [u.email for u in result.scalars().all()]
-            host = settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else "sqlite_default"
             return {
                 "status": "online",
                 "connected_db": host,
@@ -182,4 +182,8 @@ async def health_check():
                 "users": users
             }
     except Exception as e:
-        return {"status": "db_error", "error": str(e)}
+        return {
+            "status": "db_error",
+            "attempted_host": host,
+            "error": str(e)
+        }

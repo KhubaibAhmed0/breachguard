@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+venv/
+env/
+ENV/
+
+# Production & Build outputs
+.next/
+out/
+build/
+dist/
+*.egg-info/
+
+# Python cache & bytecode
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# Databases & local state
+*.db
+*.sqlite
+*.sqlite3
+backend/darkweb.db
+
+# Generated reports & dynamic uploads
+backend/reports/*.pdf
+backend/reports/*.html
+backend/uploads/logos/*
+!backend/uploads/logos/.gitkeep
+
+# Environment & credentials
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Testing & coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Logs & temporary runtime files
+*.log
+*.log.*
+*.txt
+!README.md
+*.tsbuildinfo

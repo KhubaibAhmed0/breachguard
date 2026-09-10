@@ -128,6 +128,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan
 )
+application = app
+handler = app
 
 app.add_middleware(
     CORSMiddleware,

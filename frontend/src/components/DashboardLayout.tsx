@@ -19,15 +19,15 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <main className="flex-1 overflow-y-auto bg-zinc-950 p-6 sm:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
           {isTrial && !bannerDismissed && (
-            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-gradient-to-r from-emerald-950/40 via-zinc-900/70 to-cyan-950/40 border border-emerald-500/20 rounded-xl shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center justify-between gap-4 px-4 py-3 bg-zinc-900/90 border border-zinc-800 rounded-xl shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                  <Clock className="w-4 h-4 text-emerald-400" />
+                <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0">
+                  <Clock className="w-4 h-4 text-zinc-300" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-white">7-Day Business Trial Active</span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
+                    <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-mono uppercase tracking-wider">
                       {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
                     </span>
                   </div>
@@ -45,7 +45,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 </Link>
                 <button
                   onClick={() => setBannerDismissed(true)}
-                  className="p-1 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 transition-colors"
+                  className="p-1 rounded-md text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 transition-colors cursor-pointer"
                   title="Dismiss banner"
                 >
                   <X className="w-3.5 h-3.5" />

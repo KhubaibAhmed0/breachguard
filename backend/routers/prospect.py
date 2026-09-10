@@ -1,22 +1,46 @@
-from fastapi import APIRouter, HTTPException
+import re
+import logging
+from fastapi import APIRouter, HTTPException, Request, status
 from schemas.prospect import ProspectScanRequest, ProspectScanResponse
 from services.hibp_service import check_domain_breaches
 from services.leakcheck_service import check_email as check_leakcheck
-import re
+from core.rate_limiter import check_rate_limit, prospect_cache
+
+logger = logging.getLogger(__name__)
+
+DOMAIN_REGEX = re.compile(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$")
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
 router = APIRouter()
 
 @router.post("/scan", response_model=ProspectScanResponse)
-async def scan_prospect(req: ProspectScanRequest):
+async def scan_prospect(req: ProspectScanRequest, request: Request):
     """
     Public prospect scan for lead gen.
-    Runs free live checks using open APIs and returns a redacted summary.
+    Protected with rate limiting (10 req/min per IP), in-memory TTL cache,
+    strict input sanitization, and masked blast-radius error handling.
     """
+    # 1. Rate Limiting per IP
+    check_rate_limit(request, "prospect_scan", max_requests=10, window_seconds=60)
+
+    raw_input = req.domain.strip().lower()
+    if len(raw_input) > 253 or len(raw_input) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Domain or email query must be between 3 and 253 characters."
+        )
+
+    # 2. Cache check to protect downstream provider API quotas
+    cache_key = f"prospect:{raw_input}"
+    cached_data = prospect_cache.get(cache_key)
+    if cached_data:
+        return cached_data
+
     try:
-        raw_input = req.domain.strip().lower()
-        
-        # 1. Check if user entered an email address
+        # 3. Check if user entered an email address
         if "@" in raw_input:
+            if not EMAIL_REGEX.match(raw_input):
+                raise HTTPException(status_code=400, detail="Invalid email format.")
             email = raw_input
             email_results = await check_leakcheck(email)
             breach_names = [res.get("source_name") for res in email_results if res.get("source_name")]
@@ -32,7 +56,7 @@ async def scan_prospect(req: ProspectScanRequest):
                     severity_breakdown["medium"] += 1
 
             total_exposures = len(email_results)
-            return {
+            res_payload = {
                 "domain": email,
                 "total_exposures": total_exposures,
                 "breach_count": len(breach_names),
@@ -41,12 +65,17 @@ async def scan_prospect(req: ProspectScanRequest):
                 "recent_breach": breach_names[0] if breach_names else None,
                 "target_type": "email"
             }
+            prospect_cache.set(cache_key, res_payload, ttl_seconds=1800)
+            return res_payload
 
-        # 2. Otherwise treat as a domain
+        # 4. Otherwise treat as a domain
         domain = raw_input
         domain = re.sub(r"^https?://", "", domain)
         domain = re.sub(r"/.*$", "", domain)
-        domain = re.sub(r"^www\.", "", domain)
+        domain = re.sub(r"^www\.", "", domain).split(":")[0]
+
+        if not DOMAIN_REGEX.match(domain) or domain in ("localhost", "127.0.0.1", "0.0.0.0") or domain.endswith(".internal"):
+            raise HTTPException(status_code=400, detail="Invalid domain format or restricted host.")
 
         breaches = await check_domain_breaches(domain)
         breach_names = [b.get("source_name") for b in breaches if b.get("source_name")]
@@ -89,7 +118,7 @@ async def scan_prospect(req: ProspectScanRequest):
             severity_breakdown = {"critical": 1, "high": 2, "medium": 3, "low": 1}
             breach_names = ["Historical Stealer Dump", "Third-Party SaaS Leak"]
 
-        return {
+        domain_payload = {
             "domain": domain,
             "total_exposures": total_exposures,
             "breach_count": max(len(breach_names), 1),
@@ -97,5 +126,14 @@ async def scan_prospect(req: ProspectScanRequest):
             "breach_names": breach_names[:5],
             "recent_breach": breach_names[0] if breach_names else None
         }
+        prospect_cache.set(cache_key, domain_payload, ttl_seconds=1800)
+        return domain_payload
+
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Prospect scan error for query '{raw_input}': {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="External intelligence reconnaissance service temporarily unavailable. Please try again shortly."
+        )

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Shield } from 'lucide-react';
+import { Shield, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
 
@@ -87,9 +87,16 @@ export default function RegisterPage() {
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-lg transition-colors mt-3 cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-lg transition-colors mt-3 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? 'Starting 7-day trial...' : 'Start 7-Day Free Trial'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                <span>Starting 7-day trial...</span>
+              </>
+            ) : (
+              'Start 7-Day Free Trial'
+            )}
           </button>
           <p className="text-[11px] text-zinc-500 text-center mt-2 font-normal">Instant activation &bull; Cancel anytime</p>
         </form>

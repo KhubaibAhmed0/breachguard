@@ -1,5 +1,6 @@
 import os
 import uuid
+import html
 import logging
 from datetime import datetime
 from typing import Optional, List, Tuple
@@ -119,52 +120,19 @@ async def generate_pdf_report(
         )
         domain_obj = res.scalars().first()
 
-        # If not found in current org, check if it exists in another org or seed it
+        # If not found in current org, seed it strictly for this org
         if not domain_obj:
-            res_other = await db.execute(
-                select(MonitoredDomain).where(MonitoredDomain.domain == clean_domain)
-            )
-            existing_domain = res_other.scalars().first()
-
             domain_obj = MonitoredDomain(org_id=org_id, domain=clean_domain, verified=True, scan_frequency="daily")
             db.add(domain_obj)
             await db.commit()
             await db.refresh(domain_obj)
 
-            if existing_domain:
-                # Mirror emails and exposures for this org
-                e_res = await db.execute(select(MonitoredEmail).where(MonitoredEmail.domain_id == existing_domain.id))
-                old_emails = e_res.scalars().all()
-                for oe in old_emails:
-                    ne = MonitoredEmail(domain_id=domain_obj.id, email=oe.email, is_vip=oe.is_vip)
-                    db.add(ne)
-                    await db.commit()
-                    await db.refresh(ne)
-
-                    exp_res = await db.execute(select(Exposure).where(Exposure.email_id == oe.id))
-                    for oexp in exp_res.scalars().all():
-                        nexp = Exposure(
-                            email_id=ne.id,
-                            org_id=org_id,
-                            source_name=oexp.source_name,
-                            source_type=oexp.source_type,
-                            data_classes=oexp.data_classes,
-                            severity=oexp.severity,
-                            credential_type=oexp.credential_type,
-                            first_seen_at=oexp.first_seen_at,
-                            detected_at=oexp.detected_at,
-                            status=oexp.status,
-                            raw_data=oexp.raw_data
-                        )
-                        db.add(nexp)
-                    await db.commit()
-            else:
-                # Trigger quick scan
-                from services.scan_service import run_domain_scan
-                try:
-                    await run_domain_scan(domain_obj.id, db)
-                except Exception as e:
-                    logger.error(f"Error scanning domain {clean_domain}: {e}")
+            # Trigger fresh scan for this org
+            from services.scan_service import run_domain_scan
+            try:
+                await run_domain_scan(domain_obj.id, db)
+            except Exception as e:
+                logger.error(f"Error scanning domain {clean_domain}: {e}")
 
         # Fetch emails and exposures for domain_obj
         e_res = await db.execute(select(MonitoredEmail).where(MonitoredEmail.domain_id == domain_obj.id))

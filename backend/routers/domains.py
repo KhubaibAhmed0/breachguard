@@ -13,13 +13,27 @@ from routers.deps import get_current_user
 from services.scan_service import run_domain_scan
 from datetime import datetime
 from typing import List
+import re
+
+DOMAIN_REGEX = re.compile(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$")
 
 router = APIRouter()
 
 @router.post("", response_model=DomainResponse)
 async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     clean_domain = domain_in.domain.strip().lower()
-    clean_domain = clean_domain.replace("https://", "").replace("http://", "").split("/")[0]
+    clean_domain = clean_domain.replace("https://", "").replace("http://", "").split("/")[0].split(":")[0]
+
+    # Validate domain string
+    if len(clean_domain) > 253 or not DOMAIN_REGEX.match(clean_domain):
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid domain format. Must be a valid FQDN (e.g. example.com) without protocols or ports."
+        )
+
+    # Prevent loopback or internal names
+    if clean_domain in ("localhost", "127.0.0.1", "0.0.0.0") or clean_domain.endswith(".local") or clean_domain.endswith(".internal"):
+        raise HTTPException(status_code=400, detail="Internal or localhost domains are prohibited.")
 
     # Check if already exists for this org
     result = await db.execute(
@@ -125,6 +139,16 @@ async def trigger_scan(id: int, db: AsyncSession = Depends(get_db), current_user
 
 @router.get("/{id}/status", response_model=DomainScanStatus)
 async def get_scan_status(id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    # Verify domain belongs to authenticated user's org (BOLA/IDOR prevention)
+    d_res = await db.execute(
+        select(MonitoredDomain).where(
+            MonitoredDomain.id == id,
+            MonitoredDomain.org_id == current_user.org_id
+        )
+    )
+    if not d_res.scalars().first():
+        raise HTTPException(status_code=404, detail="Domain not found")
+
     result = await db.execute(select(ScanJob).where(ScanJob.domain_id == id).order_by(ScanJob.id.desc()))
     job = result.scalars().first()
     if not job:

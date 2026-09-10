@@ -86,14 +86,20 @@ export default function DomainsPage() {
     }
   };
 
+  const [deletingDomainId, setDeletingDomainId] = useState<string | null>(null);
+  const [deletingIdentityId, setDeletingIdentityId] = useState<string | null>(null);
+
   const handleDeleteDomain = async (id: string, name: string) => {
     if (confirm(`Permanently remove domain ${name}? All associated inbox surveillance and exposure records will be removed.`)) {
       try {
+        setDeletingDomainId(id);
         await deleteDomainMutation.mutateAsync(id);
         setScanNotice(`Domain ${name} successfully deleted.`);
         setTimeout(() => setScanNotice(null), 5000);
       } catch (err: any) {
         alert(err?.response?.data?.detail || `Failed to delete domain ${name}.`);
+      } finally {
+        setDeletingDomainId(null);
       }
     }
   };
@@ -126,11 +132,14 @@ export default function DomainsPage() {
   const handleDeleteIdentity = async (id: string, email: string) => {
     if (confirm(`Remove ${email} from privileged account surveillance?`)) {
       try {
+        setDeletingIdentityId(id);
         await deleteIdentityMutation.mutateAsync(id);
         setScanNotice(`Identity ${email} removed from privileged watchlist.`);
         setTimeout(() => setScanNotice(null), 5000);
       } catch {
         alert('Failed to remove identity.');
+      } finally {
+        setDeletingIdentityId(null);
       }
     }
   };
@@ -289,9 +298,13 @@ export default function DomainsPage() {
                           onClick={() => handleDeleteDomain(domain.id, domain.name)}
                           disabled={deleteDomainMutation.isPending}
                           title={`Delete ${domain.name}`}
-                          className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                          className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          {deletingDomainId === domain.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-red-400" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
                         </button>
                       </div>
 
@@ -449,10 +462,15 @@ export default function DomainsPage() {
                         <td className="py-3 px-4 text-right">
                           <button
                             onClick={() => handleDeleteIdentity(idEntry.id, idEntry.email)}
+                            disabled={deleteIdentityMutation.isPending}
                             title="Remove from monitoring"
-                            className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors rounded-lg hover:bg-zinc-800/60 cursor-pointer"
+                            className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors rounded-lg hover:bg-zinc-800/60 cursor-pointer disabled:opacity-50"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            {deletingIdentityId === idEntry.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-red-400" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
                           </button>
                         </td>
                       </tr>
@@ -517,9 +535,16 @@ export default function DomainsPage() {
                 <button
                   type="submit"
                   disabled={addDomainMutation.isPending}
-                  className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
                 >
-                  {addDomainMutation.isPending ? 'Registering...' : 'Add domain'}
+                  {addDomainMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Registering...</span>
+                    </>
+                  ) : (
+                    'Add domain'
+                  )}
                 </button>
               </div>
             </form>
@@ -667,8 +692,17 @@ export default function DomainsPage() {
                   disabled={verifyDomainMutation.isPending}
                   className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
-                  <Check className="w-3.5 h-3.5" />
-                  {verifyDomainMutation.isPending ? 'Verifying...' : 'Verify record now'}
+                  {verifyDomainMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Verifying DNS TXT...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Verify record now</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

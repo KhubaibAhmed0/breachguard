@@ -4,15 +4,16 @@ import { Exposure } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { SeverityBadge } from './SeverityBadge';
 import { StatusBadge } from './StatusBadge';
-import { Lock, ArrowUpRight } from 'lucide-react';
+import { Lock, ArrowUpRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface ExposureTableProps {
   data: Exposure[];
   onStatusChange?: (id: string, newStatus: 'open' | 'acknowledged' | 'remediated') => void;
+  updatingId?: string | null;
 }
 
-export function ExposureTable({ data, onStatusChange }: ExposureTableProps) {
+export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTableProps) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
@@ -89,7 +90,12 @@ export function ExposureTable({ data, onStatusChange }: ExposureTableProps) {
 
                 {onStatusChange && (
                   <td className="py-3.5 px-4 text-right">
-                    {exposure.status === 'open' ? (
+                    {updatingId === exposure.id ? (
+                      <span className="inline-flex items-center text-[11px] text-zinc-400 gap-1 font-medium">
+                        <Loader2 className="w-3 h-3 animate-spin text-zinc-300" />
+                        Updating...
+                      </span>
+                    ) : exposure.status === 'open' ? (
                       <button
                         onClick={() => onStatusChange(exposure.id, 'remediated')}
                         className="text-[11px] font-medium text-zinc-400 hover:text-emerald-400 transition-colors cursor-pointer"

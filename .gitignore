@@ -26,6 +26,8 @@ __pycache__/
 backend/darkweb.db
 
 # Generated reports & dynamic uploads
+/reports/
+/uploads/
 backend/reports/*.pdf
 backend/reports/*.html
 backend/uploads/logos/*

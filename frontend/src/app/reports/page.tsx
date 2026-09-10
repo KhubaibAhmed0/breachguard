@@ -92,15 +92,28 @@ export default function ReportsPage() {
     }
   };
 
-  const handleDownload = (reportId: string, domainName?: string | null, e?: React.MouseEvent) => {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownload = async (reportId: string, domainName?: string | null, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    const link = document.createElement('a');
-    link.href = `http://localhost:8000/api/reports/${reportId}/download?download=true`;
-    const cleanDomain = domainName ? `_${domainName}` : '_All_Domains';
-    link.download = `Security_Audit_Report${cleanDomain}_${reportId}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
+    try {
+      setDownloadingId(reportId);
+      const res = await api.get(`/reports/${reportId}/download?download=true`, { responseType: 'blob' });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const cleanDomain = domainName ? `_${domainName}` : '_All_Domains';
+      link.download = `Security_Audit_Report${cleanDomain}_${reportId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch {
+      alert('Failed to download report. Please ensure you are authenticated.');
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -181,10 +194,20 @@ export default function ReportsPage() {
                 </button>
                 <button 
                   onClick={(e) => handleDownload(report.id, report.domainName, e)}
-                  className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 rounded-lg text-xs font-medium transition-colors cursor-pointer shadow-xs"
+                  disabled={downloadingId === report.id}
+                  className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 rounded-lg text-xs font-medium transition-colors cursor-pointer shadow-xs disabled:opacity-50"
                 >
-                  <Download className="w-3.5 h-3.5" />
-                  Download PDF
+                  {downloadingId === report.id ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
+                      <span>Downloading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download PDF</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -439,14 +462,15 @@ export default function ReportsPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <a
-                  href={`http://localhost:8000/api/reports/${previewId}/download`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" /> Open in tab
-                </a>
+                {previewBlobUrl && (
+                  <button
+                    type="button"
+                    onClick={() => window.open(previewBlobUrl, '_blank')}
+                    className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Open in tab
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     const iframe = document.getElementById('report-pdf-frame') as HTMLIFrameElement;
@@ -460,9 +484,20 @@ export default function ReportsPage() {
                 </button>
                 <button
                   onClick={() => handleDownload(previewId)}
-                  className="px-2.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  disabled={downloadingId === previewId}
+                  className="px-2.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs disabled:opacity-50"
                 >
-                  <Download className="w-3.5 h-3.5" /> Download PDF
+                  {downloadingId === previewId ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
+                      <span>Downloading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download PDF</span>
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => setPreviewId(null)}
@@ -475,7 +510,7 @@ export default function ReportsPage() {
             <div className="flex-1 bg-zinc-950 relative flex items-center justify-center">
               {isPreviewLoading ? (
                 <div className="flex items-center gap-2 text-zinc-400 text-xs">
-                  <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
+                  <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
                   <span>Loading PDF document...</span>
                 </div>
               ) : previewBlobUrl ? (
@@ -487,21 +522,24 @@ export default function ReportsPage() {
                 />
               ) : (
                 <div className="text-center p-8 text-xs text-zinc-400">
-                  <p>PDF generated. Unable to display preview in this browser.</p>
+                  <p>PDF generated. Ready to download.</p>
                   <div className="mt-3 flex items-center justify-center gap-2">
-                    <a
-                      href={`http://localhost:8000/api/reports/${previewId}/download`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium inline-flex items-center gap-1.5"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" /> Open in new tab
-                    </a>
                     <button
                       onClick={() => handleDownload(previewId)}
-                      className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium inline-flex items-center gap-1.5"
+                      disabled={downloadingId === previewId}
+                      className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                     >
-                      <Download className="w-3.5 h-3.5" /> Download PDF
+                      {downloadingId === previewId ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
+                          <span>Downloading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download PDF</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>

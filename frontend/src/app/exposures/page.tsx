@@ -27,8 +27,15 @@ export default function ExposuresPage() {
     e => e.upgradeRequired || (e.source && e.source.toLowerCase().includes('stealer'))
   );
 
-  const handleStatusChange = (id: string, newStatus: 'open' | 'acknowledged' | 'remediated') => {
-    updateStatusMutation.mutate({ id, status: newStatus });
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const handleStatusChange = async (id: string, newStatus: 'open' | 'acknowledged' | 'remediated') => {
+    try {
+      setUpdatingId(id);
+      await updateStatusMutation.mutateAsync({ id, status: newStatus });
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   return (
@@ -112,6 +119,7 @@ export default function ExposuresPage() {
           <ExposureTable 
             data={filteredExposures || []} 
             onStatusChange={handleStatusChange}
+            updatingId={updatingId}
           />
         )}
       </div>

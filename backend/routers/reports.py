@@ -52,11 +52,17 @@ async def download_report(
     id: int, 
     token: Optional[str] = None,
     download: Optional[bool] = False,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     from fastapi.responses import FileResponse
     import os
-    result = await db.execute(select(Report).where(Report.id == id))
+    result = await db.execute(
+        select(Report).where(
+            Report.id == id,
+            Report.org_id == current_user.org_id
+        )
+    )
     report = result.scalars().first()
     if not report or not os.path.exists(report.file_url):
         raise HTTPException(status_code=404, detail="Report not found")

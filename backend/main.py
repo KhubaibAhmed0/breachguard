@@ -158,6 +158,19 @@ app.include_router(identities.router, prefix="/api/identities", tags=["identitie
 app.include_router(integrations.router, prefix="/api/settings", tags=["settings"])
 app.include_router(msp.router, prefix="/api/msp", tags=["msp"])
 
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """
+    Catches unhandled server exceptions to prevent leaking raw tracebacks or SQL errors.
+    """
+    logger.error(f"Unhandled server exception on {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred. Please contact support if the issue persists."}
+    )
+
 @app.get("/")
 def root():
     return {
@@ -169,21 +182,17 @@ def root():
 @app.get("/api/health")
 async def health_check():
     from core.database import AsyncSessionLocal
-    from models.user import User
-    host = settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else "sqlite_default"
     try:
         async with AsyncSessionLocal() as session:
-            result = await session.execute(select(User))
-            users = [u.email for u in result.scalars().all()]
+            await session.execute(select(1))
             return {
                 "status": "online",
-                "connected_db": host,
-                "user_count": len(users),
-                "users": users
+                "database": "connected",
+                "service": "BreachGuard Threat API"
             }
     except Exception as e:
+        logger.error(f"Health check database connection check failed: {e}")
         return {
-            "status": "db_error",
-            "attempted_host": host,
-            "error": str(e)
+            "status": "degraded",
+            "database": "unavailable"
         }

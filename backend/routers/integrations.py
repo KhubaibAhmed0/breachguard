@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from core.database import get_db
+from core.ssrf_guard import validate_url_for_ssrf
 from models.user import User
 from models.organization import Organization
 from routers.deps import get_current_user
@@ -29,6 +30,7 @@ async def test_webhook(
     """
     Dispatches formatted Slack test alert:
     {"text": "🚨 *BreachGuard Security Alert Test*\nYour integration is connected successfully. Real-time exposure alerts will appear here."}
+    Protected with SSRF validation against loopback, private IPs, and cloud metadata.
     """
     target_url = None
     if req and req.webhook_url:
@@ -44,6 +46,9 @@ async def test_webhook(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="No webhook URL provided or configured in settings."
         )
+
+    # Validate for SSRF
+    target_url = validate_url_for_ssrf(target_url)
 
     payload = {
         "text": "🚨 *BreachGuard Security Alert Test*\nYour integration is connected successfully. Real-time exposure alerts will appear here."
@@ -114,9 +119,11 @@ async def update_integrations(
         raise HTTPException(status_code=404, detail="Organization not found")
 
     if req.slack_webhook_url is not None:
-        org.slack_webhook_url = req.slack_webhook_url.strip() if req.slack_webhook_url.strip() else None
+        url = req.slack_webhook_url.strip()
+        org.slack_webhook_url = validate_url_for_ssrf(url, resolve_dns=False) if url else None
     if req.siem_webhook_url is not None:
-        org.siem_webhook_url = req.siem_webhook_url.strip() if req.siem_webhook_url.strip() else None
+        url = req.siem_webhook_url.strip()
+        org.siem_webhook_url = validate_url_for_ssrf(url, resolve_dns=False) if url else None
 
     await db.commit()
     await db.refresh(org)

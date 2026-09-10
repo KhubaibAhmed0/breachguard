@@ -53,22 +53,50 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
         created_at=user.created_at
     )
 
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from core.rate_limiter import check_rate_limit
+import asyncio
+
 @router.post("/login", response_model=Token)
-async def login(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
+async def login(request: Request, login_data: UserLogin, db: AsyncSession = Depends(get_db)):
+    # Rate limit per IP (10 requests per minute)
+    check_rate_limit(request, "login", max_requests=10, window_seconds=60)
+
     result = await db.execute(select(User).where(User.email == login_data.email))
     user = result.scalars().first()
-    if not user or not verify_password(login_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    
+    # Generic error and constant-time execution guard
+    is_valid = False
+    if user:
+        is_valid = verify_password(login_data.password, user.hashed_password)
+    else:
+        # Dummy verification to prevent timing attack on non-existent users
+        verify_password("dummy_password_constant_time", "$2b$12$KIXb.Q9LzGq7kQc1fQvM1eN1Z0G6yv4X8Yqf6J5v8B3u6f7i8k9yO")
+
+    if not is_valid or not user:
+        await asyncio.sleep(0.3)  # Progressive mitigation against brute-force
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     
     access_token = create_access_token(subject=user.id)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/token", response_model=Token)
-async def token_login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+async def token_login(request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    # Rate limit per IP (10 requests per minute)
+    check_rate_limit(request, "login", max_requests=10, window_seconds=60)
+
     result = await db.execute(select(User).where(User.email == form_data.username))
     user = result.scalars().first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    
+    is_valid = False
+    if user:
+        is_valid = verify_password(form_data.password, user.hashed_password)
+    else:
+        verify_password("dummy_password_constant_time", "$2b$12$KIXb.Q9LzGq7kQc1fQvM1eN1Z0G6yv4X8Yqf6J5v8B3u6f7i8k9yO")
+
+    if not is_valid or not user:
+        await asyncio.sleep(0.3)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     
     access_token = create_access_token(subject=user.id)
     return {"access_token": access_token, "token_type": "bearer"}

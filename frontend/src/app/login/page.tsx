@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Shield } from 'lucide-react';
+import { Shield, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useState } from 'react';
 
@@ -74,9 +74,16 @@ export default function LoginPage() {
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-lg transition-colors mt-2 cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-lg transition-colors mt-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isSubmitting ? 'Authenticating...' : 'Continue to dashboard'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                <span>Authenticating...</span>
+              </>
+            ) : (
+              'Continue to dashboard'
+            )}
           </button>
         </form>
 

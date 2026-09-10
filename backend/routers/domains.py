@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import func
+from sqlalchemy import func, delete
 from core.database import get_db
 from models.user import User
 from models.organization import Organization
@@ -39,6 +39,7 @@ async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db)
             "essential": 1,
             "starter": 1,
             "business": 3,
+            "professional": 3,
             "enterprise": 15,
             "enterprise / msp": 15
         }
@@ -129,3 +130,54 @@ async def get_scan_status(id: int, db: AsyncSession = Depends(get_db), current_u
     if not job:
         raise HTTPException(status_code=404, detail="No scan job found")
     return job
+
+@router.delete("/{id}")
+async def delete_domain(
+    id: int, 
+    db: AsyncSession = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(MonitoredDomain).where(
+            MonitoredDomain.id == id, 
+            MonitoredDomain.org_id == current_user.org_id
+        )
+    )
+    domain = result.scalars().first()
+    if not domain:
+        raise HTTPException(status_code=404, detail="Domain not found")
+
+    domain_name = domain.domain
+
+    # 1. Fetch all emails associated with this domain
+    emails_res = await db.execute(
+        select(MonitoredEmail).where(MonitoredEmail.domain_id == domain.id)
+    )
+    emails = emails_res.scalars().all()
+    email_ids = [e.id for e in emails]
+
+    # 2. Delete exposures associated with these emails
+    if email_ids:
+        await db.execute(
+            delete(Exposure).where(Exposure.email_id.in_(email_ids))
+        )
+
+    # 3. Delete monitored emails
+    await db.execute(
+        delete(MonitoredEmail).where(MonitoredEmail.domain_id == domain.id)
+    )
+
+    # 4. Delete scan jobs
+    await db.execute(
+        delete(ScanJob).where(ScanJob.domain_id == domain.id)
+    )
+
+    # 5. Delete domain record
+    await db.delete(domain)
+    await db.commit()
+
+    return {
+        "status": "success", 
+        "message": f"Domain {domain_name} and all associated monitoring data removed successfully.", 
+        "id": id
+    }

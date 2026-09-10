@@ -154,6 +154,22 @@ export function useVerifyDomain() {
   });
 }
 
+export function useDeleteDomain() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (domainId: string | number) => {
+      const res = await api.delete(`/domains/${domainId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['domains'] });
+      queryClient.invalidateQueries({ queryKey: ['identities'] });
+      queryClient.invalidateQueries({ queryKey: ['exposures'] });
+      queryClient.invalidateQueries({ queryKey: ['exposureStats'] });
+    },
+  });
+}
+
 export function useUpdateExposureStatus() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -199,8 +215,9 @@ export function useIdentities() {
     queryFn: async () => {
       try {
         const res = await api.get('/identities');
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          return res.data.map((item: any) => ({
+        const list = Array.isArray(res.data) ? res.data : (res.data?.identities || []);
+        if (Array.isArray(list) && list.length > 0) {
+          return list.map((item: any) => ({
             id: String(item.id),
             domainId: String(item.domain_id || item.domainId || '1'),
             domain: item.domain || 'acme-corp.com',

@@ -188,7 +188,10 @@ async def delete_privileged_identity(
         )
 
     email_rec, _ = row
-    email_rec.is_vip = False
+    from models.exposure import Exposure
+    from sqlalchemy import delete
+    await db.execute(delete(Exposure).where(Exposure.email_id == email_rec.id))
+    await db.delete(email_rec)
     await db.commit()
 
     return {"status": "success", "message": "Privileged identity removed", "id": id}

@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { 
-  useDomains, useAddDomain, useScanDomain, useVerifyDomain,
+  useDomains, useAddDomain, useScanDomain, useVerifyDomain, useDeleteDomain,
   useIdentities, useAddIdentity, useDeleteIdentity 
 } from '@/hooks/useApi';
 import { 
@@ -20,6 +20,7 @@ export default function DomainsPage() {
   const addDomainMutation = useAddDomain();
   const scanDomainMutation = useScanDomain();
   const verifyDomainMutation = useVerifyDomain();
+  const deleteDomainMutation = useDeleteDomain();
 
   // Privileged Identities API
   const { data: identities, isLoading: isIdentitiesLoading, refetch: refetchIdentities } = useIdentities();
@@ -82,6 +83,18 @@ export default function DomainsPage() {
       setTimeout(() => setScanNotice(null), 5000);
     } catch {
       alert('Verification failed. Please try again.');
+    }
+  };
+
+  const handleDeleteDomain = async (id: string, name: string) => {
+    if (confirm(`Permanently remove domain ${name}? All associated inbox surveillance and exposure records will be removed.`)) {
+      try {
+        await deleteDomainMutation.mutateAsync(id);
+        setScanNotice(`Domain ${name} successfully deleted.`);
+        setTimeout(() => setScanNotice(null), 5000);
+      } catch (err: any) {
+        alert(err?.response?.data?.detail || `Failed to delete domain ${name}.`);
+      }
     }
   };
 
@@ -271,6 +284,15 @@ export default function DomainsPage() {
                             )}
                           </div>
                         </div>
+
+                        <button
+                          onClick={() => handleDeleteDomain(domain.id, domain.name)}
+                          disabled={deleteDomainMutation.isPending}
+                          title={`Delete ${domain.name}`}
+                          className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 py-3 border-t border-zinc-800/60 text-xs">

@@ -21,46 +21,38 @@ Render now requires a credit card to verify identity on sign-up. To keep your de
 
 ---
 
-## Step 1: Deploy Backend (Zero Credit Card)
+## 🚀 Recommended: Deploy Both Backend and Frontend on Vercel (100% Free, Zero Card)
 
-You can choose either **Hugging Face Spaces** (recommended: 16 GB RAM, 2 vCPU) or **Back4App Containers**.
+Vercel provides native Python serverless support for FastAPI and native Next.js hosting. You do not need any credit card, and you can deploy both in under 3 minutes directly from your GitHub repository (`KhubaibAhmed0/breachguard`).
 
-### Option A: Hugging Face Spaces (Recommended — 2 Minutes)
+### Part 1: Deploy Backend API to Vercel (1 Minute)
 
-Hugging Face Spaces is completely free, does not ask for a card, and gives 16GB of RAM.
+1. Go to **[vercel.com/new](https://vercel.com/new)** and sign in with GitHub (`KhubaibAhmed0`).
+2. Click **Import** next to **`KhubaibAhmed0/breachguard`**.
+3. In the configuration:
+   * **Project Name**: `breachguard-backend`
+   * **Root Directory**: Click **Edit** &rarr; select **`backend`** &rarr; click **Continue**.
+4. Expand **Environment Variables** and add:
+   * `DATABASE_URL`: `postgresql+asyncpg://postgres:Khubaib%402011@db.eqcpazrhhplewwzjnxod.supabase.co:5432/postgres`
+   * `SECRET_KEY`: `breachguard_super_secret_key_2026`
+5. Click **Deploy**.
+6. Copy your live backend URL (e.g. `https://breachguard-backend.vercel.app`). Test it by opening:
+   `https://breachguard-backend.vercel.app/docs`
 
-1. Go to **[huggingface.co/join](https://huggingface.co/join)** and create a free account (Sign up with GitHub or email — **zero credit card required**).
-2. Go to **[huggingface.co/new-space](https://huggingface.co/new-space)**.
-3. Configure your Space:
-   - **Space name**: `breachguard-api`
-   - **License**: `mit`
-   - **Select the Space SDK**: Choose **Docker** &rarr; **Blank**
-   - **Space hardware**: `CPU basic (2 vCPU, 16GB RAM) - Free`
-   - **Space visibility**: `Public`
-   - Click **Create Space**.
-4. Set your Environment Variables:
-   - Go to your Space **Settings** (tab at the top) &rarr; scroll to **Variables and secrets**.
-   - Under **Secrets**, click **New secret**:
-     - **Name**: `DATABASE_URL`
-     - **Value**: `postgresql+asyncpg://postgres:Khubaib%402011@db.eqcpazrhhplewwzjnxod.supabase.co:5432/postgres`
-     - Click **Save**.
-   - Click **New secret** again:
-     - **Name**: `SECRET_KEY`
-     - **Value**: `breachguard_super_secret_key_2026`
-     - Click **Save**.
-5. Connect your repository or push your backend:
-   - In your Space, click the **...** menu (top right) &rarr; **Settings** &rarr; scroll to **Connect a GitHub repository**, or simply push to the Space's Git URL.
-   - Alternatively, you can copy the HF Space clone URL shown on the Space page and run:
-     ```bash
-     git remote add hf https://huggingface.co/spaces/<YOUR-HF-USERNAME>/breachguard-api
-     git push hf main
-     ```
-6. Hugging Face will build the Docker container and start your API.
-   - Your live backend URL will be:
-     `https://<YOUR-HF-USERNAME>-breachguard-api.hf.space`
-   - Test it by visiting:
-     `https://<YOUR-HF-USERNAME>-breachguard-api.hf.space/docs`
+---
 
+### Part 2: Deploy Frontend UI to Vercel (1 Minute)
+
+1. Return to **[vercel.com/new](https://vercel.com/new)**.
+2. Click **Import** next to **`KhubaibAhmed0/breachguard`** again.
+3. In the configuration:
+   * **Project Name**: `breachguard`
+   * **Root Directory**: Click **Edit** &rarr; select **`frontend`** &rarr; click **Continue**.
+4. Expand **Environment Variables** and add:
+   * **Key**: `NEXT_PUBLIC_API_URL`
+   * **Value**: Your live backend URL from Part 1 with `/api` appended (e.g. `https://breachguard-backend.vercel.app/api`)
+5. Click **Deploy**.
+6. Your live production web app is ready!
 ---
 
 ### Option B: Back4App Containers (Alternative — 2 Minutes)

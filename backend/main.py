@@ -163,3 +163,21 @@ def root():
         "platform": "BreachGuard Threat Intelligence API",
         "version": "1.0.0"
     }
+
+@app.get("/api/health")
+async def health_check():
+    from core.database import AsyncSessionLocal
+    from models.user import User
+    try:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(User))
+            users = [u.email for u in result.scalars().all()]
+            host = settings.DATABASE_URL.split("@")[-1] if "@" in settings.DATABASE_URL else "sqlite_default"
+            return {
+                "status": "online",
+                "connected_db": host,
+                "user_count": len(users),
+                "users": users
+            }
+    except Exception as e:
+        return {"status": "db_error", "error": str(e)}

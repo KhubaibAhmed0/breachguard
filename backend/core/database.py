@@ -7,6 +7,8 @@ db_url = settings.async_database_url
 connect_args = {}
 if "sqlite" in db_url:
     connect_args["check_same_thread"] = False
+elif "pooler.supabase.com" in db_url or "6543" in db_url:
+    connect_args["prepared_statement_cache_size"] = 0
 
 engine = create_async_engine(db_url, connect_args=connect_args, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)

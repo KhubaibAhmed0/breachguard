@@ -8,10 +8,10 @@ This document serves as the persistent source of truth for BreachGuard across de
 
 | Layer | Platform / Provider | URL / Endpoint | Notes |
 | :--- | :--- | :--- | :--- |
-| **Web App (Frontend)** | [Vercel](https://vercel.com) | **[https://breachguard-w88w.vercel.app](https://breachguard-w88w.vercel.app)** | Auto-deployed from GitHub `main` (`frontend/`) |
-| **Backend API** | [Vercel Serverless](https://vercel.com) | **[https://breachguard-w88w.vercel.app/api](https://breachguard-w88w.vercel.app/api)** | Auto-deployed from GitHub `main` (`backend/`) |
-| **API Health Check** | Vercel | `https://breachguard-w88w.vercel.app/api/health` | Returns `{"status":"online","database":"connected"}` |
-| **Database** | [Supabase](https://supabase.com) (PostgreSQL) | `aws-0-ap-southeast-1.pooler.supabase.com:5432` | Managed PostgreSQL with IPv4 session pooler |
+| **Backend API** | [Vercel Serverless](https://vercel.com) | **[https://breachguard-w88w.vercel.app](https://breachguard-w88w.vercel.app)** | Auto-deployed from GitHub `main` (`backend/` via `@vercel/python`) |
+| **API Health Check** | Vercel Serverless | `https://breachguard-w88w.vercel.app/api/health` | Returns `{"status":"online","database":"connected","service":"BreachGuard Threat API"}` |
+| **Web App (Frontend)** | [Vercel Next.js](https://vercel.com) | **[https://breachguard-khubbiahmed-1955s-projects.vercel.app](https://breachguard-khubbiahmed-1955s-projects.vercel.app)** | Next.js 16 app deployed from GitHub `main` (`frontend/`) |
+| **Database** | [Supabase](https://supabase.com) (PostgreSQL) | `db.eqcpazrhhplewwzjnxod.supabase.co:5432` | Managed PostgreSQL with IPv4 session pooler |
 | **Code Repository** | GitHub | `https://github.com/KhubaibAhmed0/breachguard` | Active branch: `main` |
 
 ---

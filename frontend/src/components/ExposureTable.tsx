@@ -38,7 +38,7 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
             return (
               <tr 
                 key={exposure.id} 
-                className={`transition-colors ${isLockedStealer ? 'bg-amber-950/10 hover:bg-amber-950/20' : 'hover:bg-zinc-900/40'}`}
+                className={`transition-colors ${isLockedStealer ? 'bg-amber-500/[0.04] hover:bg-amber-500/[0.08]' : 'hover:bg-zinc-900/40'}`}
               >
                 <td className="py-3.5 px-4">
                   <span className="text-zinc-200 font-mono text-[11px] font-medium">
@@ -51,7 +51,7 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
                     {exposure.source}
                   </div>
                   {isLockedStealer && (
-                    <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-300">
+                    <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
                       <Lock className="w-3 h-3 text-amber-400 shrink-0" />
                       <span>Infostealer botnet telemetry requires Business tier.</span>
                       <Link 

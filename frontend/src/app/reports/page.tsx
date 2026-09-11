@@ -163,7 +163,7 @@ export default function ReportsPage() {
                           <Globe className="w-2.5 h-2.5 text-zinc-400" />
                           {report.domainName || 'All Domains'}
                         </span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-950/60 text-red-400 border border-red-900/60">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase bg-rose-500/10 text-rose-300 border border-rose-500/30 shadow-[0_0_6px_rgba(244,63,94,0.12)]">
                           PDF
                         </span>
                       </div>
@@ -395,9 +395,9 @@ export default function ReportsPage() {
                       key={t.id}
                       type="button"
                       onClick={() => setReportType(t.id)}
-                      className={`p-2.5 rounded-lg border text-left text-xs transition-all cursor-pointer ${
+                      className={`p-3 rounded-xl border text-left text-xs transition-all cursor-pointer ${
                         reportType === t.id
-                          ? 'border-emerald-500/80 bg-emerald-950/20 text-white'
+                          ? 'border-indigo-500/80 bg-indigo-500/15 text-white shadow-[0_0_15px_rgba(99,102,241,0.18)]'
                           : 'border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                       }`}
                     >
@@ -409,8 +409,8 @@ export default function ReportsPage() {
               </div>
 
               {genError && (
-                <div className="p-2.5 rounded-lg bg-red-950/50 border border-red-900/80 text-xs text-red-300 flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 text-xs text-rose-300 flex items-center gap-2.5 shadow-[0_0_12px_rgba(244,63,94,0.15)]">
+                  <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0" />
                   <span>{genError}</span>
                 </div>
               )}

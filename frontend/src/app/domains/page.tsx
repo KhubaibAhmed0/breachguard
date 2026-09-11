@@ -249,14 +249,14 @@ export default function DomainsPage() {
       {activeTab === 'domains' && (
         <div>
           {isDomainsError && (
-            <div className="mb-5 p-3.5 rounded-lg bg-red-950/40 border border-red-900/60 text-red-300 text-xs flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/35 text-rose-300 text-xs flex items-center justify-between shadow-[0_0_15px_rgba(244,63,94,0.12)]">
+              <div className="flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                 <span>Unable to load monitored domains from the server.</span>
               </div>
               <button 
                 onClick={() => refetchDomains()} 
-                className="px-2.5 py-1 bg-red-900/50 hover:bg-red-900 rounded text-[11px] text-white transition-colors cursor-pointer"
+                className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 rounded-lg text-[11px] font-medium text-rose-200 transition-colors cursor-pointer shadow-[0_0_8px_rgba(244,63,94,0.2)]"
               >
                 Retry
               </button>
@@ -283,12 +283,12 @@ export default function DomainsPage() {
                           <div>
                             <h3 className="text-sm font-semibold text-white font-mono">{domain.name}</h3>
                             {domain.status === 'verified' ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 mt-0.5">
-                                <ShieldCheck className="w-3 h-3" /> Verified DNS
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.14)] mt-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" /> Verified DNS
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 mt-0.5">
-                                <AlertCircle className="w-3 h-3" /> Pending DNS validation
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium font-mono bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_8px_rgba(245,158,11,0.18)] mt-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_6px_rgba(251,191,36,0.8)]" /> Pending DNS validation
                               </span>
                             )}
                           </div>
@@ -451,8 +451,8 @@ export default function DomainsPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.14)]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             Monitored
                           </span>
                         </td>
@@ -518,8 +518,8 @@ export default function DomainsPage() {
               </div>
 
               {addError && (
-                <div className="p-2.5 rounded-lg bg-red-950/50 border border-red-900/80 text-xs text-red-300 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 text-xs text-rose-300 flex items-center gap-2.5 shadow-[0_0_12px_rgba(244,63,94,0.12)]">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                   <span>{addError}</span>
                 </div>
               )}
@@ -619,8 +619,8 @@ export default function DomainsPage() {
               </div>
 
               {identityError && (
-                <div className="p-2.5 rounded-lg bg-red-950/50 border border-red-900/80 text-xs text-red-300 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 text-xs text-rose-300 flex items-center gap-2.5 shadow-[0_0_12px_rgba(244,63,94,0.12)]">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                   <span>{identityError}</span>
                 </div>
               )}

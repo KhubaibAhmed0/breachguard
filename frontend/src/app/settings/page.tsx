@@ -124,10 +124,10 @@ export default function SettingsPage() {
         {toastMessage && (
           <div
             className={cn(
-              "mb-6 p-3.5 rounded-xl border text-xs flex items-center justify-between animate-fadeIn transition-all shadow-lg",
+              "mb-6 p-4 rounded-2xl border text-xs flex items-center justify-between animate-fadeIn transition-all shadow-lg",
               toastMessage.type === 'success'
-                ? "bg-emerald-950/40 border-emerald-900/70 text-emerald-300"
-                : "bg-red-950/40 border-red-900/70 text-red-300"
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.12)]"
+                : "bg-rose-500/10 border-rose-500/35 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.15)]"
             )}
           >
             <div className="flex items-center gap-2.5">
@@ -265,8 +265,8 @@ export default function SettingsPage() {
               </div>
 
               {profileSuccessNotice && (
-                <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 text-xs flex items-center gap-2">
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5 shadow-[0_0_12px_rgba(16,185,129,0.12)]">
+                  <Check className="w-4 h-4 text-emerald-400" />
                   <span>Profile preferences updated successfully.</span>
                 </div>
               )}
@@ -381,7 +381,8 @@ export default function SettingsPage() {
                   <h4 className="font-semibold text-zinc-100 text-sm">Business Plan</h4>
                   <p className="text-zinc-500 text-xs mt-0.5">$239 / month • 3 domains, 25 privileged identities • Billed monthly</p>
                 </div>
-                <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-400 text-[11px] font-medium rounded-full border border-emerald-500/20">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-300 text-xs font-mono font-semibold uppercase tracking-wider rounded-full border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
                   Active
                 </span>
               </div>

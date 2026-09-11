@@ -15,9 +15,9 @@ export default function LandingPage() {
   const overallScore = scanResult?.overall_risk_score ?? 15;
   const riskLevel = scanResult?.risk_level ?? 'LOW RISK';
   const riskBadgeBg = 
-    overallScore >= 65 ? 'bg-red-950/60 border-red-800/60 text-red-400' :
-    overallScore >= 40 ? 'bg-orange-950/60 border-orange-800/60 text-orange-400' :
-    'bg-emerald-950/60 border-emerald-800/60 text-emerald-400';
+    overallScore >= 65 ? 'bg-rose-500/10 border-rose-500/35 text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.18)]' :
+    overallScore >= 40 ? 'bg-orange-500/10 border-orange-500/35 text-orange-300 shadow-[0_0_12px_rgba(249,115,22,0.18)]' :
+    'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.14)]';
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-zinc-800 selection:text-zinc-100">

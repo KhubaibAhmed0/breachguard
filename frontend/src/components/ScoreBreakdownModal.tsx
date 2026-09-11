@@ -346,13 +346,21 @@ export function ScoreBreakdownModal({
                 </div>
               </div>
 
-              {/* Remediation Simulator Tip */}
-              <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-800/40 flex items-start gap-3">
-                <Sparkles className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+              {/* Remediation Simulator Tip - Modernized Enterprise Advisory */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950/30 via-zinc-900/90 to-zinc-950 border border-emerald-500/35 p-5 flex items-start gap-3.5 shadow-[0_0_20px_rgba(16,185,129,0.08)]">
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
+                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)] shrink-0 mt-0.5">
+                  <Sparkles className="w-5 h-5" />
+                </div>
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-emerald-300">Deterministic Path to Minimal Risk</span>
-                  <p className="text-xs text-zinc-300 leading-relaxed">
-                    Remediating open perimeter findings or enforcing an email anti-spoofing policy (<code className="text-emerald-300 px-1 py-0.5 rounded bg-emerald-900/30">p=reject</code>) immediately restores up to +20 posture points, reducing your active external cyber risk score to single digits.
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold text-white tracking-tight">Deterministic Path to Minimal Risk</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      High Impact
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-relaxed font-roboto">
+                    Remediating open perimeter findings or advancing your email anti-spoofing policy (<code className="text-emerald-300 px-1.5 py-0.5 rounded bg-zinc-900 border border-emerald-900/60 font-mono">p=reject</code>) restores up to +20 posture points, driving active cyber risk down to single digits.
                   </p>
                 </div>
               </div>
@@ -414,23 +422,42 @@ export function ScoreBreakdownModal({
                   <div className="space-y-2.5">
                     {currentPillar.deductions.map((d: any, idx: number) => {
                       const points = d.points_deducted ?? 0;
-                      const sev = d.severity || (points >= 20 ? 'critical' : points >= 10 ? 'high' : 'medium');
-                      const sevColor = 
-                        sev === 'critical' ? 'bg-red-950/60 text-red-400 border-red-800/60' :
-                        sev === 'high' ? 'bg-orange-950/60 text-orange-400 border-orange-800/60' :
-                        'bg-amber-950/60 text-amber-400 border-amber-800/60';
+                      const sev = (d.severity || (points >= 20 ? 'critical' : points >= 15 ? 'high' : 'medium')).toLowerCase();
+                      const getDeductionBadge = (severity: string) => {
+                        switch (severity) {
+                          case 'critical':
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_10px_rgba(244,63,94,0.18)]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                                CRITICAL
+                              </span>
+                            );
+                          case 'high':
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_10px_rgba(249,115,22,0.18)]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                                HIGH
+                              </span>
+                            );
+                          default:
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_10px_rgba(245,158,11,0.18)]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                MEDIUM
+                              </span>
+                            );
+                        }
+                      };
 
                       return (
                         <div 
                           key={idx} 
-                          className="p-4 rounded-xl bg-zinc-900/40 border border-zinc-800/80 space-y-2 hover:bg-zinc-900/70 transition-colors"
+                          className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/90 space-y-2 hover:bg-zinc-900/80 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
+                            <div className="space-y-1.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className={`px-2 py-0.5 rounded text-[11px] font-mono uppercase font-semibold border ${sevColor}`}>
-                                  {sev}
-                                </span>
+                                {getDeductionBadge(sev)}
                                 <span className="font-semibold text-white text-xs">
                                   {d.title || d.reason}
                                 </span>
@@ -446,8 +473,8 @@ export function ScoreBreakdownModal({
                                 </div>
                               )}
                               {d.evidence && (
-                                <div className="text-xs text-zinc-400 bg-zinc-950/60 p-2 rounded border border-zinc-800/60 font-mono">
-                                  Telemetry Evidence: <span className="text-zinc-300">{d.evidence}</span>
+                                <div className="text-xs text-zinc-300 bg-zinc-950/80 p-2 rounded-lg border border-zinc-800/80 font-mono">
+                                  Telemetry Evidence: <span className="text-zinc-200 font-medium">{d.evidence}</span>
                                 </div>
                               )}
                               {d.impact && (
@@ -457,7 +484,7 @@ export function ScoreBreakdownModal({
                               )}
                             </div>
 
-                            <div className="px-2.5 py-1 rounded-lg bg-red-950/40 border border-red-800/60 text-red-400 font-mono font-bold text-xs shrink-0">
+                            <div className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 font-mono font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(244,63,94,0.12)]">
                               -{points} pts
                             </div>
                           </div>

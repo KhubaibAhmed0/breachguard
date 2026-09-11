@@ -96,15 +96,40 @@ export default function DashboardPage() {
 
   const riskColor = 
     isZeroDomain ? 'text-zinc-500' :
-    overallScore >= 65 ? 'text-red-400' :
+    overallScore >= 65 ? 'text-rose-400' :
     overallScore >= 40 ? 'text-orange-400' :
     'text-emerald-400';
 
-  const riskBadgeBg = 
-    isZeroDomain ? 'bg-zinc-800 border-zinc-700 text-zinc-400' :
-    overallScore >= 65 ? 'bg-red-950/60 border-red-800/60 text-red-400' :
-    overallScore >= 40 ? 'bg-orange-950/60 border-orange-800/60 text-orange-400' :
-    'bg-emerald-950/60 border-emerald-800/60 text-emerald-400';
+  const getOverallRiskBadge = () => {
+    if (isZeroDomain) {
+      return {
+        classes: 'bg-zinc-900 text-zinc-400 border-zinc-750',
+        dot: 'bg-zinc-500',
+        label: 'NOT ASSESSED'
+      };
+    }
+    if (overallScore >= 65) {
+      return {
+        classes: 'bg-rose-500/10 text-rose-300 border-rose-500/40 shadow-[0_0_14px_rgba(244,63,94,0.2)]',
+        dot: 'bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.8)]',
+        label: riskLevel
+      };
+    }
+    if (overallScore >= 40) {
+      return {
+        classes: 'bg-orange-500/10 text-orange-300 border-orange-500/40 shadow-[0_0_14px_rgba(249,115,22,0.2)]',
+        dot: 'bg-orange-400 animate-pulse shadow-[0_0_6px_rgba(251,146,60,0.8)]',
+        label: riskLevel
+      };
+    }
+    return {
+      classes: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]',
+      dot: 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]',
+      label: riskLevel
+    };
+  };
+
+  const overallRiskBadge = getOverallRiskBadge();
 
   return (
     <DashboardLayout>
@@ -203,8 +228,9 @@ export default function DashboardPage() {
               <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider font-roboto">Platform Telemetry Index</span>
               <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-3">
                 External Cyber Risk Score
-                <span className={`text-xs px-3 py-1 rounded-full font-roboto uppercase font-semibold border ${riskBadgeBg}`}>
-                  {riskLevel}
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-semibold uppercase border ${overallRiskBadge.classes}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${overallRiskBadge.dot}`} />
+                  {overallRiskBadge.label}
                 </span>
               </h2>
               <p className="text-sm text-zinc-400 max-w-xl leading-relaxed font-roboto">
@@ -411,19 +437,44 @@ export default function DashboardPage() {
               </div>
             ) : (
               findings.slice(0, 5).map((f) => {
-                const sevColor = 
-                  f.severity === 'critical' ? 'bg-red-950/60 text-red-400 border-red-800/60' :
-                  f.severity === 'high' ? 'bg-orange-950/60 text-orange-400 border-orange-800/60' :
-                  f.severity === 'medium' ? 'bg-amber-950/60 text-amber-400 border-amber-800/60' :
-                  'bg-zinc-800 text-zinc-400 border-zinc-700';
+                const getBadge = (sev: string) => {
+                  switch (sev?.toLowerCase()) {
+                    case 'critical':
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_10px_rgba(244,63,94,0.18)]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                          CRITICAL
+                        </span>
+                      );
+                    case 'high':
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_10px_rgba(249,115,22,0.18)]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                          HIGH
+                        </span>
+                      );
+                    case 'medium':
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_10px_rgba(245,158,11,0.18)]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          MEDIUM
+                        </span>
+                      );
+                    default:
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                          LOW
+                        </span>
+                      );
+                  }
+                };
 
                 return (
                   <div key={f.id} className="p-4 hover:bg-zinc-800/20 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 font-roboto">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2.5">
-                        <span className={`px-2.5 py-0.5 rounded text-xs font-roboto uppercase font-semibold border ${sevColor}`}>
-                          {f.severity}
-                        </span>
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        {getBadge(f.severity)}
                         <span className="text-sm font-semibold text-white">
                           {f.title}
                         </span>

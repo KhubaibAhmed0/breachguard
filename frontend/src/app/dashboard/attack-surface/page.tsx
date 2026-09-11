@@ -41,6 +41,45 @@ export default function AttackSurfacePage() {
            f.asset.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  const getSeverityBadge = (severity: string) => {
+    switch (severity?.toLowerCase()) {
+      case 'critical':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_12px_rgba(244,63,94,0.18)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.8)]" />
+            CRITICAL
+          </span>
+        );
+      case 'high':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_12px_rgba(249,115,22,0.18)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse shadow-[0_0_6px_rgba(251,146,60,0.8)]" />
+            HIGH
+          </span>
+        );
+      case 'medium':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_12px_rgba(245,158,11,0.18)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
+            MEDIUM
+          </span>
+        );
+      case 'low':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            LOW
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider font-mono bg-zinc-900 text-zinc-400 border border-zinc-750">
+            INFO
+          </span>
+        );
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -56,13 +95,13 @@ export default function AttackSurfacePage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-zinc-900 border border-zinc-700/80 rounded-lg text-sm font-medium text-zinc-200 font-roboto shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span><strong className="text-white font-semibold">{assets.length}</strong> Assets Discovered</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-zinc-900/90 border border-zinc-750 rounded-xl text-xs font-medium text-zinc-200 font-roboto shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+              <span><strong className="text-white font-semibold font-mono">{assets.length}</strong> Discovered Assets</span>
             </div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-red-950/40 border border-red-800/60 text-red-300 rounded-lg text-sm font-medium font-roboto shadow-sm">
-              <span className={`w-2 h-2 rounded-full ${findings.length > 0 ? 'bg-red-400 animate-pulse' : 'bg-zinc-500'}`} />
-              <span><strong className="text-red-200 font-semibold">{findings.length}</strong> Findings Active</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-medium font-roboto shadow-[0_0_12px_rgba(244,63,94,0.12)]">
+              <span className={`w-2 h-2 rounded-full ${findings.length > 0 ? 'bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.8)]' : 'bg-zinc-500'}`} />
+              <span><strong className="text-rose-200 font-semibold font-mono">{findings.length}</strong> Active Findings</span>
             </div>
           </div>
         </div>
@@ -76,7 +115,7 @@ export default function AttackSurfacePage() {
               placeholder="Filter by hostname, IP, port..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
+              className="w-full pl-9 pr-3 py-2 bg-zinc-900/60 border border-zinc-800 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition-colors"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -84,7 +123,7 @@ export default function AttackSurfacePage() {
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className="bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-300 px-2.5 py-1.5 focus:outline-none focus:border-zinc-700"
+              className="bg-zinc-900/60 border border-zinc-800 rounded-xl text-xs text-zinc-300 px-3 py-2 focus:outline-none focus:border-zinc-700 cursor-pointer"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical Only</option>
@@ -96,65 +135,67 @@ export default function AttackSurfacePage() {
         </div>
 
         {/* Discovered Assets Table */}
-        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800/60 bg-zinc-900/60 flex items-center justify-between">
+        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-5 py-3.5 border-b border-zinc-800/60 bg-zinc-900/60 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <Globe className="w-4 h-4 text-zinc-400" />
               Discovered Hostnames & Network Perimeter
             </h2>
-            <span className="text-[11px] text-zinc-500">Source: Certificate Transparency & DNS</span>
+            <span className="text-[11px] font-mono text-zinc-500">Source: Certificate Transparency & DNS</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-roboto">
-              <thead className="bg-zinc-950/50 text-zinc-400 border-b border-zinc-800/60 font-roboto font-medium text-xs">
+              <thead className="bg-zinc-950/60 text-zinc-400 border-b border-zinc-800/60 font-medium text-xs">
                 <tr>
-                  <th className="py-2.5 px-4">Hostname</th>
-                  <th className="py-2.5 px-4">Resolved IP</th>
-                  <th className="py-2.5 px-4">Open Ports</th>
-                  <th className="py-2.5 px-4">Telemetry Source</th>
-                  <th className="py-2.5 px-4 text-right">Observation</th>
+                  <th className="py-3 px-5">Hostname</th>
+                  <th className="py-3 px-5">Resolved IP</th>
+                  <th className="py-3 px-5">Open Ports</th>
+                  <th className="py-3 px-5">Telemetry Source</th>
+                  <th className="py-3 px-5 text-right">Observation</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/40 text-zinc-300 font-roboto">
+              <tbody className="divide-y divide-zinc-800/40 text-zinc-300">
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-zinc-500 font-roboto">
+                    <td colSpan={5} className="py-10 text-center text-zinc-500">
                       Enumerating external attack surface...
                     </td>
                   </tr>
                 ) : filteredAssets.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-zinc-500 font-roboto">
+                    <td colSpan={5} className="py-10 text-center text-zinc-500">
                       No assets found matching current filter criteria.
                     </td>
                   </tr>
                 ) : (
                   filteredAssets.map((asset) => (
-                    <tr key={asset.id} className="hover:bg-zinc-800/20 transition-colors">
-                      <td className="py-3 px-4 font-roboto text-zinc-100 font-medium text-sm">
+                    <tr key={asset.id} className="hover:bg-zinc-800/30 transition-colors">
+                      <td className="py-3.5 px-5 text-white font-medium text-sm font-mono">
                         {asset.hostname}
                       </td>
-                      <td className="py-3 px-4 font-roboto text-zinc-300">
+                      <td className="py-3.5 px-5 text-zinc-300 font-mono text-xs">
                         {asset.ip_address || <span className="text-zinc-600">Unresolved</span>}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3.5 px-5">
                         {asset.open_ports && asset.open_ports.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1.5">
                             {asset.open_ports.map((p: number) => (
-                              <span key={p} className="px-2 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-200 rounded text-xs font-roboto font-medium">
+                              <span key={p} className="px-2 py-0.5 bg-zinc-900 border border-zinc-700/80 text-zinc-200 rounded-md text-[11px] font-mono font-medium">
                                 {p}
                               </span>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-zinc-500 text-xs font-roboto">None open</span>
+                          <span className="text-zinc-500 text-xs">None open</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-zinc-400 text-xs font-roboto">
-                        {asset.source}
+                      <td className="py-3.5 px-5 text-zinc-400 text-xs">
+                        <span className="px-2 py-0.5 bg-zinc-900/80 border border-zinc-800 rounded-md text-[11px]">
+                          {asset.source}
+                        </span>
                       </td>
-                      <td className="py-3 px-4 text-right text-zinc-400 text-xs font-roboto">
+                      <td className="py-3.5 px-5 text-right text-zinc-400 text-xs font-mono">
                         {asset.last_seen_at ? new Date(asset.last_seen_at).toLocaleDateString() : 'Active'}
                       </td>
                     </tr>
@@ -165,65 +206,59 @@ export default function AttackSurfacePage() {
           </div>
         </div>
 
-        {/* Attack Surface Findings */}
-        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800/60 bg-zinc-900/60 flex items-center justify-between">
+        {/* Perimeter Findings List */}
+        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-5 py-3.5 border-b border-zinc-800/60 bg-zinc-900/60 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 text-amber-400" />
               Perimeter Security Findings ({filteredFindings.length})
             </h2>
-            <span className="text-[11px] text-zinc-500">Prioritized Technical Observations</span>
+            <span className="text-[11px] font-mono text-zinc-500">Prioritized Technical Observations</span>
           </div>
 
           <div className="divide-y divide-zinc-800/40">
             {loading ? (
-              <div className="py-8 text-center text-zinc-500 text-xs">Loading findings...</div>
+              <div className="py-10 text-center text-zinc-500 text-xs">Loading findings...</div>
             ) : filteredFindings.length === 0 ? (
-              <div className="py-8 text-center text-zinc-500 text-xs">
-                No active attack surface findings detected.
+              <div className="py-10 text-center text-zinc-500 text-xs">
+                No active attack surface findings detected across monitored perimeter.
               </div>
             ) : (
-              filteredFindings.map((finding) => {
-                const sevColor = 
-                  finding.severity === 'critical' ? 'bg-red-950/60 text-red-400 border-red-800/60' :
-                  finding.severity === 'high' ? 'bg-orange-950/60 text-orange-400 border-orange-800/60' :
-                  finding.severity === 'medium' ? 'bg-amber-950/60 text-amber-400 border-amber-800/60' :
-                  'bg-zinc-800 text-zinc-400 border-zinc-700';
-
-                return (
-                  <div key={finding.id} className="p-4 hover:bg-zinc-800/20 transition-colors space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <span className={`px-2.5 py-0.5 rounded text-xs font-roboto uppercase font-semibold border ${sevColor}`}>
-                          {finding.severity}
-                        </span>
-                        <span className="text-sm font-semibold text-white">
-                          {finding.title}
-                        </span>
-                        <span className="text-xs font-medium font-roboto text-zinc-400">
-                          {finding.finding_id}
-                        </span>
-                      </div>
-                      <span className="text-xs font-roboto text-zinc-400">
-                        Asset: <span className="text-zinc-200 font-medium font-roboto">{finding.asset}</span>
+              filteredFindings.map((finding) => (
+                <div key={finding.id} className="p-5 hover:bg-zinc-800/20 transition-colors space-y-2.5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      {getSeverityBadge(finding.severity)}
+                      <span className="text-sm font-semibold text-white tracking-tight">
+                        {finding.title}
+                      </span>
+                      <span className="text-[11px] font-mono text-zinc-500">
+                        [{finding.finding_id}]
                       </span>
                     </div>
-
-                    <p className="text-xs text-zinc-400 leading-relaxed font-roboto">
-                      {finding.description}
-                    </p>
-
-                    <div className="p-2.5 bg-zinc-950/60 border border-zinc-800/60 rounded-lg text-xs space-y-1 font-roboto">
-                      <div className="text-xs text-zinc-400 font-roboto">
-                        <strong className="text-zinc-300">Observed Evidence:</strong> {finding.evidence}
-                      </div>
-                      <div className="text-xs text-zinc-400 font-roboto">
-                        <strong className="text-zinc-300">Remediation:</strong> {finding.recommended_remediation}
-                      </div>
-                    </div>
+                    <span className="text-xs text-zinc-400 font-mono">
+                      Asset: <strong className="text-zinc-200">{finding.asset}</strong>
+                    </span>
                   </div>
-                );
-              })
+
+                  <p className="text-xs text-zinc-300 leading-relaxed font-roboto">
+                    {finding.description}
+                  </p>
+
+                  <div className="p-3 bg-zinc-950/70 border border-zinc-800/80 rounded-xl text-xs space-y-1.5 font-roboto">
+                    <div className="text-xs text-zinc-400 font-roboto">
+                      <strong className="text-zinc-200 font-medium">Observed Telemetry Evidence:</strong>{' '}
+                      <span className="text-zinc-300 font-mono text-[11px]">{finding.evidence}</span>
+                    </div>
+                    {finding.recommended_remediation && (
+                      <div className="text-xs text-zinc-400 font-roboto">
+                        <strong className="text-zinc-200 font-medium">Recommended Remediation:</strong>{' '}
+                        <span className="text-zinc-300">{finding.recommended_remediation}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>

@@ -268,7 +268,7 @@ export function Sidebar() {
               </div>
 
               {createError && (
-                <div className="p-2.5 rounded-lg bg-red-950/50 border border-red-900/80 text-xs text-red-300">
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 text-xs text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.12)]">
                   {createError}
                 </div>
               )}

@@ -668,11 +668,20 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => handleStripeCheckout('price_business_monthly')}
-                    disabled={isCheckoutLoading === 'price_business_monthly'}
-                    className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    disabled={isCheckoutLoading === 'price_business_monthly' || userMe?.plan === 'business'}
+                    className={`w-full py-2 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
+                      userMe?.plan === 'business'
+                        ? 'bg-zinc-800/80 text-emerald-400 border border-emerald-500/20 cursor-default'
+                        : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 cursor-pointer disabled:opacity-50'
+                    }`}
                   >
                     {isCheckoutLoading === 'price_business_monthly' ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : userMe?.plan === 'business' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Current Plan</span>
+                      </>
                     ) : (
                       'Switch to Business'
                     )}
@@ -696,11 +705,20 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => handleStripeCheckout('price_enterprise_monthly')}
-                    disabled={isCheckoutLoading === 'price_enterprise_monthly'}
-                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-md"
+                    disabled={isCheckoutLoading === 'price_enterprise_monthly' || userMe?.plan === 'enterprise'}
+                    className={`w-full py-2 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-md ${
+                      userMe?.plan === 'enterprise'
+                        ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-500/40 cursor-default'
+                        : 'bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer disabled:opacity-50'
+                    }`}
                   >
                     {isCheckoutLoading === 'price_enterprise_monthly' ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : userMe?.plan === 'enterprise' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Current Active Plan</span>
+                      </>
                     ) : (
                       'Upgrade to Enterprise'
                     )}

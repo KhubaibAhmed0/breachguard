@@ -30,10 +30,7 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
         </thead>
         <tbody className="text-xs divide-y divide-zinc-855 divide-zinc-900/60">
           {data.map((exposure) => {
-            const isLockedStealer = Boolean(
-              exposure.upgradeRequired ||
-              (exposure.source && exposure.source.toLowerCase().includes('stealer') && exposure.status === 'open')
-            );
+            const isLockedStealer = Boolean(exposure.upgradeRequired);
 
             return (
               <tr 

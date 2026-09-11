@@ -24,9 +24,7 @@ export default function ExposuresPage() {
     return matchesSearch && matchesSeverity && matchesStatus;
   });
 
-  const hasLockedStealer = filteredExposures?.some(
-    e => e.upgradeRequired || (e.source && e.source.toLowerCase().includes('stealer'))
-  );
+  const hasLockedStealer = Boolean(filteredExposures?.some(e => e.upgradeRequired));
 
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 

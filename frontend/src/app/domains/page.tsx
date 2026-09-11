@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { formatDate, cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { DomainGridSkeleton, TableSkeleton } from '@/components/Skeletons';
 
 export default function DomainsPage() {
@@ -182,9 +183,11 @@ export default function DomainsPage() {
     }
   };
 
-  const quotaLimit = 25;
+  const { user } = useAuth();
+  const isEnterprise = Boolean(user?.plan?.toLowerCase().includes('enterprise'));
+  const quotaLimit = isEnterprise ? 9999 : 25;
   const currentCount = identities?.length || 0;
-  const quotaPercent = Math.min(100, Math.round((currentCount / quotaLimit) * 100));
+  const quotaPercent = isEnterprise ? 0 : Math.min(100, Math.round((currentCount / quotaLimit) * 100));
 
   return (
     <DashboardLayout>
@@ -399,7 +402,7 @@ export default function DomainsPage() {
                 <div className="flex items-center gap-2">
                   <KeyRound className="w-4 h-4 text-indigo-400" />
                   <span className="text-sm font-semibold text-white tracking-tight">
-                    {currentCount} / {quotaLimit} privileged identities tracked
+                    {isEnterprise ? `${currentCount} privileged identities tracked` : `${currentCount} / ${quotaLimit} privileged identities tracked`}
                   </span>
                 </div>
                 <p className="text-xs text-zinc-400 mt-1">
@@ -409,7 +412,7 @@ export default function DomainsPage() {
 
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-roboto">
-                  Business Tier (25 Quota)
+                  {isEnterprise ? 'Enterprise Tier (Unlimited Quota)' : 'Business Tier (25 Quota)'}
                 </span>
               </div>
             </div>
@@ -418,12 +421,12 @@ export default function DomainsPage() {
             <div className="w-full bg-zinc-950 rounded-full h-2 overflow-hidden border border-zinc-800">
               <div 
                 className="bg-indigo-500 h-full rounded-full transition-all duration-500" 
-                style={{ width: `${quotaPercent}%` }}
+                style={{ width: isEnterprise ? '100%' : `${quotaPercent}%` }}
               />
             </div>
             <div className="flex items-center justify-between text-[11px] text-zinc-500 font-roboto mt-2">
-              <span>{quotaPercent}% capacity utilized</span>
-              <span>Need more? Upgrade to Enterprise for Unlimited VIP accounts</span>
+              <span>{isEnterprise ? `${currentCount} identities monitored` : `${quotaPercent}% capacity utilized`}</span>
+              <span>{isEnterprise ? 'Unlimited VIP identity surveillance enabled' : 'Need more? Upgrade to Enterprise for Unlimited VIP accounts'}</span>
             </div>
           </div>
 

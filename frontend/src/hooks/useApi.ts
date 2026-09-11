@@ -36,8 +36,7 @@ export function useExposures() {
         );
         const upgradeRequired = Boolean(
           e.upgrade_required === true || 
-          e.upgradeRequired === true || 
-          (isStealer && (e.credential_type === 'session_token' || e.credential_type === 'botnet_log' || e.redacted || e.is_redacted))
+          e.upgradeRequired === true
         );
 
         return {

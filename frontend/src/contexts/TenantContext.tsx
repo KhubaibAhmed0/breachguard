@@ -52,37 +52,44 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedTenantId = typeof window !== 'undefined' ? localStorage.getItem('bg_active_tenant_id') : null;
     
-    // Fetch MSP tenants from API if available
-    api.get('/msp/tenants')
-      .then((res) => {
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          const mapped: Tenant[] = res.data.map((t: any) => ({
-            id: String(t.id),
-            name: t.name,
-            type: t.type || (t.name.includes('(Primary)') ? 'primary' : 'client'),
-            plan: t.plan || 'Business Client',
-            domainCount: t.domain_count ?? t.domainCount ?? 0,
-            exposureCount: t.exposure_count ?? t.exposureCount ?? 0,
-          }));
-          setTenants(mapped);
+    // Fetch current user and MSP tenants
+    Promise.all([
+      api.get('/auth/me').catch(() => null),
+      api.get('/msp/tenants').catch(() => null),
+    ]).then(([meRes, mspRes]) => {
+      const orgName = meRes?.data?.org_name || 'Primary MSP';
+      const planName = meRes?.data?.plan ? `${meRes.data.plan.toUpperCase()} Plan` : 'Enterprise / MSP';
 
-          if (savedTenantId) {
-            const found = mapped.find(m => m.id === savedTenantId);
-            if (found) {
-              setActiveTenantState(found);
-              return;
-            }
-          }
-          setActiveTenantState(mapped[0]);
+      const primaryTenant: Tenant = {
+        id: 'primary',
+        name: `${orgName} (Primary)`,
+        type: 'primary',
+        plan: planName,
+        domainCount: 3,
+        exposureCount: 0,
+      };
+
+      const childTenants: Tenant[] = Array.isArray(mspRes?.data) ? mspRes.data.map((t: any) => ({
+        id: String(t.id),
+        name: t.name,
+        type: 'client',
+        plan: t.plan || 'Enterprise Client',
+        domainCount: t.domain_count ?? t.domainCount ?? 0,
+        exposureCount: t.exposure_count ?? t.exposureCount ?? 0,
+      })) : [];
+
+      const fullList = [primaryTenant, ...childTenants];
+      setTenants(fullList);
+
+      if (savedTenantId) {
+        const found = fullList.find(m => m.id === savedTenantId);
+        if (found) {
+          setActiveTenantState(found);
+          return;
         }
-      })
-      .catch(() => {
-        // Fall back to default tenants if API is unavailable
-        if (savedTenantId) {
-          const found = DEFAULT_TENANTS.find(t => t.id === savedTenantId);
-          if (found) setActiveTenantState(found);
-        }
-      });
+      }
+      setActiveTenantState(primaryTenant);
+    });
   }, []);
 
   const setActiveTenant = (tenant: Tenant) => {

@@ -10,7 +10,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  const isTrial = user?.isTrial ?? false;
+  const isTrial = Boolean(user?.isTrial && !user?.plan?.toLowerCase().includes('enterprise'));
   const daysRemaining = user?.trialDaysRemaining ?? 7;
 
   return (

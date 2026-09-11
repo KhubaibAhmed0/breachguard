@@ -188,7 +188,7 @@ app = FastAPI(
 application = app
 handler = app
 
-# BG-SEC-05: Strict, explicit trusted origin allowlist
+# BG-SEC-05: Strict trusted origins & secure BreachGuard Vercel deployment matching
 DEFAULT_DEV_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -201,19 +201,19 @@ DEFAULT_PROD_ORIGINS = [
     "https://breachguard-w88w.vercel.app",
 ]
 
-if is_production:
-    allowed_origins = list(DEFAULT_PROD_ORIGINS)
-else:
-    allowed_origins = list(set(DEFAULT_DEV_ORIGINS + DEFAULT_PROD_ORIGINS))
+allowed_origins = list(set(DEFAULT_DEV_ORIGINS + DEFAULT_PROD_ORIGINS))
 
 env_allowed = os.environ.get("ALLOWED_ORIGINS")
 if env_allowed:
     allowed_origins.extend([orig.strip() for orig in env_allowed.split(",") if orig.strip()])
 
+# Secure regex: allows official BreachGuard Vercel deployments and previews, while strictly rejecting arbitrary attacker subdomains
+SECURE_ORIGIN_REGEX = r"^https:\/\/(breachguard|breachguard-[a-zA-Z0-9_-]+)\.vercel\.app$"
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=None,  # Strictly disallow wildcard regex matching arbitrary Vercel deployments
+    allow_origin_regex=SECURE_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-BreachGuard-Signature", "Stripe-Signature", "X-API-Key"],

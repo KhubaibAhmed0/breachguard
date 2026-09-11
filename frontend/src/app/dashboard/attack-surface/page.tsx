@@ -11,19 +11,88 @@ export default function AttackSurfacePage() {
   const [severityFilter, setSeverityFilter] = useState('all');
 
   const { data: assets = [], isLoading: assetsLoading } = useAttackSurfaceAssets();
-  const { data: findings = [], isLoading: findingsLoading } = useAttackSurfaceFindings({ severity: severityFilter });
+  const { data: allFindings = [], isLoading: findingsLoading } = useAttackSurfaceFindings();
 
   const loading = assetsLoading || findingsLoading;
 
-  const filteredAssets = assets.filter((a: any) => 
-    a.hostname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (a.ip_address && a.ip_address.includes(searchTerm))
-  );
+  // Correlate finding records with asset hostnames or IPs
+  const getAssetFindings = (asset: any) => {
+    const host = (asset.hostname || '').toLowerCase().trim();
+    const ip = (asset.ip_address || '').trim();
+    return allFindings.filter((f: any) => {
+      if (!f.asset) return false;
+      const fAsset = f.asset.toLowerCase().trim();
+      if (fAsset === host) return true;
+      if (fAsset.startsWith(`${host}:`) || fAsset.startsWith(`${host} `) || fAsset.startsWith(`${host}/`)) return true;
+      if (ip && fAsset.includes(ip)) return true;
+      return false;
+    });
+  };
 
-  const filteredFindings = findings.filter((f: any) => {
-    if (severityFilter !== 'all' && f.severity !== severityFilter) return false;
-    return f.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           f.asset.toLowerCase().includes(searchTerm.toLowerCase());
+  // Determine overall asset severity from its associated findings and exposed services
+  const getAssetSeverity = (asset: any, assetFindings: any[]) => {
+    if (assetFindings.length > 0) {
+      if (assetFindings.some((f: any) => f.severity?.toLowerCase() === 'critical')) return 'critical';
+      if (assetFindings.some((f: any) => f.severity?.toLowerCase() === 'high')) return 'high';
+      if (assetFindings.some((f: any) => f.severity?.toLowerCase() === 'medium')) return 'medium';
+      if (assetFindings.some((f: any) => f.severity?.toLowerCase() === 'low')) return 'low';
+    }
+
+    // Direct port inspection for unhedged administrative protocols
+    const ports: number[] = Array.isArray(asset.open_ports) ? asset.open_ports : [];
+    if (ports.includes(23) || ports.includes(6379)) return 'critical';
+    if (ports.some((p: number) => [22, 3389, 3306, 5432, 27017, 5900].includes(p))) return 'high';
+    if (ports.includes(21)) return 'medium';
+    if (ports.some((p: number) => [8080, 8443].includes(p))) return 'low';
+    if (asset.vulns && asset.vulns.length > 0) return 'medium';
+
+    return 'clean';
+  };
+
+  const filteredAssets = assets.filter((a: any) => {
+    const assetFindings = getAssetFindings(a);
+    const assetSeverity = getAssetSeverity(a, assetFindings);
+
+    // Severity filtering
+    if (severityFilter === 'clean') {
+      if (assetSeverity !== 'clean') return false;
+    } else if (severityFilter !== 'all') {
+      const matchesFilter =
+        assetSeverity === severityFilter ||
+        assetFindings.some((f: any) => f.severity?.toLowerCase() === severityFilter.toLowerCase());
+      if (!matchesFilter) return false;
+    }
+
+    // Search filtering
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      const matchesSearch =
+        (a.hostname && a.hostname.toLowerCase().includes(term)) ||
+        (a.ip_address && a.ip_address.includes(term)) ||
+        (a.source && a.source.toLowerCase().includes(term)) ||
+        (Array.isArray(a.open_ports) && a.open_ports.some((p: any) => String(p).includes(term))) ||
+        assetFindings.some((f: any) =>
+          (f.title && f.title.toLowerCase().includes(term)) ||
+          (f.description && f.description.toLowerCase().includes(term))
+        );
+      if (!matchesSearch) return false;
+    }
+
+    return true;
+  });
+
+  const filteredFindings = allFindings.filter((f: any) => {
+    if (severityFilter === 'clean') return false;
+    if (severityFilter !== 'all' && f.severity?.toLowerCase() !== severityFilter.toLowerCase()) return false;
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.toLowerCase().trim();
+    return (
+      (f.title && f.title.toLowerCase().includes(term)) ||
+      (f.asset && f.asset.toLowerCase().includes(term)) ||
+      (f.description && f.description.toLowerCase().includes(term)) ||
+      (f.evidence && f.evidence.toLowerCase().includes(term)) ||
+      (f.finding_id && f.finding_id.toLowerCase().includes(term))
+    );
   });
 
   const getSeverityBadge = (severity: string) => {
@@ -51,9 +120,17 @@ export default function AttackSurfacePage() {
         );
       case 'low':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-blue-500/10 text-blue-300 border border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.14)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
             LOW
+          </span>
+        );
+      case 'clean':
+      case 'secure':
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            SECURE
           </span>
         );
       default:
@@ -64,6 +141,8 @@ export default function AttackSurfacePage() {
         );
     }
   };
+
+  const isFiltered = severityFilter !== 'all' || searchTerm.trim().length > 0;
 
   return (
     <DashboardLayout>
@@ -85,8 +164,8 @@ export default function AttackSurfacePage() {
               <span><strong className="text-white font-semibold font-roboto">{assets.length}</strong> Discovered Assets</span>
             </div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-medium font-roboto shadow-[0_0_12px_rgba(244,63,94,0.12)]">
-              <span className={`w-2 h-2 rounded-full ${findings.length > 0 ? 'bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.8)]' : 'bg-zinc-500'}`} />
-              <span><strong className="text-rose-200 font-semibold font-roboto">{findings.length}</strong> Active Findings</span>
+              <span className={`w-2 h-2 rounded-full ${allFindings.length > 0 ? 'bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.8)]' : 'bg-zinc-500'}`} />
+              <span><strong className="text-rose-200 font-semibold font-roboto">{allFindings.length}</strong> Active Findings</span>
             </div>
           </div>
         </div>
@@ -97,7 +176,7 @@ export default function AttackSurfacePage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             <input 
               type="text"
-              placeholder="Filter by hostname, IP, port..."
+              placeholder="Filter by hostname, IP, port, finding..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-zinc-900/60 border border-zinc-800 rounded-xl text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition-colors"
@@ -115,7 +194,17 @@ export default function AttackSurfacePage() {
               <option value="high">High Only</option>
               <option value="medium">Medium Only</option>
               <option value="low">Low Only</option>
+              <option value="clean">Secure / Clean Only</option>
             </select>
+            {isFiltered && (
+              <button
+                onClick={() => { setSeverityFilter('all'); setSearchTerm(''); }}
+                className="px-2.5 py-1.5 text-xs text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 rounded-xl transition-colors font-roboto"
+                title="Reset all filters"
+              >
+                Clear
+              </button>
+            )}
           </div>
         </div>
 
@@ -124,7 +213,7 @@ export default function AttackSurfacePage() {
           <div className="px-5 py-3.5 border-b border-zinc-800/60 bg-zinc-900/60 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <Globe className="w-4 h-4 text-zinc-400" />
-              Discovered Hostnames & Network Perimeter
+              Discovered Hostnames & Network Perimeter ({filteredAssets.length}{filteredAssets.length !== assets.length ? ` of ${assets.length}` : ''})
             </h2>
             <span className="text-[11px] font-roboto text-zinc-500">Source: Certificate Transparency & DNS</span>
           </div>
@@ -134,6 +223,7 @@ export default function AttackSurfacePage() {
               <thead className="bg-zinc-950/60 text-zinc-400 border-b border-zinc-800/60 font-medium text-xs">
                 <tr>
                   <th className="py-3 px-5">Hostname</th>
+                  <th className="py-3 px-5">Risk Status</th>
                   <th className="py-3 px-5">Resolved IP</th>
                   <th className="py-3 px-5">Open Ports</th>
                   <th className="py-3 px-5">Telemetry Source</th>
@@ -145,6 +235,7 @@ export default function AttackSurfacePage() {
                   Array.from({ length: 4 }).map((_, idx) => (
                     <tr key={idx} className="animate-pulse">
                       <td className="py-4 px-5"><div className="h-4 w-40 bg-zinc-800/80 rounded" /></td>
+                      <td className="py-4 px-5"><div className="h-4 w-20 bg-zinc-800/60 rounded" /></td>
                       <td className="py-4 px-5"><div className="h-3.5 w-24 bg-zinc-800/60 rounded" /></td>
                       <td className="py-4 px-5"><div className="h-4 w-28 bg-zinc-800/50 rounded" /></td>
                       <td className="py-4 px-5"><div className="h-3.5 w-20 bg-zinc-800/60 rounded" /></td>
@@ -153,42 +244,75 @@ export default function AttackSurfacePage() {
                   ))
                 ) : filteredAssets.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-zinc-500">
-                      No assets found matching current filter criteria.
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <ShieldAlert className="w-8 h-8 text-zinc-600 mb-1" />
+                        <p className="text-sm font-medium text-zinc-300">
+                          No {severityFilter !== 'all' ? `"${severityFilter.toUpperCase()}" ` : ''}assets found
+                        </p>
+                        <p className="text-xs text-zinc-500 max-w-sm">
+                          {severityFilter !== 'all'
+                            ? `No discovered perimeter assets currently match the "${severityFilter}" filter.`
+                            : 'No perimeter assets match your search criteria.'}
+                        </p>
+                        {isFiltered && (
+                          <button 
+                            onClick={() => { setSeverityFilter('all'); setSearchTerm(''); }}
+                            className="mt-2 px-3 py-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-colors font-roboto"
+                          >
+                            Reset Filters
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (
-                  filteredAssets.map((asset: any) => (
-                    <tr key={asset.id} className="hover:bg-zinc-800/30 transition-colors">
-                      <td className="py-3.5 px-5 text-white font-medium text-sm font-roboto">
-                        {asset.hostname}
-                      </td>
-                      <td className="py-3.5 px-5 text-zinc-300 font-roboto text-xs">
-                        {asset.ip_address || <span className="text-zinc-600">Unresolved</span>}
-                      </td>
-                      <td className="py-3.5 px-5">
-                        {asset.open_ports && asset.open_ports.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {asset.open_ports.map((p: number) => (
-                              <span key={p} className="px-2 py-0.5 bg-zinc-900 border border-zinc-700/80 text-zinc-200 rounded-md text-[11px] font-roboto font-medium">
-                                {p}
+                  filteredAssets.map((asset: any) => {
+                    const assetFindings = getAssetFindings(asset);
+                    const assetSeverity = getAssetSeverity(asset, assetFindings);
+
+                    return (
+                      <tr key={asset.id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="py-3.5 px-5 text-white font-medium text-sm font-roboto">
+                          {asset.hostname}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <div className="flex items-center gap-2">
+                            {getSeverityBadge(assetSeverity)}
+                            {assetFindings.length > 0 && (
+                              <span className="text-[11px] font-roboto text-zinc-400 hidden sm:inline">
+                                ({assetFindings.length} issue{assetFindings.length > 1 ? 's' : ''})
                               </span>
-                            ))}
+                            )}
                           </div>
-                        ) : (
-                          <span className="text-zinc-500 text-xs">None open</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-5 text-zinc-400 text-xs">
-                        <span className="px-2 py-0.5 bg-zinc-900/80 border border-zinc-800 rounded-md text-[11px]">
-                          {asset.source}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-5 text-right text-zinc-400 text-xs font-roboto">
-                        {asset.last_seen_at ? new Date(asset.last_seen_at).toLocaleDateString() : 'Active'}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="py-3.5 px-5 text-zinc-300 font-roboto text-xs">
+                          {asset.ip_address || <span className="text-zinc-600">Unresolved</span>}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          {asset.open_ports && asset.open_ports.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {asset.open_ports.map((p: number) => (
+                                <span key={p} className="px-2 py-0.5 bg-zinc-900 border border-zinc-700/80 text-zinc-200 rounded-md text-[11px] font-roboto font-medium">
+                                  {p}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-zinc-500 text-xs">None open</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-5 text-zinc-400 text-xs">
+                          <span className="px-2 py-0.5 bg-zinc-900/80 border border-zinc-800 rounded-md text-[11px]">
+                            {asset.source}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-5 text-right text-zinc-400 text-xs font-roboto">
+                          {asset.last_seen_at ? new Date(asset.last_seen_at).toLocaleDateString() : 'Active'}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -200,17 +324,35 @@ export default function AttackSurfacePage() {
           <div className="px-5 py-3.5 border-b border-zinc-800/60 bg-zinc-900/60 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 text-amber-400" />
-              Perimeter Security Findings ({filteredFindings.length})
+              Perimeter Security Findings ({filteredFindings.length}{filteredFindings.length !== allFindings.length ? ` of ${allFindings.length}` : ''})
             </h2>
             <span className="text-[11px] font-roboto text-zinc-500">Prioritized Technical Observations</span>
           </div>
 
           <div className="divide-y divide-zinc-800/40">
-            {findingsLoading && !findings.length ? (
+            {findingsLoading && !allFindings.length ? (
               <FindingListSkeleton count={4} />
             ) : filteredFindings.length === 0 ? (
-              <div className="py-10 text-center text-zinc-500 text-xs">
-                No active attack surface findings detected across monitored perimeter.
+              <div className="py-12 text-center">
+                <div className="flex flex-col items-center justify-center space-y-2 font-roboto">
+                  <CheckCircle2 className="w-8 h-8 text-zinc-600 mb-1" />
+                  <p className="text-sm font-medium text-zinc-300">
+                    No {severityFilter !== 'all' ? `"${severityFilter.toUpperCase()}" ` : ''}findings detected
+                  </p>
+                  <p className="text-xs text-zinc-500 max-w-sm">
+                    {severityFilter !== 'all'
+                      ? `No attack surface findings with "${severityFilter}" severity are currently affecting your perimeter.`
+                      : 'Zero attack surface security findings detected across monitored perimeter.'}
+                  </p>
+                  {isFiltered && (
+                    <button 
+                      onClick={() => { setSeverityFilter('all'); setSearchTerm(''); }}
+                      className="mt-2 px-3 py-1.5 text-xs font-medium text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-colors font-roboto"
+                    >
+                      Reset Filters
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               filteredFindings.map((finding: any) => (

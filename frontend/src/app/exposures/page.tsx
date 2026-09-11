@@ -19,8 +19,8 @@ export default function ExposuresPage() {
     const matchesSearch = 
       e.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.source.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSeverity = severityFilter === 'all' || e.severity === severityFilter;
-    const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
+    const matchesSeverity = severityFilter === 'all' || e.severity?.toLowerCase() === severityFilter.toLowerCase();
+    const matchesStatus = statusFilter === 'all' || e.status?.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesSeverity && matchesStatus;
   });
 

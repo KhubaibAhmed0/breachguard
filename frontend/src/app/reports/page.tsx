@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useState, useEffect } from 'react';
+import { ReportGridSkeleton } from '@/components/Skeletons';
 
 export default function ReportsPage() {
   const { data: reports, isLoading: isReportsLoading } = useReports();
@@ -137,10 +138,7 @@ export default function ReportsPage() {
 
       {/* Reports Grid */}
       {isReportsLoading ? (
-        <div className="flex items-center justify-center py-20 text-zinc-500 text-xs">
-          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-          Loading generated audits...
-        </div>
+        <ReportGridSkeleton count={3} />
       ) : reports && reports.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {reports.map((report) => (
@@ -159,11 +157,11 @@ export default function ReportsPage() {
                         {report.type} Risk Assessment
                       </h3>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800 text-[10px] font-mono text-zinc-300 border border-zinc-700">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800 text-[10px] font-roboto text-zinc-300 border border-zinc-700">
                           <Globe className="w-2.5 h-2.5 text-zinc-400" />
                           {report.domainName || 'All Domains'}
                         </span>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase bg-rose-500/10 text-rose-300 border border-rose-500/30 shadow-[0_0_6px_rgba(244,63,94,0.12)]">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-roboto font-semibold uppercase bg-rose-500/10 text-rose-300 border border-rose-500/30 shadow-[0_0_6px_rgba(244,63,94,0.12)]">
                           PDF
                         </span>
                       </div>
@@ -179,7 +177,7 @@ export default function ReportsPage() {
                   <p className="text-zinc-500 leading-relaxed">
                     Includes posture scorecard, stealer log forensics, compromised identities, and targeted remediation steps.
                   </p>
-                  <p className="text-[10px] text-zinc-600 font-mono pt-1">
+                  <p className="text-[10px] text-zinc-600 font-roboto pt-1">
                     Generated: {formatDate(report.generatedAt)}
                   </p>
                 </div>
@@ -372,7 +370,7 @@ export default function ReportsPage() {
                     value={customDomain}
                     onChange={(e) => setCustomDomain(e.target.value)}
                     placeholder="e.g. laam.com or yourcompany.com"
-                    className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-mono"
+                    className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-roboto"
                   />
                   <p className="text-[11px] text-zinc-500 mt-1">
                     BreachGuard will compile dark web intelligence and threat vectors for this specific domain.
@@ -458,7 +456,7 @@ export default function ReportsPage() {
                 <span className="text-sm font-semibold text-white">
                   Executive Security Assessment Audit Dossier (Report #{previewId})
                 </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400 border border-zinc-700">
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-roboto bg-zinc-800 text-zinc-400 border border-zinc-700">
                   PDF Format
                 </span>
               </div>

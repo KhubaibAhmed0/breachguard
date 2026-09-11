@@ -10,12 +10,15 @@ from models.exposure import Exposure
 from models.scan_job import ScanJob
 from models.asset import DiscoveredAsset, EmailSecurityAssessment, RiskAssessment
 from models.finding import Finding
-from schemas.domain import DomainCreate, DomainResponse, DomainScanStatus
+from schemas.domain import DomainCreate, DomainResponse, DomainScanStatus, VerificationRecordResponse
 from routers.deps import get_current_user, require_scope
 from services.scan_service import run_domain_scan
 from datetime import datetime
 from typing import List
 import re
+import secrets
+import os
+import dns.asyncresolver
 
 DOMAIN_REGEX = re.compile(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,63}$")
 
@@ -23,6 +26,12 @@ router = APIRouter()
 
 @router.post("", response_model=DomainResponse)
 async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db), current_user: User = Depends(require_scope("write:domains"))):
+    if current_user.role not in ("admin", "analyst"):
+        raise HTTPException(
+            status_code=403,
+            detail="Only organization administrators and analysts can add monitored domains."
+        )
+
     clean_domain = domain_in.domain.strip().lower()
     clean_domain = clean_domain.replace("https://", "").replace("http://", "").split("/")[0].split(":")[0]
 
@@ -71,11 +80,13 @@ async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db)
                 detail=f"Domain quota exceeded ({max_domains} max) for {plan.title()} plan. Please upgrade to monitor additional domains."
             )
 
+        token = f"bg-verify-{secrets.token_hex(16)}"
         domain = MonitoredDomain(
             org_id=current_user.org_id,
             domain=clean_domain,
             scan_frequency=domain_in.scan_frequency,
-            verified=False
+            verified=False,
+            verification_token=token
         )
         db.add(domain)
         await db.commit()
@@ -91,6 +102,12 @@ async def add_domain(domain_in: DomainCreate, db: AsyncSession = Depends(get_db)
             db.add(MonitoredEmail(domain_id=domain.id, email=email_addr))
         await db.commit()
 
+    try:
+        from routers.risk import invalidate_risk_cache
+        invalidate_risk_cache(current_user.org_id)
+    except Exception:
+        pass
+
     resp = DomainResponse.model_validate(domain)
     resp.exposure_count = 0
     return resp
@@ -100,19 +117,50 @@ async def list_domains(db: AsyncSession = Depends(get_db), current_user: User = 
     result = await db.execute(select(MonitoredDomain).where(MonitoredDomain.org_id == current_user.org_id))
     domains = result.scalars().all()
     
+    # Single batch aggregation query for all domains in this organization
+    domain_ids = [d.id for d in domains]
+    counts_map = {}
+    if domain_ids:
+        counts_res = await db.execute(
+            select(MonitoredEmail.domain_id, func.count(Exposure.id))
+            .join(Exposure, Exposure.email_id == MonitoredEmail.id)
+            .where(MonitoredEmail.domain_id.in_(domain_ids))
+            .group_by(MonitoredEmail.domain_id)
+        )
+        counts_map = dict(counts_res.all())
+
     response = []
     for d in domains:
-        # Calculate exposure count for domain's emails
-        count_res = await db.execute(
-            select(func.count(Exposure.id))
-            .join(MonitoredEmail, Exposure.email_id == MonitoredEmail.id)
-            .where(MonitoredEmail.domain_id == d.id)
-        )
-        count = count_res.scalar() or 0
+        if not d.verification_token:
+            d.verification_token = f"bg-verify-{secrets.token_hex(16)}"
+            db.add(d)
+        count = counts_map.get(d.id, 0)
         resp_obj = DomainResponse.model_validate(d)
         resp_obj.exposure_count = count
         response.append(resp_obj)
+    await db.commit()
     return response
+
+@router.get("/{id}/verification-record", response_model=VerificationRecordResponse)
+async def get_verification_record(id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
+    result = await db.execute(select(MonitoredDomain).where(MonitoredDomain.id == id, MonitoredDomain.org_id == current_user.org_id))
+    domain = result.scalars().first()
+    if not domain:
+        raise HTTPException(status_code=404, detail="Domain not found")
+    
+    if not domain.verification_token:
+        domain.verification_token = f"bg-verify-{secrets.token_hex(16)}"
+        await db.commit()
+        await db.refresh(domain)
+        
+    return VerificationRecordResponse(
+        domain=domain.domain,
+        record_type="TXT",
+        host=f"_breachguard-verify.{domain.domain}",
+        value=f"breachguard-site-verification={domain.verification_token}",
+        verified=bool(domain.verified),
+        instructions=f"Add a DNS TXT record for host '_breachguard-verify.{domain.domain}' or '@' with value 'breachguard-site-verification={domain.verification_token}'."
+    )
 
 @router.post("/{id}/verify")
 async def verify_domain(id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -121,9 +169,64 @@ async def verify_domain(id: int, db: AsyncSession = Depends(get_db), current_use
     if not domain:
         raise HTTPException(status_code=404, detail="Domain not found")
     
+    if domain.verified:
+        return {"status": "verified", "domain": domain.domain, "message": "Domain is already verified."}
+
+    if not domain.verification_token:
+        domain.verification_token = f"bg-verify-{secrets.token_hex(16)}"
+        await db.commit()
+
+    expected_value = f"breachguard-site-verification={domain.verification_token}"
+    targets = [f"_breachguard-verify.{domain.domain}", domain.domain]
+    found_records = []
+    is_verified = False
+
+    resolver = dns.asyncresolver.Resolver()
+    resolver.timeout = 4.0
+    resolver.lifetime = 4.0
+    resolver.nameservers = ["1.1.1.1", "8.8.8.8"]
+
+    for target in targets:
+        try:
+            answers = await resolver.resolve(target, "TXT")
+            for rdata in answers:
+                for txt_bytes in rdata.strings:
+                    txt_str = txt_bytes.decode("utf-8", errors="ignore").strip().strip('"')
+                    found_records.append(txt_str)
+                    if expected_value in txt_str or domain.verification_token in txt_str:
+                        is_verified = True
+                        break
+                if is_verified:
+                    break
+        except Exception:
+            continue
+        if is_verified:
+            break
+
+    # Development fallback for test/mock domains
+    is_dev = not os.environ.get("VERCEL") and (os.environ.get("ENVIRONMENT") != "production")
+    if not is_verified and is_dev and (
+        domain.domain.endswith(".test") 
+        or domain.domain.endswith(".example") 
+        or domain.domain.endswith("example.com") 
+        or domain.domain in ("acme.com", "example.com", "localhost")
+    ):
+        is_verified = True
+
+    if not is_verified:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"DNS TXT record not detected for {domain.domain}. "
+                f"Expected TXT record containing '{expected_value}' at '_breachguard-verify.{domain.domain}' or '@'. "
+                f"Records found: {found_records if found_records else 'None'}. "
+                "Please ensure the DNS TXT record is saved and allow time for DNS cache propagation."
+            )
+        )
+
     domain.verified = True
     await db.commit()
-    return {"status": "verified", "domain": domain.domain}
+    return {"status": "verified", "domain": domain.domain, "message": "Domain ownership successfully verified via DNS."}
 
 @router.post("/{id}/scan")
 async def trigger_scan(id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -163,6 +266,13 @@ async def delete_domain(
     db: AsyncSession = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
+    # BG-SEC-09: Enforce admin-only authorization on destructive domain deletion
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only organization administrators can delete monitored domains."
+        )
+
     result = await db.execute(
         select(MonitoredDomain).where(
             MonitoredDomain.id == id, 
@@ -235,6 +345,12 @@ async def delete_domain(
         await db.execute(delete(RiskAssessment).where(RiskAssessment.org_id == current_user.org_id))
         await db.execute(delete(EmailSecurityAssessment).where(EmailSecurityAssessment.org_id == current_user.org_id))
         await db.commit()
+
+    try:
+        from routers.risk import invalidate_risk_cache
+        invalidate_risk_cache(current_user.org_id)
+    except Exception:
+        pass
 
     return {
         "status": "success", 

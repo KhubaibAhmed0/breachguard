@@ -38,7 +38,7 @@ export function RiskScoreGauge({ score }: RiskScoreGaugeProps) {
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pt-6">
         <span className="text-3xl font-semibold tracking-tight text-white">{score}</span>
-        <span className="text-[10px] uppercase font-mono tracking-wider text-zinc-500">Security rating</span>
+        <span className="text-[10px] uppercase font-roboto tracking-wider text-zinc-500">Security rating</span>
       </div>
     </div>
   );

@@ -3,10 +3,14 @@ import asyncio
 import socket
 import json
 import httpx
-from typing import List, Dict, Any, Optional
+import time
+from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+_SUBDOMAIN_CACHE: Dict[str, Tuple[float, List[str]]] = {}
+_SHODAN_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
 
 ADMIN_PORTS = {
     22: ('SSH', 'Secure Shell administrative remote access service', 'high'),
@@ -22,12 +26,19 @@ ADMIN_PORTS = {
     8443: ('HTTPS-Alt', 'Alternative TLS management console or web interface', 'low'),
 }
 
-async def discover_subdomains(domain: str, timeout: float = 8.0) -> List[str]:
+async def discover_subdomains(domain: str, timeout: float = 5.0) -> List[str]:
     """
     Queries Certificate Transparency logs via crt.sh to discover subdomains.
     Sanitizes, normalizes, and deduplicates all returned records.
+    Cached for 15 minutes in memory.
     """
     clean_domain = domain.lower().strip().lstrip('.').split(':')[0]
+    now = time.time()
+    if clean_domain in _SUBDOMAIN_CACHE:
+        cached_time, cached_subs = _SUBDOMAIN_CACHE[clean_domain]
+        if now - cached_time < 900.0:
+            return list(cached_subs)
+
     discovered = set()
     discovered.add(clean_domain)
     
@@ -35,7 +46,8 @@ async def discover_subdomains(domain: str, timeout: float = 8.0) -> List[str]:
     headers = {"User-Agent": "BreachGuard-Security-Auditor/2.0"}
     
     try:
-        async with httpx.AsyncClient(timeout=timeout, verify=False) as client:
+        # BG-SEC-07: Standard TLS verification enforced (verify=True)
+        async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.get(url, headers=headers)
             if resp.status_code == 200:
                 data = resp.json()
@@ -54,7 +66,9 @@ async def discover_subdomains(domain: str, timeout: float = 8.0) -> List[str]:
         for prefix in ["mail", "vpn", "remote", "portal", "dev", "api"]:
             discovered.add(f"{prefix}.{clean_domain}")
 
-    return sorted(list(discovered))
+    result_subs = sorted(list(discovered))
+    _SUBDOMAIN_CACHE[clean_domain] = (now, result_subs)
+    return result_subs
 
 async def resolve_hostname(hostname: str) -> Optional[str]:
     """
@@ -69,17 +83,25 @@ async def resolve_hostname(hostname: str) -> Optional[str]:
         pass
     return None
 
-async def query_shodan_internetdb(ip: str, timeout: float = 5.0) -> Dict[str, Any]:
+async def query_shodan_internetdb(ip: str, timeout: float = 3.0) -> Dict[str, Any]:
     """
     Queries Shodan InternetDB for passive open ports, hostnames, CPEs, and known CVEs.
-    Free, non-intrusive, zero API key required.
+    Free, non-intrusive, zero API key required. Cached for 1 hour.
     """
+    now = time.time()
+    if ip in _SHODAN_CACHE:
+        cached_time, cached_data = _SHODAN_CACHE[ip]
+        if now - cached_time < 3600.0:
+            return cached_data
+
     url = f"https://internetdb.shodan.io/{ip}"
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.get(url)
             if resp.status_code == 200:
-                return resp.json()
+                data = resp.json()
+                _SHODAN_CACHE[ip] = (now, data)
+                return data
     except Exception as e:
         logger.debug(f"Shodan InternetDB lookup skipped or timed out for {ip}: {e}")
     return {}
@@ -89,7 +111,7 @@ async def analyze_attack_surface(domain: str) -> Dict[str, Any]:
     Orchestrates external attack surface reconnaissance:
     1. Subdomain discovery via Certificate Transparency
     2. Hostname resolution to IP addresses
-    3. Passive enrichment via Shodan InternetDB
+    3. Passive enrichment via Shodan InternetDB (parallelized)
     4. Meaningful security finding generation
     """
     subdomains = await discover_subdomains(domain)
@@ -97,11 +119,17 @@ async def analyze_attack_surface(domain: str) -> Dict[str, Any]:
     
     assets = []
     findings = []
-    unique_ips = {}
     finding_counter = 1
 
+    # 1. Resolve hostnames concurrently
     resolution_tasks = [resolve_hostname(h) for h in target_hosts]
     resolved_ips = await asyncio.gather(*resolution_tasks)
+
+    # 2. Enrich distinct unique IPs concurrently
+    distinct_ips = list(set(ip for ip in resolved_ips if ip))
+    ip_enrichment_tasks = [query_shodan_internetdb(ip) for ip in distinct_ips]
+    ip_enrichment_results = await asyncio.gather(*ip_enrichment_tasks)
+    unique_ips = dict(zip(distinct_ips, ip_enrichment_results))
 
     for host, ip in zip(target_hosts, resolved_ips):
         asset_info = {
@@ -135,10 +163,7 @@ async def analyze_attack_surface(domain: str) -> Dict[str, Any]:
             })
             finding_counter += 1
 
-        if ip:
-            if ip not in unique_ips:
-                unique_ips[ip] = await query_shodan_internetdb(ip)
-            
+        if ip and ip in unique_ips:
             enrichment = unique_ips[ip]
             if enrichment:
                 asset_info["open_ports"] = enrichment.get("ports", [])

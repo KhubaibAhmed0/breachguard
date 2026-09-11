@@ -18,7 +18,7 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="border-b border-zinc-800/80 text-[11px] font-medium text-zinc-500 uppercase tracking-wider font-mono">
+          <tr className="border-b border-zinc-800/80 text-[11px] font-medium text-zinc-500 uppercase tracking-wider font-roboto">
             <th className="pb-3 px-4">Identity / Account</th>
             <th className="pb-3 px-4">Breach Source</th>
             <th className="pb-3 px-4">Severity</th>
@@ -28,7 +28,7 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
             {onStatusChange && <th className="pb-3 px-4 text-right">Remediation</th>}
           </tr>
         </thead>
-        <tbody className="text-xs divide-y divide-zinc-850 divide-zinc-900/60">
+        <tbody className="text-xs divide-y divide-zinc-855 divide-zinc-900/60">
           {data.map((exposure) => {
             const isLockedStealer = Boolean(
               exposure.upgradeRequired ||
@@ -41,7 +41,7 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
                 className={`transition-colors ${isLockedStealer ? 'bg-amber-500/[0.04] hover:bg-amber-500/[0.08]' : 'hover:bg-zinc-900/40'}`}
               >
                 <td className="py-3.5 px-4">
-                  <span className="text-zinc-200 font-mono text-[11px] font-medium">
+                  <span className="text-zinc-200 font-roboto text-[11px] font-medium">
                     {exposure.email}
                   </span>
                 </td>
@@ -70,17 +70,17 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
 
                 <td className="py-3.5 px-4">
                   {isLockedStealer ? (
-                    <span className="font-mono text-[11px] text-zinc-500 tracking-wider">
+                    <span className="font-roboto text-[11px] text-zinc-500 tracking-wider">
                       •••••••••••••• (Redacted)
                     </span>
                   ) : (
-                    <span className="text-zinc-400 font-mono text-[11px]">
+                    <span className="text-zinc-400 font-roboto text-[11px]">
                       {exposure.credentialType}
                     </span>
                   )}
                 </td>
 
-                <td className="py-3.5 px-4 text-zinc-400 font-mono text-[11px]">
+                <td className="py-3.5 px-4 text-zinc-400 font-roboto text-[11px]">
                   {formatDate(exposure.detectedAt)}
                 </td>
 

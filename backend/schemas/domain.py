@@ -13,10 +13,19 @@ class DomainResponse(BaseModel):
     org_id: int
     domain: str
     verified: bool
+    verification_token: Optional[str] = None
     scan_frequency: str
     last_scanned_at: Optional[datetime] = None
     created_at: datetime
     exposure_count: Optional[int] = 0
+
+class VerificationRecordResponse(BaseModel):
+    domain: str
+    record_type: str = "TXT"
+    host: str
+    value: str
+    verified: bool
+    instructions: str
 
 class DomainScanStatus(BaseModel):
     model_config = ConfigDict(from_attributes=True)

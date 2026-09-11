@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { StatsCard } from '@/components/StatsCard';
-import { ExposureChart } from '@/components/ExposureChart';
-import { SeverityDonut } from '@/components/SeverityDonut';
 import { ExposureTable } from '@/components/ExposureTable';
-import { ScoreBreakdownModal, PillarKey } from '@/components/ScoreBreakdownModal';
-import { useExposureStats, useExposures, useDomains } from '@/hooks/useApi';
+import type { PillarKey } from '@/components/ScoreBreakdownModal';
+import { 
+  useExposureStats, 
+  useExposures, 
+  useDomains,
+  useRiskOverview,
+  useFindings
+} from '@/hooks/useApi';
 import { useTenant } from '@/contexts/TenantContext';
 import { 
   Globe, AlertTriangle, Activity, ArrowRight, Download, Building2, 
@@ -15,7 +20,28 @@ import {
   RefreshCw, Calculator, Plus, ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
-import api from '@/lib/api';
+import { 
+  HeroCardSkeleton, 
+  CardSkeleton, 
+  FindingListSkeleton, 
+  ChartSkeleton 
+} from '@/components/Skeletons';
+
+// Dynamically import heavy chart modules and modal
+const ScoreBreakdownModal = dynamic(
+  () => import('@/components/ScoreBreakdownModal').then(m => m.ScoreBreakdownModal),
+  { ssr: false }
+);
+
+const ExposureChart = dynamic(
+  () => import('@/components/ExposureChart').then(m => m.ExposureChart),
+  { ssr: false, loading: () => <ChartSkeleton height="h-64" /> }
+);
+
+const SeverityDonut = dynamic(
+  () => import('@/components/SeverityDonut').then(m => m.SeverityDonut),
+  { ssr: false, loading: () => <ChartSkeleton height="h-64" /> }
+);
 
 export default function DashboardPage() {
   const { data: stats } = useExposureStats();
@@ -23,9 +49,8 @@ export default function DashboardPage() {
   const { data: domains, isLoading: domainsLoading } = useDomains();
   const { activeTenant, tenants, setActiveTenant } = useTenant();
 
-  const [riskData, setRiskData] = useState<any>(null);
-  const [findings, setFindings] = useState<any[]>([]);
-  const [loadingOverview, setLoadingOverview] = useState(true);
+  const { data: riskData, isLoading: riskLoading } = useRiskOverview();
+  const { data: findings = [], isLoading: findingsLoading } = useFindings({ status: 'open', limit: 10 });
 
   // Score Breakdown Modal State
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
@@ -36,31 +61,13 @@ export default function DashboardPage() {
     setIsBreakdownOpen(true);
   };
 
-  const loadOverview = async () => {
-    try {
-      const [resRisk, resFindings] = await Promise.all([
-        api.get('/risk/overview'),
-        api.get('/findings?status=open')
-      ]);
-      setRiskData(resRisk.data || null);
-      setFindings(resFindings.data || []);
-    } catch (err) {
-      console.error('Failed to load risk overview', err);
-    } finally {
-      setLoadingOverview(false);
-    }
-  };
-
-  useEffect(() => {
-    loadOverview();
-  }, []);
-
   const isZeroDomain = !domainsLoading && (!domains || domains.length === 0);
+  const isInitialLoading = domainsLoading || (riskLoading && !riskData);
 
   const overallScore = isZeroDomain ? 0 : (riskData?.overall_risk_score ?? 0);
   const riskLevel = isZeroDomain 
     ? 'NOT ASSESSED' 
-    : (riskData?.risk_level ?? (loadingOverview ? 'ANALYZING...' : 'NOT ASSESSED'));
+    : (riskData?.risk_level ?? (isInitialLoading ? 'ANALYZING...' : 'NOT ASSESSED'));
 
   const categories = isZeroDomain ? {
     attack_surface: 0,
@@ -155,7 +162,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <span className="font-medium text-white">Viewing Managed Client Tenant: </span>
-                <span className="font-semibold text-indigo-300 font-mono">{activeTenant.name}</span>
+                <span className="font-semibold text-indigo-300 font-roboto">{activeTenant.name}</span>
                 <span className="text-zinc-400 text-[11px] block sm:inline sm:ml-2">Telemetry and domain assets are isolated to this client organization.</span>
               </div>
             </div>
@@ -228,7 +235,7 @@ export default function DashboardPage() {
               <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider font-roboto">Platform Telemetry Index</span>
               <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-3">
                 External Cyber Risk Score
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-semibold uppercase border ${overallRiskBadge.classes}`}>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-roboto font-semibold uppercase border ${overallRiskBadge.classes}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${overallRiskBadge.dot}`} />
                   {overallRiskBadge.label}
                 </span>
@@ -429,40 +436,40 @@ export default function DashboardPage() {
           </div>
 
           <div className="divide-y divide-zinc-800/40">
-            {loadingOverview ? (
-              <div className="py-8 text-center text-zinc-500 text-xs font-roboto">Loading findings...</div>
+            {findingsLoading && !findings.length ? (
+              <FindingListSkeleton count={4} />
             ) : findings.length === 0 ? (
               <div className="py-8 text-center text-zinc-500 text-xs font-roboto">
                 No active security findings detected across monitored perimeter.
               </div>
             ) : (
-              findings.slice(0, 5).map((f) => {
+              findings.slice(0, 5).map((f: any) => {
                 const getBadge = (sev: string) => {
                   switch (sev?.toLowerCase()) {
                     case 'critical':
                       return (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_10px_rgba(244,63,94,0.18)]">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_10px_rgba(244,63,94,0.18)]">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
                           CRITICAL
                         </span>
                       );
                     case 'high':
                       return (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_10px_rgba(249,115,22,0.18)]">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_10px_rgba(249,115,22,0.18)]">
                           <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
                           HIGH
                         </span>
                       );
                     case 'medium':
                       return (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_10px_rgba(245,158,11,0.18)]">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_10px_rgba(245,158,11,0.18)]">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                           MEDIUM
                         </span>
                       );
                     default:
                       return (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                           LOW
                         </span>

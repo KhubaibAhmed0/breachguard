@@ -27,7 +27,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-white">7-Day Business Trial Active</span>
-                    <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-mono uppercase tracking-wider">
+                    <span className="px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-300 border border-zinc-700 text-[10px] font-roboto uppercase tracking-wider">
                       {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'} remaining
                     </span>
                   </div>

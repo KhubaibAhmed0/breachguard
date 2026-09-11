@@ -25,7 +25,7 @@ export function StatsCard({ title, value, icon: Icon, trend, description }: Stat
           <span className="text-2xl sm:text-3xl font-semibold tracking-tight text-white">{value}</span>
           {trend && (
             <span className={cn(
-              "text-xs font-mono font-medium",
+              "text-xs font-roboto font-medium",
               trend === 'up' ? "text-amber-400" : trend === 'down' ? "text-emerald-400" : "text-zinc-500"
             )}>
               {trend === 'up' ? '↑ 12%' : trend === 'down' ? '↓ 8%' : '—'}

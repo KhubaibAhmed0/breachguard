@@ -78,8 +78,39 @@ async def create_checkout(
 
     target_plan = VALID_PRICES[req.price_id]["plan"]
     
-    # Return secure hosted checkout session URL
-    mock_session_id = f"cs_live_{current_user.org_id}_{target_plan}"
+    # If real Stripe API key configured, generate live hosted session
+    if settings.STRIPE_SECRET_KEY:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                res = await client.post(
+                    "https://api.stripe.com/v1/checkout/sessions",
+                    headers={"Authorization": f"Bearer {settings.STRIPE_SECRET_KEY}"},
+                    data={
+                        "success_url": f"{settings.FRONTEND_URL}/settings?session_id={{CHECKOUT_SESSION_ID}}",
+                        "cancel_url": f"{settings.FRONTEND_URL}/settings",
+                        "mode": "subscription",
+                        "client_reference_id": str(current_user.org_id),
+                        "customer_email": current_user.email,
+                        "line_items[0][price]": req.price_id,
+                        "line_items[0][quantity]": "1",
+                        "metadata[org_id]": str(current_user.org_id),
+                    }
+                )
+                if res.status_code == 200:
+                    session_data = res.json()
+                    return {
+                        "url": session_data.get("url"),
+                        "session_id": session_data.get("id"),
+                        "plan": target_plan
+                    }
+                else:
+                    logger.warning(f"Stripe checkout session creation failed: {res.text}")
+        except Exception as e:
+            logger.error(f"Stripe network error: {e}")
+
+    # Fallback to test checkout URL when Stripe keys are unset
+    mock_session_id = f"cs_test_{current_user.org_id}_{target_plan}"
     return {
         "url": f"https://checkout.stripe.com/pay/{mock_session_id}",
         "session_id": mock_session_id,
@@ -93,6 +124,24 @@ async def create_portal(
     """
     Generates hosted customer billing portal URL.
     """
+    if settings.STRIPE_SECRET_KEY and current_user.organization and current_user.organization.stripe_customer_id:
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                res = await client.post(
+                    "https://api.stripe.com/v1/billing_portal/sessions",
+                    headers={"Authorization": f"Bearer {settings.STRIPE_SECRET_KEY}"},
+                    data={
+                        "customer": current_user.organization.stripe_customer_id,
+                        "return_url": f"{settings.FRONTEND_URL}/settings",
+                    }
+                )
+                if res.status_code == 200:
+                    portal_data = res.json()
+                    return {"url": portal_data.get("url")}
+        except Exception as e:
+            logger.error(f"Stripe Customer Portal API error: {e}")
+
     return {
         "url": f"https://billing.stripe.com/p/session/portal_{current_user.org_id}"
     }
@@ -109,19 +158,26 @@ async def stripe_webhook(
     """
     body_bytes = await request.body()
 
-    # 1. Cryptographic Signature Verification
-    if settings.STRIPE_WEBHOOK_SECRET:
-        if not stripe_signature:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Missing Stripe-Signature header."
-            )
-        is_valid = verify_stripe_signature(body_bytes, stripe_signature, settings.STRIPE_WEBHOOK_SECRET)
-        if not is_valid:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid Stripe webhook signature."
-            )
+    # 1. Cryptographic Signature Verification (Fail-Closed)
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        logger.error("[STRIPE_WEBHOOK] Webhook rejected: STRIPE_WEBHOOK_SECRET is not configured on the server.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Stripe webhook processing is currently unavailable (webhook secret not configured)."
+        )
+
+    if not stripe_signature:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing required Stripe-Signature header."
+        )
+
+    is_valid = verify_stripe_signature(body_bytes, stripe_signature, settings.STRIPE_WEBHOOK_SECRET)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid Stripe webhook signature."
+        )
 
     try:
         event = json.loads(body_bytes.decode("utf-8"))

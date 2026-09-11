@@ -7,28 +7,24 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (token) {
-      api.get('/auth/me')
-        .then((res) => {
-          setUser({
-            id: String(res.data.id),
-            email: res.data.email,
-            name: res.data.role === 'admin' ? 'Acme Admin' : 'User',
-            organizationId: String(res.data.org_id),
-            plan: res.data.plan,
-            isTrial: res.data.is_trial,
-            trialDaysRemaining: res.data.trial_days_remaining,
-            trialEndsAt: res.data.trial_ends_at,
-          });
-        })
-        .catch(() => {
-          login('admin@acme.com', 'password123').catch(() => {});
-        })
-        .finally(() => setLoading(false));
-    } else {
-      login('admin@acme.com', 'password123').catch(() => {}).finally(() => setLoading(false));
-    }
+    // Check authentication via session cookie or Authorization header
+    api.get('/auth/me')
+      .then((res) => {
+        setUser({
+          id: String(res.data.id),
+          email: res.data.email,
+          name: res.data.role === 'admin' ? 'Acme Admin' : 'User',
+          organizationId: String(res.data.org_id),
+          plan: res.data.plan,
+          isTrial: res.data.is_trial,
+          trialDaysRemaining: res.data.trial_days_remaining,
+          trialEndsAt: res.data.trial_ends_at,
+        });
+      })
+      .catch(() => {
+        login('admin@acme.com', 'password123').catch(() => {});
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const login = async (emailOrToken: string, password?: string) => {
@@ -78,11 +74,17 @@ export function useAuth() {
     return res.data;
   };
 
-  const logout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+      }
+      setUser(null);
     }
-    setUser(null);
   };
 
   return { user, loading, login, register, logout };

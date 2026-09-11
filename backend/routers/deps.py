@@ -2,7 +2,7 @@ import hashlib
 import logging
 from datetime import datetime
 from typing import Optional, List
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Depends, HTTPException, Header, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 async def get_current_user(
+    request: Request,
     token: Optional[str] = Depends(oauth2_scheme),
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
     db: AsyncSession = Depends(get_db)
@@ -92,12 +93,16 @@ async def get_current_user(
         user.api_scopes = [s.strip() for s in api_key_record.scopes.split(",") if s.strip()]
         return user
 
-    # 2. Standard JWT Authentication
-    if not token:
+    # 2. Standard JWT Authentication (Bearer header or HttpOnly cookie BG-SEC-12)
+    jwt_token = token
+    if not jwt_token and request.cookies.get("bg_session"):
+        jwt_token = request.cookies.get("bg_session")
+
+    if not jwt_token:
         raise credentials_exception
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str = payload.get("sub")
         scoped_org_id = payload.get("org_id")
         if user_id is None:

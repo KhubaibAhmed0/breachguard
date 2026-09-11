@@ -81,7 +81,7 @@ export default function LandingPage() {
               
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
                 <div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider font-mono mb-1">
+                  <div className="text-xs text-zinc-500 uppercase tracking-wider font-roboto mb-1">
                     External Cyber Risk Snapshot
                   </div>
                   <h2 className="text-2xl font-semibold text-white tracking-tight">
@@ -91,10 +91,10 @@ export default function LandingPage() {
 
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <div className="text-2xl font-bold font-mono text-white">
+                    <div className="text-2xl font-bold font-roboto text-white">
                       {overallScore} <span className="text-xs text-zinc-500 font-normal">/ 100</span>
                     </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded font-mono uppercase font-semibold border ${riskBadgeBg}`}>
+                    <span className={`text-[10px] px-2 py-0.5 rounded font-roboto uppercase font-semibold border ${riskBadgeBg}`}>
                       {riskLevel}
                     </span>
                   </div>
@@ -151,7 +151,7 @@ export default function LandingPage() {
                           <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                           <span>{finding.title}</span>
                         </div>
-                        <span className="text-zinc-500 font-mono text-[11px]">{finding.evidence}</span>
+                        <span className="text-zinc-500 font-roboto text-[11px]">{finding.evidence}</span>
                       </div>
                     ))}
                   </div>

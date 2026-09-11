@@ -7,10 +7,11 @@ import {
 } from '@/hooks/useApi';
 import { 
   Globe, Plus, ShieldCheck, RefreshCw, AlertCircle, X, 
-  Check, Loader2, UserCheck, Shield, Trash2, KeyRound 
+  Check, Loader2, UserCheck, Shield, Trash2, KeyRound, Copy 
 } from 'lucide-react';
 import { formatDate, cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { DomainGridSkeleton, TableSkeleton } from '@/components/Skeletons';
 
 export default function DomainsPage() {
   const [activeTab, setActiveTab] = useState<'domains' | 'identities'>('domains');
@@ -36,6 +37,39 @@ export default function DomainsPage() {
 
   // DNS Verification Modal State
   const [verifyingDomain, setVerifyingDomain] = useState<{ id: string; name: string } | null>(null);
+  const [verificationRecord, setVerificationRecord] = useState<{ host: string; value: string; record_type: string } | null>(null);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<'host' | 'value' | null>(null);
+
+  useEffect(() => {
+    if (!verifyingDomain) {
+      setVerificationRecord(null);
+      setVerificationError(null);
+      setCopiedField(null);
+      return;
+    }
+    let isMounted = true;
+    setVerificationLoading(true);
+    setVerificationError(null);
+    import('@/lib/api').then(({ default: api }) => {
+      api.get(`/domains/${verifyingDomain.id}/verification-record`)
+        .then((res) => {
+          if (isMounted) setVerificationRecord(res.data);
+        })
+        .catch((err) => {
+          if (isMounted) {
+            setVerificationError(err?.response?.data?.detail || 'Failed to load verification token.');
+          }
+        })
+        .finally(() => {
+          if (isMounted) setVerificationLoading(false);
+        });
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [verifyingDomain]);
 
   // Add Privileged Identity Modal State
   const [isAddIdentityOpen, setIsAddIdentityOpen] = useState(false);
@@ -77,12 +111,16 @@ export default function DomainsPage() {
 
   const handleVerify = async (domainId: string) => {
     try {
+      setVerificationError(null);
       await verifyDomainMutation.mutateAsync(domainId);
       setVerifyingDomain(null);
       setScanNotice('Domain DNS TXT record successfully verified.');
       setTimeout(() => setScanNotice(null), 5000);
-    } catch {
-      alert('Verification failed. Please try again.');
+    } catch (err: any) {
+      setVerificationError(
+        err?.response?.data?.detail || 
+        'DNS TXT verification failed. Please ensure the TXT record is saved in your DNS provider and allow time for propagation.'
+      );
     }
   };
 
@@ -210,7 +248,7 @@ export default function DomainsPage() {
           >
             <Globe className="w-3.5 h-3.5" />
             <span>Monitored Domains</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-zinc-700/60 text-[10px] text-zinc-300 font-mono">
+            <span className="px-1.5 py-0.2 rounded-full bg-zinc-700/60 text-[10px] text-zinc-300 font-roboto">
               {domains?.length || 0}
             </span>
           </button>
@@ -226,7 +264,7 @@ export default function DomainsPage() {
           >
             <UserCheck className="w-3.5 h-3.5" />
             <span>Privileged Identities</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-[10px] text-indigo-300 font-mono">
+            <span className="px-1.5 py-0.2 rounded-full bg-indigo-500/20 text-[10px] text-indigo-300 font-roboto">
               {identities?.length || 0}
             </span>
           </button>
@@ -264,10 +302,7 @@ export default function DomainsPage() {
           )}
 
           {isDomainsLoading ? (
-            <div className="py-12 flex justify-center items-center text-zinc-500 text-xs gap-2">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Loading perimeter inventory...
-            </div>
+            <DomainGridSkeleton count={3} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {domains?.map(domain => {
@@ -281,13 +316,13 @@ export default function DomainsPage() {
                             <Globe className="w-4 h-4" />
                           </div>
                           <div>
-                            <h3 className="text-sm font-semibold text-white font-mono">{domain.name}</h3>
+                            <h3 className="text-sm font-semibold text-white font-roboto">{domain.name}</h3>
                             {domain.status === 'verified' ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.14)] mt-1">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.14)] mt-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" /> Verified DNS
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium font-mono bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_8px_rgba(245,158,11,0.18)] mt-1">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium font-roboto bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_8px_rgba(245,158,11,0.18)] mt-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_6px_rgba(251,191,36,0.8)]" /> Pending DNS validation
                               </span>
                             )}
@@ -311,11 +346,11 @@ export default function DomainsPage() {
                       <div className="grid grid-cols-2 gap-3 py-3 border-t border-zinc-800/60 text-xs">
                         <div>
                           <span className="text-[11px] text-zinc-500">Exposures</span>
-                          <div className="font-semibold text-zinc-100 font-mono mt-0.5">{domain.exposureCount}</div>
+                          <div className="font-semibold text-zinc-100 font-roboto mt-0.5">{domain.exposureCount}</div>
                         </div>
                         <div>
                           <span className="text-[11px] text-zinc-500">Last scanned</span>
-                          <div className="text-zinc-300 font-mono text-[11px] mt-0.5">
+                          <div className="text-zinc-300 font-roboto text-[11px] mt-0.5">
                             {domain.lastScannedAt ? formatDate(domain.lastScannedAt) : 'Never'}
                           </div>
                         </div>
@@ -373,7 +408,7 @@ export default function DomainsPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-mono">
+                <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-roboto">
                   Business Tier (25 Quota)
                 </span>
               </div>
@@ -386,7 +421,7 @@ export default function DomainsPage() {
                 style={{ width: `${quotaPercent}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[11px] text-zinc-500 font-mono mt-2">
+            <div className="flex items-center justify-between text-[11px] text-zinc-500 font-roboto mt-2">
               <span>{quotaPercent}% capacity utilized</span>
               <span>Need more? Upgrade to Enterprise for Unlimited VIP accounts</span>
             </div>
@@ -411,15 +446,12 @@ export default function DomainsPage() {
             </div>
 
             {isIdentitiesLoading ? (
-              <div className="py-12 flex justify-center items-center text-zinc-500 text-xs gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Loading privileged identities inventory...
-              </div>
+              <TableSkeleton rows={4} cols={6} />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-zinc-800 text-[11px] font-medium text-zinc-500 uppercase tracking-wider font-mono bg-zinc-950/40">
+                    <tr className="border-b border-zinc-800 text-[11px] font-medium text-zinc-500 uppercase tracking-wider font-roboto bg-zinc-950/40">
                       <th className="py-3 px-4">Privileged Identity</th>
                       <th className="py-3 px-4">Scope / Role</th>
                       <th className="py-3 px-4">Domain</th>
@@ -437,8 +469,8 @@ export default function DomainsPage() {
                               <Shield className="w-3.5 h-3.5" />
                             </div>
                             <div>
-                              <div className="font-mono text-zinc-200 font-medium text-xs">{idEntry.email}</div>
-                              <div className="text-[10px] text-zinc-500 font-mono">ID: #{idEntry.id}</div>
+                              <div className="font-roboto text-zinc-200 font-medium text-xs">{idEntry.email}</div>
+                              <div className="text-[10px] text-zinc-500 font-roboto">ID: #{idEntry.id}</div>
                             </div>
                           </div>
                         </td>
@@ -446,17 +478,17 @@ export default function DomainsPage() {
                           {idEntry.role || 'Executive Account'}
                         </td>
                         <td className="py-3 px-4">
-                          <span className="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-zinc-300 font-mono text-[11px]">
+                          <span className="px-2 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-zinc-300 font-roboto text-[11px]">
                             {idEntry.domain}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.14)]">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-roboto font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.14)]">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             Monitored
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">
+                        <td className="py-3 px-4 text-zinc-400 font-roboto text-[11px]">
                           {formatDate(idEntry.createdAt)}
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -508,7 +540,7 @@ export default function DomainsPage() {
                   placeholder="e.g. acme-corp.com or startup.io"
                   value={newDomainInput}
                   onChange={(e) => setNewDomainInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-mono text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
                   required
                   autoFocus
                 />
@@ -574,7 +606,7 @@ export default function DomainsPage() {
                 <select
                   value={identityDomain}
                   onChange={(e) => setIdentityDomain(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 font-mono text-xs focus:outline-none focus:border-zinc-700 cursor-pointer"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 font-roboto text-xs focus:outline-none focus:border-zinc-700 cursor-pointer"
                 >
                   {domains && domains.length > 0 ? (
                     domains.map(d => (
@@ -593,7 +625,7 @@ export default function DomainsPage() {
                   placeholder="e.g. ciso@company.com or devops-lead@company.com"
                   value={identityEmail}
                   onChange={(e) => setIdentityEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-mono text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
                   required
                   autoFocus
                 />
@@ -658,24 +690,109 @@ export default function DomainsPage() {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-2xl">
             <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-              <h3 className="text-sm font-semibold text-white">DNS TXT Verification</h3>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-sm font-semibold text-white">DNS Ownership Verification</h3>
+              </div>
               <button onClick={() => setVerifyingDomain(null)} className="text-zinc-400 hover:text-white cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="mt-4 space-y-3 text-xs">
-              <p className="text-zinc-300">
-                To confirm organizational ownership of <span className="font-mono text-white font-semibold">{verifyingDomain.name}</span>, add the following TXT record to your DNS provider:
+
+            <div className="mt-4 space-y-3.5 text-xs">
+              <p className="text-zinc-300 leading-relaxed">
+                To confirm organizational ownership of <span className="font-roboto text-white font-semibold">{verifyingDomain.name}</span>, add this TXT record to your domain registrar or DNS management console (Cloudflare, Route53, GoDaddy):
               </p>
               
-              <div className="p-3 bg-zinc-950 border border-zinc-850 rounded-lg space-y-1.5 font-mono text-[11px]">
-                <div className="text-zinc-500">Record Type: <span className="text-zinc-200">TXT</span></div>
-                <div className="text-zinc-500">Host / Name: <span className="text-zinc-200">@ or _breachguard-verify</span></div>
-                <div className="text-zinc-500">Value: <span className="text-emerald-400">breachguard-site-verification=org-sec-77x90</span></div>
-              </div>
+              {verificationLoading ? (
+                <div className="p-6 bg-zinc-950 border border-zinc-800/80 rounded-xl flex flex-col items-center justify-center text-zinc-400 gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
+                  <span className="text-[11px] font-roboto">Generating cryptographic verification token...</span>
+                </div>
+              ) : (
+                <div className="p-3.5 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2.5 font-roboto text-[11px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-zinc-500 font-medium">Record Type</span>
+                    <span className="px-2 py-0.5 rounded bg-zinc-800/80 text-zinc-200 font-semibold text-[10px]">
+                      {verificationRecord?.record_type || 'TXT'}
+                    </span>
+                  </div>
 
-              <p className="text-[11px] text-zinc-500">
-                Once propagated, click Verify Record below to activate automated perimeter verification.
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-zinc-500 font-medium">Host / Name</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const hostVal = verificationRecord?.host || `_breachguard-verify.${verifyingDomain.name}`;
+                          navigator.clipboard.writeText(hostVal);
+                          setCopiedField('host');
+                          setTimeout(() => setCopiedField(null), 2500);
+                        }}
+                        className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        {copiedField === 'host' ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span className="text-emerald-400 font-medium">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy host</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="p-2 bg-zinc-900/90 border border-zinc-800/60 rounded text-zinc-200 break-all select-all font-roboto text-[10.5px]">
+                      {verificationRecord?.host || `_breachguard-verify.${verifyingDomain.name}`}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-zinc-500 font-medium">TXT Value</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const valStr = verificationRecord?.value || 'breachguard-site-verification=loading';
+                          navigator.clipboard.writeText(valStr);
+                          setCopiedField('value');
+                          setTimeout(() => setCopiedField(null), 2500);
+                        }}
+                        className="text-[10px] text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                      >
+                        {copiedField === 'value' ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span className="text-emerald-400 font-medium">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Copy value</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="p-2 bg-zinc-900/90 border border-zinc-800/60 rounded text-emerald-400 break-all select-all font-roboto text-[10.5px]">
+                      {verificationRecord?.value || 'breachguard-site-verification=...'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {verificationError && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 text-xs text-rose-300 flex items-start gap-2.5 shadow-[0_0_12px_rgba(244,63,94,0.12)]">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span className="leading-relaxed">{verificationError}</span>
+                </div>
+              )}
+
+              <p className="text-[11px] text-zinc-500 leading-normal">
+                Once saved in your DNS zone, click <strong className="text-zinc-400">Verify Record Now</strong>. Note that global DNS propagation can take 1 to 5 minutes depending on your TTL.
               </p>
 
               <div className="flex items-center justify-end gap-2 pt-2">
@@ -689,18 +806,18 @@ export default function DomainsPage() {
                 <button
                   type="button"
                   onClick={() => handleVerify(verifyingDomain.id)}
-                  disabled={verifyDomainMutation.isPending}
+                  disabled={verifyDomainMutation.isPending || verificationLoading}
                   className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {verifyDomainMutation.isPending ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Verifying DNS TXT...</span>
+                      <span>Resolving DNS TXT...</span>
                     </>
                   ) : (
                     <>
                       <Check className="w-3.5 h-3.5" />
-                      <span>Verify record now</span>
+                      <span>Verify Record Now</span>
                     </>
                   )}
                 </button>

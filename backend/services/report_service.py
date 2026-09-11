@@ -67,6 +67,18 @@ def mask_email(email: str) -> str:
         masked_user = user[0] + "***" + user[-1]
     return f"{masked_user}@{dom}"
 
+def safe_text(val: Any) -> str:
+    """
+    BG-SEC-08: Strictly escapes HTML/XML control characters (&, <, >, ", ')
+    before passing untrusted text into ReportLab Paragraph flowables.
+    Neutralizes XML parsing crashes (ParaScanError) and malicious markup injection.
+    """
+    if val is None:
+        return ""
+    text = str(val).strip()
+    escaped = html.escape(text, quote=True)
+    return escaped.replace("\n", "<br/>")
+
 async def generate_pdf_report(
     org_id: int, 
     report_type: str = "Full Assessment", 
@@ -622,30 +634,36 @@ async def generate_pdf_report(
             f_sev_color = "#DC2626" if finding.severity == "critical" else ("#EA580C" if finding.severity == "high" else ("#CA8A04" if finding.severity == "medium" else "#16A34A"))
             
             finding_content = []
-            # Title & Header
+            # Title & Header with safe_text
+            f_id_safe = safe_text(finding.finding_id)
+            f_title_safe = safe_text(finding.title)
             finding_content.append(Paragraph(
-                f"<b>{finding.finding_id}: {html.escape(finding.title)}</b>",
+                f"<b>{f_id_safe}: {f_title_safe}</b>",
                 ParagraphStyle("FTitle", fontName="Helvetica-Bold", fontSize=10.5, leading=14, textColor=primary_color)
             ))
             finding_content.append(Spacer(1, 4))
             
-            # Attributes metadata bar
+            # Attributes metadata bar with safe_text
+            cat_safe = safe_text(finding.category.replace('_', ' ').title())
+            stat_safe = safe_text(finding.status.upper())
+            conf_safe = safe_text(finding.confidence.upper())
+            asset_safe = safe_text(finding.asset)
             meta_bar = (
                 f"<b>Severity:</b> <font color='{f_sev_color}'>{finding.severity.upper()}</font> | "
-                f"<b>Category:</b> {finding.category.replace('_', ' ').title()} | "
-                f"<b>Status:</b> {finding.status.upper()} | "
-                f"<b>Confidence:</b> {finding.confidence.upper()} | "
-                f"<b>Affected Asset:</b> <code>{html.escape(finding.asset)}</code>"
+                f"<b>Category:</b> {cat_safe} | "
+                f"<b>Status:</b> {stat_safe} | "
+                f"<b>Confidence:</b> {conf_safe} | "
+                f"<b>Affected Asset:</b> <font name='Courier'>{asset_safe}</font>"
             )
             finding_content.append(Paragraph(meta_bar, body_style))
             finding_content.append(Spacer(1, 6))
 
-            # Table of Finding Details
+            # Table of Finding Details with safe_text
             f_details = [
-                [Paragraph("<b>Observed Evidence:</b>", body_bold), Paragraph(html.escape(finding.evidence or "Observed via public perimeter checks."), body_style)],
-                [Paragraph("<b>Security Impact:</b>", body_bold), Paragraph(html.escape(finding.security_impact or "Increases external attack surface exposure."), body_style)],
-                [Paragraph("<b>Recommended Remediation:</b>", body_bold), Paragraph(html.escape(finding.recommended_remediation or "Review configuration and restrict access."), body_style)],
-                [Paragraph("<b>Framework References:</b>", body_bold), Paragraph(f"<font color='#475569'>{html.escape(finding.references or 'NIST CSF / CIS Controls')}</font>", body_style)],
+                [Paragraph("<b>Observed Evidence:</b>", body_bold), Paragraph(safe_text(finding.evidence or "Observed via public perimeter checks."), body_style)],
+                [Paragraph("<b>Security Impact:</b>", body_bold), Paragraph(safe_text(finding.security_impact or "Increases external attack surface exposure."), body_style)],
+                [Paragraph("<b>Recommended Remediation:</b>", body_bold), Paragraph(safe_text(finding.recommended_remediation or "Review configuration and restrict access."), body_style)],
+                [Paragraph("<b>Framework References:</b>", body_bold), Paragraph(f"<font color='#475569'>{safe_text(finding.references or 'NIST CSF / CIS Controls')}</font>", body_style)],
             ]
             t_f = Table(f_details, colWidths=[130, 410])
             t_f.setStyle(TableStyle([
@@ -693,7 +711,7 @@ async def generate_pdf_report(
         [
             Paragraph("<b>Phase 2: Short-Term Remediation (1–7 Days)</b>", body_bold),
             Paragraph(
-                "• <b>Enforce Email Anti-Spoofing:</b> Transition DMARC policy from <code>p=none</code> to <code>p=quarantine</code> or <code>p=reject</code>. Verify SPF syntax.<br/>"
+                "• <b>Enforce Email Anti-Spoofing:</b> Transition DMARC policy from <font name='Courier'>p=none</font> to <font name='Courier'>p=quarantine</font> or <font name='Courier'>p=reject</font>. Verify SPF syntax.<br/>"
                 "• <b>Isolate Development Hostnames:</b> Place pre-production interfaces (dev, staging) behind authenticated reverse proxies or IP allowlists.",
                 body_style
             )

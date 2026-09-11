@@ -18,8 +18,13 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: var(--font-inter), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 }
 
-.font-roboto {
-  font-family: var(--font-roboto), 'Roboto', system-ui, sans-serif !important;
+.font-roboto,
+.font-mono,
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-roboto), 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 }
 
 .font-inter {

@@ -30,3 +30,12 @@ class Token(BaseModel):
     model_config = ConfigDict(extra="forbid")
     access_token: str
     token_type: str
+
+class ForgotPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    token: str = Field(..., min_length=10)
+    new_password: str = Field(..., min_length=8, max_length=128, description="New password must be at least 8 characters.")

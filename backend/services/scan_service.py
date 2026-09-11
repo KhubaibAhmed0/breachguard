@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import httpx
 import json
 from datetime import datetime, timedelta
@@ -88,23 +89,36 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
 
         all_collected_findings = []
 
-        # ==========================================
-        # PILLAR 1: EXTERNAL ATTACK SURFACE
-        # ==========================================
-        attack_surface_res = await analyze_attack_surface(domain.domain)
+        # Concurrently execute independent security intelligence pillars
+        attack_surface_task = analyze_attack_surface(domain.domain)
+        email_sec_task = analyze_email_security(domain.domain)
+        threat_intel_task = analyze_threat_intelligence(domain.domain)
+
+        attack_surface_res, email_sec_res, threat_intel_res = await asyncio.gather(
+            attack_surface_task,
+            email_sec_task,
+            threat_intel_task
+        )
+
         all_collected_findings.extend(attack_surface_res.get("findings", []))
+        all_collected_findings.extend(email_sec_res.get("findings", []))
+        all_collected_findings.extend(threat_intel_res.get("findings", []))
         
-        # Persist discovered assets
+        # Batch load existing assets to eliminate N+1 database queries
+        existing_assets_res = await db.execute(
+            select(DiscoveredAsset).where(DiscoveredAsset.domain_id == domain.id)
+        )
+        existing_assets_map = {a.hostname: a for a in existing_assets_res.scalars().all()}
+
         for asset_data in attack_surface_res.get("assets", []):
             host = asset_data.get("hostname")
-            existing_asset = await db.execute(
-                select(DiscoveredAsset).where(
-                    DiscoveredAsset.domain_id == domain.id,
-                    DiscoveredAsset.hostname == host
-                )
-            )
-            asset_row = existing_asset.scalars().first()
-            if not asset_row:
+            if host in existing_assets_map:
+                asset_row = existing_assets_map[host]
+                asset_row.ip_address = asset_data.get("ip_address")
+                asset_row.open_ports = json.dumps(asset_data.get("open_ports", []))
+                asset_row.services = json.dumps(asset_data.get("services", {}))
+                asset_row.last_seen_at = datetime.utcnow()
+            else:
                 asset_row = DiscoveredAsset(
                     org_id=domain.org_id,
                     domain_id=domain.id,
@@ -117,18 +131,8 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
                     source=asset_data.get("source", "crt.sh")
                 )
                 db.add(asset_row)
-            else:
-                asset_row.ip_address = asset_data.get("ip_address")
-                asset_row.open_ports = json.dumps(asset_data.get("open_ports", []))
-                asset_row.services = json.dumps(asset_data.get("services", {}))
-                asset_row.last_seen_at = datetime.utcnow()
+                existing_assets_map[host] = asset_row
 
-        # ==========================================
-        # PILLAR 2: EMAIL SECURITY POSTURE
-        # ==========================================
-        email_sec_res = await analyze_email_security(domain.domain)
-        all_collected_findings.extend(email_sec_res.get("findings", []))
-        
         # Persist Email Security Assessment
         email_assessment = EmailSecurityAssessment(
             org_id=domain.org_id,
@@ -151,12 +155,6 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
             score=email_sec_res.get("score", 0)
         )
         db.add(email_assessment)
-
-        # ==========================================
-        # PILLAR 3: PUBLIC THREAT INTELLIGENCE
-        # ==========================================
-        threat_intel_res = await analyze_threat_intelligence(domain.domain)
-        all_collected_findings.extend(threat_intel_res.get("findings", []))
 
         # ==========================================
         # PILLAR 4: CREDENTIAL EXPOSURE (Monitored Identities)
@@ -405,6 +403,12 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
                     "high_findings": high_count,
                     "timestamp": datetime.utcnow().isoformat()
                 })
+
+        try:
+            from routers.risk import invalidate_risk_cache
+            invalidate_risk_cache(domain.org_id)
+        except Exception:
+            pass
 
         return {
             "status": "success",

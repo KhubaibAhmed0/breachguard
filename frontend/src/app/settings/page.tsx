@@ -4,13 +4,22 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { useState, useRef, useEffect } from 'react';
 import { 
   User, Bell, CreditCard, Check, Loader2, Send, 
-  Upload, Sparkles, Image as ImageIcon, Trash2, AlertCircle, CheckCircle2 
+  Upload, Sparkles, Image as ImageIcon, Trash2, AlertCircle, CheckCircle2,
+  Users, Plus, Shield, X, ExternalLink, ShieldCheck, UserPlus
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
 import { useIntegrationsSettings, useTestSlackWebhook, useUpdateIntegrations } from '@/hooks/useApi';
+import api from '@/lib/api';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
+
+  // Current user / organization details
+  const [userMe, setUserMe] = useState<any>(null);
+  const [orgName, setOrgName] = useState('Acme CyberCorp');
+  const [adminEmail, setAdminEmail] = useState('admin@acme.com');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSuccessNotice, setProfileSuccessNotice] = useState(false);
 
   // Integrations state & hooks
   const { data: integrationsData } = useIntegrationsSettings();
@@ -23,11 +32,50 @@ export default function SettingsPage() {
 
   // Logo upload state
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [orgName, setOrgName] = useState('Acme CyberCorp');
-  const [adminEmail, setAdminEmail] = useState('admin@acme.com');
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileSuccessNotice, setProfileSuccessNotice] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Team Management state
+  const [teamMembers, setTeamMembers] = useState<any[]>([]);
+  const [isTeamLoading, setIsTeamLoading] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'admin' | 'analyst' | 'member'>('member');
+  const [isInviting, setIsInviting] = useState(false);
+  const [inviteSuccessNotice, setInviteSuccessNotice] = useState<{ email: string; tempPass?: string } | null>(null);
+  const [deletingMemberId, setDeletingMemberId] = useState<number | null>(null);
+
+  // Billing state
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState<string | null>(null);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
+
+  // Load User & Org info
+  const fetchUserMe = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setUserMe(res.data);
+      if (res.data.org_name) setOrgName(res.data.org_name);
+      if (res.data.email) setAdminEmail(res.data.email);
+    } catch {
+      // ignore
+    }
+  };
+
+  const fetchTeamMembers = async () => {
+    setIsTeamLoading(true);
+    try {
+      const res = await api.get('/team/members');
+      setTeamMembers(res.data);
+    } catch {
+      // ignore
+    } finally {
+      setIsTeamLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserMe();
+    fetchTeamMembers();
+  }, []);
 
   useEffect(() => {
     if (integrationsData) {
@@ -97,27 +145,98 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     setIsSavingProfile(true);
-    setTimeout(() => {
-      setIsSavingProfile(false);
+    try {
+      await api.patch('/settings/organization', { name: orgName.trim() });
       setProfileSuccessNotice(true);
+      showToast('success', 'Organization profile updated successfully.');
       setTimeout(() => setProfileSuccessNotice(false), 4000);
-    }, 600);
+    } catch (err: any) {
+      showToast('error', err?.response?.data?.detail || 'Failed to update organization profile.');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  // Team Invite Handler
+  const handleInviteMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim()) return;
+    setIsInviting(true);
+    try {
+      const res = await api.post('/team/members', { email: inviteEmail.trim(), role: inviteRole });
+      setInviteSuccessNotice({
+        email: inviteEmail.trim(),
+        tempPass: res.data?.temporary_password,
+      });
+      setInviteEmail('');
+      setIsInviteModalOpen(false);
+      showToast('success', `Team member ${inviteEmail} invited.`);
+      fetchTeamMembers();
+    } catch (err: any) {
+      showToast('error', err?.response?.data?.detail || 'Failed to invite team member.');
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const handleRemoveMember = async (id: number, email: string) => {
+    if (!confirm(`Remove ${email} from the organization? They will immediately lose access to the workspace.`)) return;
+    try {
+      setDeletingMemberId(id);
+      await api.delete(`/team/members/${id}`);
+      showToast('success', `Member ${email} removed.`);
+      fetchTeamMembers();
+    } catch (err: any) {
+      showToast('error', err?.response?.data?.detail || 'Failed to remove member.');
+    } finally {
+      setDeletingMemberId(null);
+    }
+  };
+
+  // Billing Actions
+  const handleStripeCheckout = async (priceId: string) => {
+    setIsCheckoutLoading(priceId);
+    try {
+      const res = await api.post('/billing/checkout', { price_id: priceId });
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err: any) {
+      showToast('error', err?.response?.data?.detail || 'Failed to initiate checkout.');
+    } finally {
+      setIsCheckoutLoading(null);
+    }
+  };
+
+  const handleStripePortal = async () => {
+    setIsPortalLoading(true);
+    try {
+      const res = await api.post('/billing/portal');
+      if (res.data?.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err: any) {
+      showToast('error', err?.response?.data?.detail || 'Failed to access billing portal.');
+    } finally {
+      setIsPortalLoading(false);
+    }
   };
 
   const tabs = [
     { id: 'profile', label: 'Organization', icon: User },
+    { id: 'team', label: 'Team Members', icon: Users },
     { id: 'integrations', label: 'Notification Channels', icon: Bell },
     { id: 'billing', label: 'Subscription & Billing', icon: CreditCard },
   ];
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl">
+      <div className="max-w-4xl">
         <div className="pb-4 border-b border-zinc-900 mb-6">
           <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">Organization Settings</h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage team access, notification hooks, and billing tiers.</p>
+          <p className="text-xs sm:text-sm text-zinc-400 mt-1">Manage team access, notification hooks, and subscription plans.</p>
         </div>
 
         {/* Global Toast Alert */}
@@ -146,63 +265,75 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
-        
-        {/* Tabs */}
-        <div className="flex border-b border-zinc-900 mb-6 gap-6 text-xs">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-2 pb-3 font-medium transition-colors border-b-2 -mb-px cursor-pointer",
-                activeTab === tab.id 
-                  ? "border-zinc-200 text-zinc-100" 
-                  : "border-transparent text-zinc-500 hover:text-zinc-300"
-              )}
-            >
-              <tab.icon className="w-3.5 h-3.5" />
-              {tab.label}
-            </button>
-          ))}
+
+        {/* Tabs Navigation */}
+        <div className="flex gap-2 border-b border-zinc-800 pb-px mb-6 overflow-x-auto">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 text-xs font-medium rounded-t-lg transition-colors cursor-pointer border-b-2 whitespace-nowrap",
+                  isActive
+                    ? "border-white text-white bg-zinc-900/60"
+                    : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Content Container */}
-        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-6">
+        {/* Tab Content */}
+        <div>
+          {/* 1. Profile / Organization Tab */}
           {activeTab === 'profile' && (
             <div className="space-y-6 max-w-xl text-xs">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-zinc-400 mb-1.5 font-medium">Organization Name</label>
-                  <input 
-                    type="text" 
-                    value={orgName}
-                    onChange={(e) => setOrgName(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-zinc-700 font-medium" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-zinc-400 mb-1.5 font-medium">Security Administrator Email</label>
-                  <input 
-                    type="email" 
-                    value={adminEmail}
-                    onChange={(e) => setAdminEmail(e.target.value)}
-                    className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 focus:outline-none focus:border-zinc-700 font-mono text-xs" 
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="block text-zinc-300 font-medium">Organization Name</label>
+                <input 
+                  type="text" 
+                  value={orgName} 
+                  onChange={(e) => setOrgName(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs font-roboto text-zinc-200 focus:outline-none focus:border-zinc-700" 
+                />
+                <p className="text-[11px] text-zinc-500">
+                  Displayed on executive security audit reports and team notifications.
+                </p>
               </div>
 
-              {/* Company Logo Upload Component */}
-              <div className="pt-4 border-t border-zinc-800/80 space-y-3">
+              <div className="space-y-1.5">
+                <label className="block text-zinc-300 font-medium">Admin Contact Email</label>
+                <input 
+                  type="email" 
+                  value={adminEmail} 
+                  disabled
+                  className="w-full px-3 py-2 bg-zinc-950/50 border border-zinc-850 rounded-lg text-xs font-roboto text-zinc-400 cursor-not-allowed" 
+                />
+                <p className="text-[11px] text-zinc-500">
+                  Primary security operations contact receiving critical breach alerts.
+                </p>
+              </div>
+
+              {/* Co-Branded Report Logo */}
+              <div className="space-y-2 pt-4 border-t border-zinc-850">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="block text-zinc-300 font-medium text-xs">Company Logo</label>
-                    <p className="text-[11px] text-zinc-500 mt-0.5">
+                    <label className="block text-zinc-300 font-medium text-xs">
+                      Executive Report Logo
+                    </label>
+                    <p className="text-[11px] text-zinc-500">
                       Upload PNG or JPG image for branded executive PDF audit reports.
                     </p>
                   </div>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
                     <Sparkles className="w-3 h-3 text-indigo-400" />
-                    Included in Business & Enterprise
+                    Included in All Plans
                   </span>
                 </div>
 
@@ -226,7 +357,7 @@ export default function SettingsPage() {
                   ) : (
                     <div className="w-28 h-20 bg-zinc-900/60 border border-dashed border-zinc-800 rounded-lg flex flex-col items-center justify-center text-zinc-500 gap-1">
                       <ImageIcon className="w-5 h-5 text-zinc-600" />
-                      <span className="text-[10px] font-mono">No Logo</span>
+                      <span className="text-[10px] font-roboto">No Logo</span>
                     </div>
                   )}
 
@@ -267,7 +398,7 @@ export default function SettingsPage() {
               {profileSuccessNotice && (
                 <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2.5 shadow-[0_0_12px_rgba(16,185,129,0.12)]">
                   <Check className="w-4 h-4 text-emerald-400" />
-                  <span>Profile preferences updated successfully.</span>
+                  <span>Organization preferences saved.</span>
                 </div>
               )}
 
@@ -284,31 +415,151 @@ export default function SettingsPage() {
                       Saving...
                     </>
                   ) : (
-                    'Save preferences'
+                    'Save changes'
                   )}
                 </button>
               </div>
             </div>
           )}
 
+          {/* 2. Team Members Tab */}
+          {activeTab === 'team' && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">Team Access &amp; Roles</h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Authorize coworkers to collaborate on threat intelligence, attack surface management, and breach response.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsInviteModalOpen(true)}
+                  className="px-3.5 py-2 bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer shadow-sm"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  Invite Teammate
+                </button>
+              </div>
+
+              {/* Temporary Password Notice */}
+              {inviteSuccessNotice && (
+                <div className="p-4 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-200 text-xs flex items-start gap-3 shadow-lg">
+                  <ShieldCheck className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
+                  <div className="leading-relaxed flex-1">
+                    <strong className="block text-white font-semibold mb-1">
+                      Teammate {inviteSuccessNotice.email} has been provisioned
+                    </strong>
+                    {inviteSuccessNotice.tempPass ? (
+                      <div>
+                        Temporary sign-in password: <span className="font-roboto text-white font-bold bg-zinc-900 px-2 py-0.5 rounded border border-zinc-750">{inviteSuccessNotice.tempPass}</span>
+                        <p className="text-[11px] text-zinc-400 mt-1">
+                          An automated invitation email was dispatched. Share this temporary password if your outbound email delivery is restricted.
+                        </p>
+                      </div>
+                    ) : (
+                      <span>An invitation email has been dispatched with sign-in instructions.</span>
+                    )}
+                  </div>
+                  <button onClick={() => setInviteSuccessNotice(null)} className="text-zinc-400 hover:text-white text-xs cursor-pointer">
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              {/* Members Table */}
+              <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl overflow-hidden">
+                {isTeamLoading ? (
+                  <div className="p-8 flex items-center justify-center text-zinc-400 gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+                    <span className="text-xs font-roboto">Loading organization members...</span>
+                  </div>
+                ) : (
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-zinc-800 bg-zinc-950/40 text-zinc-400 text-[11px] font-medium uppercase tracking-wider">
+                        <th className="py-3 px-4">Member</th>
+                        <th className="py-3 px-4">Role</th>
+                        <th className="py-3 px-4 hidden sm:table-cell">Added Date</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800/60">
+                      {teamMembers.map((member) => (
+                        <tr key={member.id} className="hover:bg-zinc-900/40 transition-colors">
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-roboto font-semibold text-zinc-200 uppercase text-xs shrink-0">
+                                {member.email.charAt(0)}
+                              </div>
+                              <div>
+                                <div className="font-roboto text-white font-medium flex items-center gap-1.5">
+                                  {member.email}
+                                  {member.is_current_user && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9.5px] font-roboto bg-zinc-800 text-zinc-300 border border-zinc-700">
+                                      You
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={cn(
+                              "px-2.5 py-1 rounded-full text-[10.5px] font-roboto font-semibold uppercase tracking-wider inline-flex items-center gap-1",
+                              member.role === 'admin'
+                                ? "bg-purple-500/10 text-purple-300 border border-purple-500/30"
+                                : member.role === 'analyst'
+                                ? "bg-blue-500/10 text-blue-300 border border-blue-500/30"
+                                : "bg-zinc-800 text-zinc-300 border border-zinc-700"
+                            )}>
+                              {member.role}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-zinc-400 font-roboto text-[11px] hidden sm:table-cell">
+                            {formatDate(member.created_at)}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {member.is_current_user ? (
+                              <span className="text-[11px] text-zinc-600 italic">Current Session</span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMember(member.id, member.email)}
+                                disabled={deletingMemberId === member.id}
+                                className="text-zinc-500 hover:text-rose-400 text-xs font-medium transition-colors cursor-pointer disabled:opacity-40"
+                              >
+                                {deletingMemberId === member.id ? 'Removing...' : 'Revoke'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3. Notification Channels Tab */}
           {activeTab === 'integrations' && (
             <div className="space-y-6 max-w-xl text-xs">
-              {/* Slack Incident Webhook Section */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-zinc-300 font-medium text-xs">
                     Slack Incident Webhook
                   </label>
-                  <span className="text-[11px] text-zinc-500 font-mono">Incoming Webhook</span>
+                  <span className="text-[11px] text-zinc-500 font-roboto">Incoming Webhook</span>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <input 
                     type="url" 
-                    value={slackWebhook}
+                    value={slackWebhook} 
                     onChange={(e) => setSlackWebhook(e.target.value)}
-                    placeholder="https://example.com/webhook/slack-alert" 
-                    className="flex-1 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs font-mono text-zinc-200 focus:outline-none focus:border-zinc-700" 
+                    placeholder="https://hooks.slack.com/services/..." 
+                    className="flex-1 px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs font-roboto text-zinc-200 focus:outline-none focus:border-zinc-700" 
                   />
                   <button
                     type="button"
@@ -340,14 +591,14 @@ export default function SettingsPage() {
                   <label className="block text-zinc-300 font-medium text-xs">
                     SIEM / Custom HTTPS Webhook
                   </label>
-                  <span className="text-[11px] text-zinc-500 font-mono">JSON Ingest</span>
+                  <span className="text-[11px] text-zinc-500 font-roboto">JSON Ingest</span>
                 </div>
                 <input 
                   type="url" 
                   value={siemWebhook}
                   onChange={(e) => setSiemWebhook(e.target.value)}
                   placeholder="https://siem.company.com/api/v1/ingest" 
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 font-mono text-xs focus:outline-none focus:border-zinc-700" 
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 font-roboto text-xs focus:outline-none focus:border-zinc-700" 
                 />
                 <p className="text-[11px] text-zinc-500">
                   Sends raw JSON payloads for ingestion into Splunk, Microsoft Sentinel, or Elastic SIEM.
@@ -374,30 +625,185 @@ export default function SettingsPage() {
             </div>
           )}
 
+          {/* 4. Subscription & Billing Tab */}
           {activeTab === 'billing' && (
-            <div className="space-y-5 text-xs">
-              <div className="p-4 border border-zinc-800 bg-zinc-950 rounded-xl flex items-center justify-between">
+            <div className="space-y-6 text-xs max-w-2xl">
+              <div className="p-5 border border-zinc-800 bg-zinc-950 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h4 className="font-semibold text-zinc-100 text-sm">Business Plan</h4>
-                  <p className="text-zinc-500 text-xs mt-0.5">$239 / month • 3 domains, 25 privileged identities • Billed monthly</p>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-zinc-100 text-sm capitalize">
+                      {userMe?.plan ? `${userMe.plan} Plan` : 'Business Plan'}
+                    </h4>
+                    {userMe?.is_trial && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-roboto font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                        Trial ({userMe?.trial_days_remaining ?? 7} days left)
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-zinc-500 text-xs mt-1">
+                    {userMe?.plan === 'enterprise'
+                      ? '$899 / month • 15 domains, continuous scanning, unlimited identities'
+                      : '$239 / month • 3 domains, 25 privileged identities • Billed monthly'}
+                  </p>
                 </div>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-300 text-xs font-mono font-semibold uppercase tracking-wider rounded-full border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-300 text-xs font-roboto font-semibold uppercase tracking-wider rounded-full border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)] self-start sm:self-auto">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
                   Active
                 </span>
               </div>
-              <div className="flex gap-2.5">
-                <button className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium rounded-lg transition-colors cursor-pointer">
-                  Manage in Stripe portal
-                </button>
-                <button className="px-3.5 py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 font-medium rounded-lg transition-colors cursor-pointer">
-                  Upgrade to Enterprise / MSP ($899/mo)
+
+              {/* Plan Options */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-5 border border-zinc-800 bg-zinc-900/40 rounded-xl flex flex-col justify-between space-y-4">
+                  <div>
+                    <div className="text-white font-semibold text-sm">Business Security</div>
+                    <div className="text-2xl font-bold text-white mt-2 font-roboto">$239<span className="text-xs text-zinc-400 font-normal"> / mo</span></div>
+                    <ul className="mt-3 space-y-2 text-[11px] text-zinc-400">
+                      <li className="flex items-center gap-1.5 text-zinc-300"><Check className="w-3.5 h-3.5 text-emerald-400" /> Up to 3 Monitored Domains</li>
+                      <li className="flex items-center gap-1.5 text-zinc-300"><Check className="w-3.5 h-3.5 text-emerald-400" /> 25 Privileged Identities</li>
+                      <li className="flex items-center gap-1.5 text-zinc-300"><Check className="w-3.5 h-3.5 text-emerald-400" /> Daily Automated Scans</li>
+                      <li className="flex items-center gap-1.5 text-zinc-300"><Check className="w-3.5 h-3.5 text-emerald-400" /> Executive PDF Audit Reports</li>
+                    </ul>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleStripeCheckout('price_business_monthly')}
+                    disabled={isCheckoutLoading === 'price_business_monthly'}
+                    className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isCheckoutLoading === 'price_business_monthly' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      'Switch to Business'
+                    )}
+                  </button>
+                </div>
+
+                <div className="p-5 border border-indigo-500/40 bg-zinc-900/70 rounded-xl flex flex-col justify-between space-y-4 relative shadow-[0_0_20px_rgba(99,102,241,0.08)]">
+                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[9.5px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
+                    Recommended
+                  </div>
+                  <div>
+                    <div className="text-white font-semibold text-sm">Enterprise / MSP</div>
+                    <div className="text-2xl font-bold text-white mt-2 font-roboto">$899<span className="text-xs text-zinc-400 font-normal"> / mo</span></div>
+                    <ul className="mt-3 space-y-2 text-[11px] text-zinc-400">
+                      <li className="flex items-center gap-1.5 text-zinc-300"><Check className="w-3.5 h-3.5 text-emerald-400" /> Up to 15 Monitored Domains</li>
+                      <li className="flex items-center gap-1.5 text-zinc-300"><Check className="w-3.5 h-3.5 text-emerald-400" /> Multi-Tenant Client Portals</li>
+                      <li className="flex items-center gap-1.5 text-zinc-300"><Check className="w-3.5 h-3.5 text-emerald-400" /> Continuous 1-Hour Threat Cadence</li>
+                      <li className="flex items-center gap-1.5 text-zinc-300"><Check className="w-3.5 h-3.5 text-emerald-400" /> SIEM &amp; Splunk JSON Hooks</li>
+                    </ul>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleStripeCheckout('price_enterprise_monthly')}
+                    disabled={isCheckoutLoading === 'price_enterprise_monthly'}
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-md"
+                  >
+                    {isCheckoutLoading === 'price_enterprise_monthly' ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      'Upgrade to Enterprise'
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Portal Button */}
+              <div className="pt-2 flex items-center justify-between border-t border-zinc-800">
+                <span className="text-zinc-500 text-[11px]">
+                  Need invoices, tax receipts, or payment method updates?
+                </span>
+                <button
+                  type="button"
+                  onClick={handleStripePortal}
+                  disabled={isPortalLoading}
+                  className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {isPortalLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      <ExternalLink className="w-3 h-3" />
+                      <span>Stripe Customer Portal</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Invite Member Modal */}
+      {isInviteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                  <UserPlus className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-sm font-semibold text-white">Invite Team Member</h3>
+              </div>
+              <button onClick={() => setIsInviteModalOpen(false)} className="text-zinc-400 hover:text-white cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleInviteMember} className="mt-4 space-y-4 text-xs">
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-medium">Work Email Address</label>
+                <input 
+                  type="email"
+                  placeholder="analyst@company.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 mb-1.5 font-medium">Workspace Role</label>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 text-xs focus:outline-none focus:border-zinc-700 cursor-pointer"
+                >
+                  <option value="analyst">Analyst (View &amp; scan telemetry, generate audit reports)</option>
+                  <option value="admin">Administrator (Full access, billing, and team management)</option>
+                  <option value="member">Member (Read-only dashboard access)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsInviteModalOpen(false)}
+                  className="px-3.5 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isInviting}
+                  className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                >
+                  {isInviting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Inviting...</span>
+                    </>
+                  ) : (
+                    'Send Invitation'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

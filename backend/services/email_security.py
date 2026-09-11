@@ -1,5 +1,7 @@
 import logging
+import asyncio
 import dns.resolver
+import dns.asyncresolver
 import dns.dnssec
 import json
 from typing import Dict, Any, List, Optional
@@ -9,8 +11,58 @@ logger = logging.getLogger(__name__)
 
 COMMON_DKIM_SELECTORS = ["google", "k1", "default", "s1", "selector1", "mail", "dkim", "smtp", "2023", "2024"]
 
+async def query_dns_txt_async(name: str, timeout: float = 2.5) -> List[str]:
+    """Asynchronously queries DNS TXT records with non-blocking asyncresolver."""
+    records = []
+    try:
+        resolver = dns.asyncresolver.Resolver()
+        resolver.timeout = timeout
+        resolver.lifetime = timeout
+        answers = await resolver.resolve(name, "TXT")
+        for rdata in answers:
+            txt_content = b"".join(rdata.strings).decode("utf-8", errors="replace")
+            records.append(txt_content)
+    except Exception:
+        pass
+    return records
+
+async def query_dns_mx_async(domain: str, timeout: float = 2.5) -> List[Dict[str, Any]]:
+    """Asynchronously queries MX records for the domain."""
+    mx_records = []
+    try:
+        resolver = dns.asyncresolver.Resolver()
+        resolver.timeout = timeout
+        resolver.lifetime = timeout
+        answers = await resolver.resolve(domain, "MX")
+        for rdata in answers:
+            mx_records.append({
+                "preference": rdata.preference,
+                "exchange": str(rdata.exchange).rstrip(".")
+            })
+    except Exception:
+        pass
+    return sorted(mx_records, key=lambda x: x["preference"])
+
+async def check_dnssec_async(domain: str, timeout: float = 2.5) -> bool:
+    """Asynchronously checks if DNSSEC DNSKEY or DS records are published."""
+    try:
+        resolver = dns.asyncresolver.Resolver()
+        resolver.timeout = timeout
+        resolver.lifetime = timeout
+        await resolver.resolve(domain, "DNSKEY")
+        return True
+    except Exception:
+        try:
+            resolver = dns.asyncresolver.Resolver()
+            resolver.timeout = timeout
+            resolver.lifetime = timeout
+            await resolver.resolve(domain, "DS")
+            return True
+        except Exception:
+            return False
+
 def query_dns_txt(name: str, timeout: float = 3.0) -> List[str]:
-    """Queries DNS TXT records with a short timeout."""
+    """Synchronous fallback queries DNS TXT records."""
     records = []
     try:
         resolver = dns.resolver.Resolver()
@@ -25,7 +77,7 @@ def query_dns_txt(name: str, timeout: float = 3.0) -> List[str]:
     return records
 
 def query_dns_mx(domain: str, timeout: float = 3.0) -> List[Dict[str, Any]]:
-    """Queries MX records for the domain."""
+    """Synchronous fallback queries MX records."""
     mx_records = []
     try:
         resolver = dns.resolver.Resolver()
@@ -42,7 +94,7 @@ def query_dns_mx(domain: str, timeout: float = 3.0) -> List[Dict[str, Any]]:
     return sorted(mx_records, key=lambda x: x["preference"])
 
 def check_dnssec(domain: str, timeout: float = 3.0) -> bool:
-    """Checks if DNSSEC DNSKEY or DS records are published."""
+    """Synchronous fallback checks DNSSEC."""
     try:
         resolver = dns.resolver.Resolver()
         resolver.timeout = timeout
@@ -75,8 +127,35 @@ async def analyze_email_security(domain: str) -> Dict[str, Any]:
     finding_counter = 1
     score = 0
 
+    # Launch all DNS queries concurrently in parallel
+    spf_task = query_dns_txt_async(clean_domain)
+    dmarc_task = query_dns_txt_async(f"_dmarc.{clean_domain}")
+    mx_task = query_dns_mx_async(clean_domain)
+    mta_sts_task = query_dns_txt_async(f"_mta-sts.{clean_domain}")
+    tls_rpt_task = query_dns_txt_async(f"_smtp._tls.{clean_domain}")
+    dnssec_task = check_dnssec_async(clean_domain)
+    dkim_tasks = [query_dns_txt_async(f"{sel}._domainkey.{clean_domain}") for sel in COMMON_DKIM_SELECTORS]
+
+    (
+        spf_raw,
+        dmarc_raw,
+        mx_list,
+        mta_sts_records,
+        tls_rpt_records,
+        dnssec_active,
+        *dkim_results
+    ) = await asyncio.gather(
+        spf_task,
+        dmarc_task,
+        mx_task,
+        mta_sts_task,
+        tls_rpt_task,
+        dnssec_task,
+        *dkim_tasks
+    )
+
     # 1. SPF Analysis
-    spf_records = [r for r in query_dns_txt(clean_domain) if r.startswith("v=spf1")]
+    spf_records = [r for r in spf_raw if r.startswith("v=spf1")]
     spf_status = "fail"
     spf_record = None
     spf_details = "An SPF record was not detected for the monitored domain."
@@ -132,7 +211,7 @@ async def analyze_email_security(domain: str) -> Dict[str, Any]:
         finding_counter += 1
 
     # 2. DMARC Analysis
-    dmarc_records = [r for r in query_dns_txt(f"_dmarc.{clean_domain}") if r.startswith("v=DMARC1")]
+    dmarc_records = [r for r in dmarc_raw if r.startswith("v=DMARC1")]
     dmarc_status = "fail"
     dmarc_record = None
     dmarc_policy = "missing"
@@ -198,8 +277,7 @@ async def analyze_email_security(domain: str) -> Dict[str, Any]:
     dkim_details = "DKIM could not be verified from publicly discoverable selectors."
     found_selector = None
 
-    for sel in COMMON_DKIM_SELECTORS:
-        txts = query_dns_txt(f"{sel}._domainkey.{clean_domain}")
+    for sel, txts in zip(COMMON_DKIM_SELECTORS, dkim_results):
         for t in txts:
             if "v=DKIM1" in t or "p=" in t:
                 found_selector = sel
@@ -216,7 +294,6 @@ async def analyze_email_security(domain: str) -> Dict[str, Any]:
         score += 7
 
     # 4. MX Record Analysis
-    mx_list = query_dns_mx(clean_domain)
     mx_status = "pass" if mx_list else "fail"
     if mx_list:
         score += 15
@@ -240,18 +317,15 @@ async def analyze_email_security(domain: str) -> Dict[str, Any]:
         finding_counter += 1
 
     # 5. MTA-STS & TLS-RPT
-    mta_sts_records = query_dns_txt(f"_mta-sts.{clean_domain}")
     mta_sts_status = "pass" if any("v=STSv1" in r for r in mta_sts_records) else "not_detected"
     if mta_sts_status == "pass":
         score += 5
 
-    tls_rpt_records = query_dns_txt(f"_smtp._tls.{clean_domain}")
     tls_rpt_status = "pass" if any("v=TLSRPTv1" in r for r in tls_rpt_records) else "not_detected"
     if tls_rpt_status == "pass":
         score += 5
 
     # 6. DNSSEC
-    dnssec_active = check_dnssec(clean_domain)
     dnssec_status = "pass" if dnssec_active else "not_detected"
     if dnssec_active:
         score += 5

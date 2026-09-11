@@ -10,6 +10,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     org_id = Column(Integer, ForeignKey("organizations.id"))
     role = Column(String, default="member")
+    password_changed_at = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     organization = relationship("Organization", back_populates="users")

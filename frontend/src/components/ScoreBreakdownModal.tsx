@@ -130,7 +130,7 @@ export function ScoreBreakdownModal({
             <div>
               <h3 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
                 Score Transparency & Deduction Breakdown
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-mono font-normal">
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-roboto font-normal">
                   Deterministic v2.4
                 </span>
               </h3>
@@ -227,12 +227,12 @@ export function ScoreBreakdownModal({
               {/* Mathematical Formula Card */}
               <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-3">
                 <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Weighted Derivation Formula</span>
-                <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 font-mono text-xs text-zinc-200 overflow-x-auto leading-relaxed">
+                <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 font-roboto text-xs text-zinc-200 overflow-x-auto leading-relaxed">
                   Risk = 100 − [ (30% × Attack Surface) + (25% × Email Posture) + (20% × Threat Intel) + (25% × Credential Posture) ]
                 </div>
                 <div className="flex flex-wrap items-center justify-between text-xs text-zinc-400 pt-1">
-                  <span>Weighted Defense Posture: <strong className="text-white font-mono">{breakdown?.weighted_posture_score ?? (100 - overallScore)}/100</strong></span>
-                  <span>Active Cyber Risk: <strong className="text-indigo-400 font-mono">{overallScore}/100 ({riskLevel})</strong></span>
+                  <span>Weighted Defense Posture: <strong className="text-white font-roboto">{breakdown?.weighted_posture_score ?? (100 - overallScore)}/100</strong></span>
+                  <span>Active Cyber Risk: <strong className="text-indigo-400 font-roboto">{overallScore}/100 ({riskLevel})</strong></span>
                 </div>
               </div>
 
@@ -250,11 +250,11 @@ export function ScoreBreakdownModal({
                         <Network className="w-4 h-4 text-cyan-400" />
                         <span className="font-semibold text-zinc-200 text-xs">Attack Surface (30% weight)</span>
                       </div>
-                      <span className="text-xs font-mono text-zinc-400 group-hover:text-cyan-400 flex items-center gap-1">
+                      <span className="text-xs font-roboto text-zinc-400 group-hover:text-cyan-400 flex items-center gap-1">
                         Inspect &rarr;
                       </span>
                     </div>
-                    <div className="flex items-baseline justify-between text-xs font-mono">
+                    <div className="flex items-baseline justify-between text-xs font-roboto">
                       <span className="text-zinc-400">Defense Posture: <strong className="text-white">{categories.attack_surface}/100</strong></span>
                       <span className="text-zinc-400">Risk Added: <strong className="text-amber-400">+{contributions.attack_surface?.risk_points ?? ((100 - categories.attack_surface) * 0.3).toFixed(1)} pts</strong></span>
                     </div>
@@ -276,11 +276,11 @@ export function ScoreBreakdownModal({
                         <MailCheck className="w-4 h-4 text-emerald-400" />
                         <span className="font-semibold text-zinc-200 text-xs">Email Security (25% weight)</span>
                       </div>
-                      <span className="text-xs font-mono text-zinc-400 group-hover:text-emerald-400 flex items-center gap-1">
+                      <span className="text-xs font-roboto text-zinc-400 group-hover:text-emerald-400 flex items-center gap-1">
                         Inspect &rarr;
                       </span>
                     </div>
-                    <div className="flex items-baseline justify-between text-xs font-mono">
+                    <div className="flex items-baseline justify-between text-xs font-roboto">
                       <span className="text-zinc-400">Defense Posture: <strong className="text-white">{categories.email_security}/100</strong></span>
                       <span className="text-zinc-400">Risk Added: <strong className="text-amber-400">+{contributions.email_security?.risk_points ?? ((100 - categories.email_security) * 0.25).toFixed(1)} pts</strong></span>
                     </div>
@@ -302,11 +302,11 @@ export function ScoreBreakdownModal({
                         <Radar className="w-4 h-4 text-blue-400" />
                         <span className="font-semibold text-zinc-200 text-xs">Threat Intel (20% weight)</span>
                       </div>
-                      <span className="text-xs font-mono text-zinc-400 group-hover:text-blue-400 flex items-center gap-1">
+                      <span className="text-xs font-roboto text-zinc-400 group-hover:text-blue-400 flex items-center gap-1">
                         Inspect &rarr;
                       </span>
                     </div>
-                    <div className="flex items-baseline justify-between text-xs font-mono">
+                    <div className="flex items-baseline justify-between text-xs font-roboto">
                       <span className="text-zinc-400">Defense Posture: <strong className="text-white">{categories.threat_intelligence}/100</strong></span>
                       <span className="text-zinc-400">Risk Added: <strong className="text-amber-400">+{contributions.threat_intelligence?.risk_points ?? ((100 - categories.threat_intelligence) * 0.2).toFixed(1)} pts</strong></span>
                     </div>
@@ -328,11 +328,11 @@ export function ScoreBreakdownModal({
                         <KeyRound className="w-4 h-4 text-amber-400" />
                         <span className="font-semibold text-zinc-200 text-xs">Credential Exposure (25% weight)</span>
                       </div>
-                      <span className="text-xs font-mono text-zinc-400 group-hover:text-amber-400 flex items-center gap-1">
+                      <span className="text-xs font-roboto text-zinc-400 group-hover:text-amber-400 flex items-center gap-1">
                         Inspect &rarr;
                       </span>
                     </div>
-                    <div className="flex items-baseline justify-between text-xs font-mono">
+                    <div className="flex items-baseline justify-between text-xs font-roboto">
                       <span className="text-zinc-400">Defense Posture: <strong className="text-white">{categories.credential_exposure}/100</strong></span>
                       <span className="text-zinc-400">Risk Added: <strong className="text-amber-400">+{contributions.credential_exposure?.risk_points ?? ((100 - categories.credential_exposure) * 0.25).toFixed(1)} pts</strong></span>
                     </div>
@@ -355,12 +355,12 @@ export function ScoreBreakdownModal({
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-semibold text-white tracking-tight">Deterministic Path to Minimal Risk</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-roboto font-semibold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                       High Impact
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 leading-relaxed font-roboto">
-                    Remediating open perimeter findings or advancing your email anti-spoofing policy (<code className="text-emerald-300 px-1.5 py-0.5 rounded bg-zinc-900 border border-emerald-900/60 font-mono">p=reject</code>) restores up to +20 posture points, driving active cyber risk down to single digits.
+                    Remediating open perimeter findings or advancing your email anti-spoofing policy (<code className="text-emerald-300 px-1.5 py-0.5 rounded bg-zinc-900 border border-emerald-900/60 font-roboto">p=reject</code>) restores up to +20 posture points, driving active cyber risk down to single digits.
                   </p>
                 </div>
               </div>
@@ -374,7 +374,7 @@ export function ScoreBreakdownModal({
                   <div className="flex items-center gap-2">
                     <currentPillar.icon className="w-4 h-4 text-indigo-400" />
                     <h4 className="text-sm font-semibold text-white">{currentPillar.title}</h4>
-                    <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 font-mono">
+                    <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 font-roboto">
                       Weight: {currentPillar.weight}
                     </span>
                   </div>
@@ -385,10 +385,10 @@ export function ScoreBreakdownModal({
 
                 <div className="flex items-center gap-4 bg-zinc-950 px-4 py-2.5 rounded-lg border border-zinc-800/80 shrink-0">
                   <div className="text-right">
-                    <div className="text-2xl font-bold font-mono text-white">
+                    <div className="text-2xl font-bold font-roboto text-white">
                       {currentPillar.score}<span className="text-xs text-zinc-500"> / 100</span>
                     </div>
-                    <div className="text-[11px] text-zinc-400 font-mono uppercase">
+                    <div className="text-[11px] text-zinc-400 font-roboto uppercase">
                       Baseline: {currentPillar.baseScore} pts
                     </div>
                   </div>
@@ -402,7 +402,7 @@ export function ScoreBreakdownModal({
                     Evidence-Based Deductions ({currentPillar.deductions.length})
                   </span>
                   {currentPillar.deductions.length > 0 && (
-                    <span className="text-xs font-mono text-red-400">
+                    <span className="text-xs font-roboto text-red-400">
                       Total Deducted: -{currentPillar.baseScore - currentPillar.score} pts
                     </span>
                   )}
@@ -427,21 +427,21 @@ export function ScoreBreakdownModal({
                         switch (severity) {
                           case 'critical':
                             return (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_10px_rgba(244,63,94,0.18)]">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-roboto uppercase font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_10px_rgba(244,63,94,0.18)]">
                                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
                                 CRITICAL
                               </span>
                             );
                           case 'high':
                             return (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_10px_rgba(249,115,22,0.18)]">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-roboto uppercase font-semibold bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_10px_rgba(249,115,22,0.18)]">
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
                                 HIGH
                               </span>
                             );
                           default:
                             return (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono uppercase font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_10px_rgba(245,158,11,0.18)]">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-roboto uppercase font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_10px_rgba(245,158,11,0.18)]">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                                 MEDIUM
                               </span>
@@ -462,18 +462,18 @@ export function ScoreBreakdownModal({
                                   {d.title || d.reason}
                                 </span>
                                 {d.finding_id && (
-                                  <span className="text-[11px] font-mono text-zinc-500">
+                                  <span className="text-[11px] font-roboto text-zinc-500">
                                     [{d.finding_id}]
                                   </span>
                                 )}
                               </div>
                               {d.asset && (
-                                <div className="text-xs text-zinc-400 font-mono">
+                                <div className="text-xs text-zinc-400 font-roboto">
                                   Asset Target: <strong className="text-zinc-200">{d.asset}</strong>
                                 </div>
                               )}
                               {d.evidence && (
-                                <div className="text-xs text-zinc-300 bg-zinc-950/80 p-2 rounded-lg border border-zinc-800/80 font-mono">
+                                <div className="text-xs text-zinc-300 bg-zinc-950/80 p-2 rounded-lg border border-zinc-800/80 font-roboto">
                                   Telemetry Evidence: <span className="text-zinc-200 font-medium">{d.evidence}</span>
                                 </div>
                               )}
@@ -484,7 +484,7 @@ export function ScoreBreakdownModal({
                               )}
                             </div>
 
-                            <div className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 font-mono font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(244,63,94,0.12)]">
+                            <div className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 font-roboto font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(244,63,94,0.12)]">
                               -{points} pts
                             </div>
                           </div>

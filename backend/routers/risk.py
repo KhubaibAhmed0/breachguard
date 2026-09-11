@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
-from typing import Optional
+from typing import Optional, Dict, Any, Tuple
+import time
 
 from core.database import get_db
 from models.user import User
@@ -15,12 +16,34 @@ from services.unified_risk_engine import compute_unified_risk
 
 router = APIRouter(prefix="/api/risk", tags=["risk"])
 
+# Fast in-memory cache for repeated risk overview requests
+# Key: (org_id, domain_id), Value: (timestamp, data_dict)
+_RISK_CACHE: Dict[Tuple[int, Optional[int]], Tuple[float, Dict[str, Any]]] = {}
+_CACHE_TTL_SECONDS = 20.0
+
+def invalidate_risk_cache(org_id: Optional[int] = None):
+    global _RISK_CACHE
+    if org_id is None:
+        _RISK_CACHE.clear()
+    else:
+        keys_to_del = [k for k in _RISK_CACHE if k[0] == org_id]
+        for k in keys_to_del:
+            _RISK_CACHE.pop(k, None)
+
 @router.get("/overview")
 async def get_risk_overview(
     domain_id: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Check in-memory cache first
+    cache_key = (current_user.org_id, domain_id)
+    now = time.time()
+    if cache_key in _RISK_CACHE:
+        cached_time, cached_data = _RISK_CACHE[cache_key]
+        if now - cached_time < _CACHE_TTL_SECONDS:
+            return cached_data
+
     # 1. Check monitored domains count
     d_query = select(func.count(MonitoredDomain.id)).where(MonitoredDomain.org_id == current_user.org_id)
     if domain_id:
@@ -30,7 +53,7 @@ async def get_risk_overview(
 
     # If organization has zero monitored domains, strictly return unassessed zero-state
     if monitored_domains_count == 0:
-        return {
+        zero_state = {
             "overall_risk_score": 0,
             "risk_level": "NOT ASSESSED",
             "risk_color": "#71717A",
@@ -55,23 +78,26 @@ async def get_risk_overview(
             "assessed": False,
             "last_assessed_at": None
         }
+        _RISK_CACHE[cache_key] = (now, zero_state)
+        return zero_state
 
-    # 2. Fetch live discovered assets
-    a_query = select(DiscoveredAsset).where(DiscoveredAsset.org_id == current_user.org_id)
+    # 2. Count live discovered assets without pulling entire records
+    a_query = select(func.count(DiscoveredAsset.id)).where(DiscoveredAsset.org_id == current_user.org_id)
     if domain_id:
         a_query = a_query.where(DiscoveredAsset.domain_id == domain_id)
     a_res = await db.execute(a_query)
-    assets = a_res.scalars().all()
-    assets_count = len(assets)
+    assets_count = a_res.scalar() or 0
 
-    # 3. Fetch live findings
-    f_query = select(Finding).where(Finding.org_id == current_user.org_id)
+    # 3. Fetch only open findings at database level
+    f_query = select(Finding).where(
+        Finding.org_id == current_user.org_id,
+        Finding.status == "open"
+    )
     if domain_id:
         f_query = f_query.where(Finding.domain_id == domain_id)
     f_res = await db.execute(f_query)
-    findings = f_res.scalars().all()
+    open_findings = f_res.scalars().all()
     
-    open_findings = [f for f in findings if f.status == "open"]
     crit_count = sum(1 for f in open_findings if f.severity == "critical")
     high_count = sum(1 for f in open_findings if f.severity == "high")
     med_count = sum(1 for f in open_findings if f.severity == "medium")
@@ -142,7 +168,7 @@ async def get_risk_overview(
     latest_ra = ra_res.scalars().first()
     last_assessed = latest_ra.created_at.isoformat() if (latest_ra and latest_ra.created_at) else None
 
-    return {
+    result_payload = {
         "overall_risk_score": risk_data["overall_risk_score"],
         "risk_level": risk_data["risk_level"],
         "risk_color": risk_data["risk_color"],
@@ -162,3 +188,5 @@ async def get_risk_overview(
         "assessed": True,
         "last_assessed_at": last_assessed
     }
+    _RISK_CACHE[cache_key] = (now, result_payload)
+    return result_payload

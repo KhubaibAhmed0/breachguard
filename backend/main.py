@@ -15,7 +15,8 @@ from services.scan_service import run_domain_scan
 from routers import (
     auth, domains, exposures, reports, prospect, billing,
     identities, integrations, msp, api_keys,
-    attack_surface, email_security, findings, risk
+    attack_surface, email_security, findings, risk,
+    team, cron
 )
 
 logger = logging.getLogger(__name__)
@@ -25,9 +26,10 @@ async def init_models():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-        def sync_sqlite_columns(connection):
+        def sync_columns(connection):
             try:
-                if "sqlite" in str(connection.engine.url):
+                raw_url = str(connection.engine.url)
+                if "sqlite" in raw_url:
                     cursor = connection.connection.cursor()
                     cursor.execute("PRAGMA table_info(organizations)")
                     cols = [r[1] for r in cursor.fetchall()]
@@ -37,17 +39,49 @@ async def init_models():
                         ("logo_path", "VARCHAR"),
                         ("slack_webhook_url", "VARCHAR"),
                         ("siem_webhook_url", "VARCHAR"),
+                        ("webhook_secret", "VARCHAR"),
                         ("is_trial", "BOOLEAN DEFAULT 0"),
                         ("trial_ends_at", "DATETIME"),
                     ]
                     for c_name, c_def in needed_cols:
                         if c_name not in cols:
                             cursor.execute(f"ALTER TABLE organizations ADD COLUMN {c_name} {c_def}")
+
+                    cursor.execute("PRAGMA table_info(users)")
+                    u_cols = [r[1] for r in cursor.fetchall()]
+                    if "password_changed_at" not in u_cols:
+                        cursor.execute("ALTER TABLE users ADD COLUMN password_changed_at DATETIME")
+
+                    cursor.execute("PRAGMA table_info(monitored_domains)")
+                    d_cols = [r[1] for r in cursor.fetchall()]
+                    if "verification_token" not in d_cols:
+                        cursor.execute("ALTER TABLE monitored_domains ADD COLUMN verification_token VARCHAR")
+
                     connection.connection.commit()
+                else:
+                    # PostgreSQL (Supabase)
+                    statements = [
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS is_msp BOOLEAN DEFAULT FALSE",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS parent_org_id INTEGER",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS logo_path VARCHAR",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS slack_webhook_url VARCHAR",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS siem_webhook_url VARCHAR",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS webhook_secret VARCHAR",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS is_trial BOOLEAN DEFAULT FALSE",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP",
+                        "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP",
+                        "ALTER TABLE monitored_domains ADD COLUMN IF NOT EXISTS verification_token VARCHAR"
+                    ]
+                    from sqlalchemy import text
+                    for stmt in statements:
+                        try:
+                            connection.execute(text(stmt))
+                        except Exception as pge:
+                            logger.debug(f"PG column sync ({stmt}): {pge}")
             except Exception as e:
                 logger.debug(f"Schema sync check: {e}")
 
-        await conn.run_sync(sync_sqlite_columns)
+        await conn.run_sync(sync_columns)
 
 async def autonomous_scan_scheduler():
     """
@@ -154,7 +188,7 @@ app = FastAPI(
 application = app
 handler = app
 
-# Trusted frontend origins (Measure 28)
+# BG-SEC-05: Strict, explicit trusted origin allowlist
 DEFAULT_DEV_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -167,7 +201,11 @@ DEFAULT_PROD_ORIGINS = [
     "https://breachguard-w88w.vercel.app",
 ]
 
-allowed_origins = list(set(DEFAULT_DEV_ORIGINS + DEFAULT_PROD_ORIGINS))
+if is_production:
+    allowed_origins = list(DEFAULT_PROD_ORIGINS)
+else:
+    allowed_origins = list(set(DEFAULT_DEV_ORIGINS + DEFAULT_PROD_ORIGINS))
+
 env_allowed = os.environ.get("ALLOWED_ORIGINS")
 if env_allowed:
     allowed_origins.extend([orig.strip() for orig in env_allowed.split(",") if orig.strip()])
@@ -175,7 +213,7 @@ if env_allowed:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"(https://.*\.vercel\.app|http://(localhost|127\.0\.0\.1)(:[0-9]+)?)",
+    allow_origin_regex=None,  # Strictly disallow wildcard regex matching arbitrary Vercel deployments
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-BreachGuard-Signature", "Stripe-Signature", "X-API-Key"],
@@ -199,11 +237,11 @@ async def add_security_headers(request, call_next):
     response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
     return response
 
-# Static file mount (safely skipped in serverless read-only mode)
+# BG-SEC-04: Static file mount with html=False to eliminate stored XSS in uploaded content
 if not os.environ.get("VERCEL"):
     try:
         os.makedirs("uploads/logos", exist_ok=True)
-        app.mount("/uploads", StaticFiles(directory="uploads", html=True), name="uploads")
+        app.mount("/uploads", StaticFiles(directory="uploads", html=False), name="uploads")
     except Exception as e:
         logger.debug(f"Uploads mount skipped: {e}")
 
@@ -216,12 +254,15 @@ app.include_router(prospect.router, prefix="/api/prospect", tags=["prospect"])
 app.include_router(billing.router, prefix="/api/billing", tags=["billing"])
 app.include_router(identities.router, prefix="/api/identities", tags=["identities"])
 app.include_router(integrations.router, prefix="/api/settings", tags=["settings"])
+app.include_router(integrations.router, prefix="/api/integrations", tags=["integrations"])
 app.include_router(msp.router, prefix="/api/msp", tags=["msp"])
 app.include_router(api_keys.router)
 app.include_router(attack_surface.router)
 app.include_router(email_security.router)
 app.include_router(findings.router)
 app.include_router(risk.router)
+app.include_router(team.router, prefix="/api/team", tags=["team"])
+app.include_router(cron.router, prefix="/api/cron", tags=["cron"])
 
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError

@@ -6,9 +6,10 @@ from core.database import Base
 class MonitoredDomain(Base):
     __tablename__ = "monitored_domains"
     id = Column(Integer, primary_key=True, index=True)
-    org_id = Column(Integer, ForeignKey("organizations.id"))
+    org_id = Column(Integer, ForeignKey("organizations.id"), index=True, nullable=False)
     domain = Column(String, index=True, nullable=False)
     verified = Column(Boolean, default=False)
+    verification_token = Column(String, nullable=True)
     scan_frequency = Column(String, default="daily")
     last_scanned_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -20,7 +21,7 @@ class MonitoredDomain(Base):
 class MonitoredEmail(Base):
     __tablename__ = "monitored_emails"
     id = Column(Integer, primary_key=True, index=True)
-    domain_id = Column(Integer, ForeignKey("monitored_domains.id"))
+    domain_id = Column(Integer, ForeignKey("monitored_domains.id"), index=True, nullable=False)
     email = Column(String, index=True, nullable=False)
     is_vip = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

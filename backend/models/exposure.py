@@ -7,16 +7,16 @@ from core.database import Base
 class Exposure(Base):
     __tablename__ = "exposures"
     id = Column(Integer, primary_key=True, index=True)
-    email_id = Column(Integer, ForeignKey("monitored_emails.id"))
-    org_id = Column(Integer, ForeignKey("organizations.id"))
-    source_name = Column(String, nullable=False)
+    email_id = Column(Integer, ForeignKey("monitored_emails.id"), index=True, nullable=True)
+    org_id = Column(Integer, ForeignKey("organizations.id"), index=True, nullable=False)
+    source_name = Column(String, index=True, nullable=False)
     source_type = Column(String, nullable=False) # breach/stealer_log/paste
     data_classes = Column(JSON, default=list)
-    severity = Column(String, nullable=False) # critical/high/medium/low
+    severity = Column(String, index=True, nullable=False) # critical/high/medium/low
     credential_type = Column(String, nullable=True)
     first_seen_at = Column(DateTime, nullable=True)
-    detected_at = Column(DateTime, default=datetime.utcnow)
-    status = Column(String, default="open") # open/acknowledged/remediated
+    detected_at = Column(DateTime, index=True, default=datetime.utcnow)
+    status = Column(String, index=True, default="open") # open/acknowledged/remediated
     raw_data = Column(JSON, nullable=True) # Using JSON for general compatibility if JSONB unavailable
     created_at = Column(DateTime, default=datetime.utcnow)
 

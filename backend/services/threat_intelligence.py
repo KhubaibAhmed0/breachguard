@@ -1,13 +1,17 @@
 import logging
+import asyncio
 import os
 import json
 import httpx
-from typing import Dict, Any, List
+import time
+from typing import Dict, Any, List, Tuple
 from services.hibp_service import check_domain_breaches
 
 logger = logging.getLogger(__name__)
 
-async def query_virustotal_domain(domain: str, timeout: float = 4.0) -> Dict[str, Any]:
+_TI_CACHE: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+
+async def query_virustotal_domain(domain: str, timeout: float = 3.5) -> Dict[str, Any]:
     """
     Queries VirusTotal v3 domain report if VIRUSTOTAL_API_KEY is configured.
     """
@@ -40,13 +44,25 @@ async def analyze_threat_intelligence(domain: str) -> Dict[str, Any]:
     1. Historical public breach records via HIBP
     2. Threat reputation indicators via VirusTotal (when configured)
     3. Produces findings with strict source provenance and confidence ratings
+    Cached in-memory for 15 minutes.
     """
     clean_domain = domain.lower().strip().lstrip(".").split(":")[0]
+    now = time.time()
+    if clean_domain in _TI_CACHE:
+        cached_time, cached_val = _TI_CACHE[clean_domain]
+        if now - cached_time < 900.0:
+            return cached_val
+
     findings = []
     finding_counter = 1
 
+    # Run HIBP breach check and VirusTotal domain lookup concurrently
+    domain_breaches, vt_data = await asyncio.gather(
+        check_domain_breaches(clean_domain),
+        query_virustotal_domain(clean_domain)
+    )
+
     # 1. HIBP Public Breach Repository
-    domain_breaches = await check_domain_breaches(clean_domain)
     for breach in domain_breaches:
         source_name = breach.get("source_name", "Public Breach Database")
         breach_date = breach.get("breach_date", "Historical")
@@ -72,7 +88,6 @@ async def analyze_threat_intelligence(domain: str) -> Dict[str, Any]:
         finding_counter += 1
 
     # 2. VirusTotal Reputation
-    vt_data = await query_virustotal_domain(clean_domain)
     if vt_data and (vt_data.get("malicious", 0) > 0 or vt_data.get("suspicious", 0) > 0):
         mal_count = vt_data.get("malicious", 0)
         susp_count = vt_data.get("suspicious", 0)
@@ -95,10 +110,12 @@ async def analyze_threat_intelligence(domain: str) -> Dict[str, Any]:
         })
         finding_counter += 1
 
-    return {
+    res = {
         "domain": clean_domain,
         "breaches_count": len(domain_breaches),
         "breaches": domain_breaches,
         "virustotal": vt_data,
         "findings": findings
     }
+    _TI_CACHE[clean_domain] = (now, res)
+    return res

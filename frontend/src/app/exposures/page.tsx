@@ -6,6 +6,7 @@ import { useExposures, useUpdateExposureStatus } from '@/hooks/useApi';
 import { Search, Loader2, Lock, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { TableSkeleton } from '@/components/Skeletons';
 
 export default function ExposuresPage() {
   const { data: exposures, isLoading } = useExposures();
@@ -96,7 +97,7 @@ export default function ExposuresPage() {
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-white tracking-tight text-sm">Infostealer Botnet Telemetry Requires Business Tier</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-roboto font-semibold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   Feature Gated
                 </span>
               </div>
@@ -117,10 +118,7 @@ export default function ExposuresPage() {
 
       <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3 sm:p-4">
         {isLoading ? (
-          <div className="py-12 flex justify-center items-center text-zinc-500 text-xs gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Loading threat inventory...
-          </div>
+          <TableSkeleton rows={6} cols={5} />
         ) : (
           <ExposureTable 
             data={filteredExposures || []} 

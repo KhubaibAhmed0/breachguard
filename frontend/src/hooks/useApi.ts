@@ -297,3 +297,76 @@ export function useUpdateIntegrations() {
     },
   });
 }
+
+export function useRiskOverview(domainId?: number) {
+  return useQuery<any>({
+    queryKey: ['riskOverview', domainId],
+    queryFn: async () => {
+      const url = domainId ? `/risk/overview?domain_id=${domainId}` : '/risk/overview';
+      const res = await api.get(url);
+      return res.data;
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+}
+
+export function useFindings(filter: { status?: string; category?: string; domainId?: number; limit?: number } = {}) {
+  return useQuery<any[]>({
+    queryKey: ['findings', filter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filter.status) params.append('status', filter.status);
+      if (filter.category) params.append('category', filter.category);
+      if (filter.domainId) params.append('domain_id', String(filter.domainId));
+      const qs = params.toString();
+      const res = await api.get(`/findings${qs ? `?${qs}` : ''}`);
+      let list = res.data || [];
+      if (filter.limit && list.length > filter.limit) {
+        list = list.slice(0, filter.limit);
+      }
+      return list;
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useAttackSurfaceAssets(domainId?: number) {
+  return useQuery<any[]>({
+    queryKey: ['attackSurfaceAssets', domainId],
+    queryFn: async () => {
+      const url = domainId ? `/attack-surface/assets?domain_id=${domainId}` : '/attack-surface/assets';
+      const res = await api.get(url);
+      return res.data || [];
+    },
+    staleTime: 1000 * 60 * 3,
+  });
+}
+
+export function useAttackSurfaceFindings(filter: { domainId?: number; severity?: string; status?: string } = {}) {
+  return useQuery<any[]>({
+    queryKey: ['attackSurfaceFindings', filter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filter.domainId) params.append('domain_id', String(filter.domainId));
+      if (filter.severity && filter.severity !== 'all') params.append('severity', filter.severity);
+      if (filter.status && filter.status !== 'all') params.append('status', filter.status);
+      const qs = params.toString();
+      const res = await api.get(`/attack-surface/findings${qs ? `?${qs}` : ''}`);
+      return res.data || [];
+    },
+    staleTime: 1000 * 60 * 3,
+  });
+}
+
+export function useEmailSecurityOverview(domainId?: number) {
+  return useQuery<any>({
+    queryKey: ['emailSecurityOverview', domainId],
+    queryFn: async () => {
+      const url = domainId ? `/email-security?domain_id=${domainId}` : '/email-security';
+      const res = await api.get(url);
+      return res.data;
+    },
+    staleTime: 1000 * 60 * 3,
+  });
+}
+

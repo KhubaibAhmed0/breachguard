@@ -70,7 +70,7 @@ export function Sidebar() {
                 BreachGuard
               </span>
             </Link>
-            <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-mono font-medium">
+            <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-roboto font-medium">
               MSP
             </span>
           </div>
@@ -78,9 +78,9 @@ export function Sidebar() {
           {/* Multi-Tenant MSP Switcher */}
           {isMspUser && (
             <div className="relative">
-              <div className="text-[10px] uppercase font-mono font-medium text-zinc-500 mb-1 px-1 flex items-center justify-between">
+              <div className="text-[10px] uppercase font-roboto font-medium text-zinc-500 mb-1 px-1 flex items-center justify-between">
                 <span>Active Scope</span>
-                <span className="text-zinc-600 font-mono">{tenants.length} tenants</span>
+                <span className="text-zinc-600 font-roboto">{tenants.length} tenants</span>
               </div>
               
               <button
@@ -94,7 +94,7 @@ export function Sidebar() {
                     <div className="text-xs font-medium text-zinc-200 truncate leading-tight">
                       {activeTenant.name}
                     </div>
-                    <div className="text-[10px] text-zinc-500 font-mono leading-tight mt-0.5">
+                    <div className="text-[10px] text-zinc-500 font-roboto leading-tight mt-0.5">
                       {activeTenant.type === 'primary' ? 'Primary MSP' : 'Client Tenant'}
                     </div>
                   </div>
@@ -105,7 +105,7 @@ export function Sidebar() {
               {/* Dropdown Menu */}
               {isTenantDropdownOpen && (
                 <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl p-1.5 space-y-1">
-                  <div className="px-2 py-1 text-[10px] font-mono uppercase text-zinc-500">
+                  <div className="px-2 py-1 text-[10px] font-roboto uppercase text-zinc-500">
                     Switch Client Tenant
                   </div>
                   <div className="max-h-52 overflow-y-auto space-y-0.5">
@@ -185,7 +185,7 @@ export function Sidebar() {
         <div className="p-3 border-t border-zinc-900">
           <div className="flex items-center justify-between p-2 rounded-lg bg-zinc-900/40 border border-zinc-900">
             <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-mono font-medium text-zinc-300">
+              <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] font-roboto font-medium text-zinc-300">
                 AU
               </div>
               <div className="truncate text-xs">
@@ -247,7 +247,7 @@ export function Sidebar() {
                   placeholder="e.g. medtech-clinic.com"
                   value={newOrgDomain}
                   onChange={(e) => setNewOrgDomain(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-mono text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
                 />
                 <p className="text-[11px] text-zinc-500 mt-1">
                   Domain will be automatically scheduled for continuous dark web exposure discovery.
@@ -263,7 +263,7 @@ export function Sidebar() {
                   placeholder="e.g. security-lead@medtech-clinic.com"
                   value={newOrgAdminEmail}
                   onChange={(e) => setNewOrgAdminEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-mono text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
                 />
               </div>
 

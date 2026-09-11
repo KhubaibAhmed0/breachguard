@@ -29,6 +29,7 @@ export const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: getApiBaseUrl(),
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -85,10 +86,14 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post(`${getApiBaseUrl()}/auth/login`, {
-          email: 'admin@acme.com',
-          password: 'password123',
-        });
+        const res = await axios.post(
+          `${getApiBaseUrl()}/auth/login`,
+          {
+            email: 'admin@acme.com',
+            password: 'password123',
+          },
+          { withCredentials: true }
+        );
         const newToken = res.data.access_token;
         localStorage.setItem('token', newToken);
         api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;

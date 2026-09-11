@@ -99,9 +99,12 @@ async def update_integrations(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Update Slack and SIEM webhook integration URLs for current user's organization.
-    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only organization administrators can update integrations."
+        )
+
     org_res = await db.execute(select(Organization).where(Organization.id == current_user.org_id))
     org = org_res.scalars().first()
     if not org:
@@ -124,6 +127,33 @@ async def update_integrations(
         "message": "Integrations updated successfully"
     }
 
+class OrgUpdateRequest(BaseModel):
+    name: str
+
+@router.patch("/organization")
+async def update_organization(
+    req: OrgUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only administrators can change organization details.")
+    org_res = await db.execute(select(Organization).where(Organization.id == current_user.org_id))
+    org = org_res.scalars().first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    clean_name = req.name.strip()
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Organization name cannot be empty.")
+    org.name = clean_name
+    await db.commit()
+    await db.refresh(org)
+    return {"status": "success", "name": org.name, "message": "Organization updated successfully."}
+
+ALLOWED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
+ALLOWED_LOGO_MIMES = {"image/png", "image/jpeg", "image/pjpeg", "image/webp"}
+MAX_LOGO_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+
 @router.post("/logo")
 async def upload_logo(
     file: UploadFile = File(...),
@@ -131,22 +161,77 @@ async def upload_logo(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Upload corporate logo for co-branded PDF threat reports.
-    Ensures uploads folder exists (uploads/logos/).
-    Saves file as uploads/logos/{org_id}_{file.filename}.
-    Updates org.logo_path.
+    Upload corporate logo for co-branded PDF threat reports (BG-SEC-04).
+    Enforces RBAC (admin only), extension whitelisting, magic-byte inspection,
+    2MB size limit, active content neutralization, and randomized filenames.
     """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only organization administrators can upload organization logos."
+        )
+
+    # 1. Filename & extension validation
+    filename = file.filename or ""
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower()
+    if ext not in ALLOWED_LOGO_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file extension '{ext}'. Only PNG, JPEG, and WEBP image formats are permitted."
+        )
+
+    # 2. Content-Type MIME validation
+    if file.content_type and file.content_type.lower() not in ALLOWED_LOGO_MIMES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid MIME type '{file.content_type}'. Only PNG, JPEG, and WEBP images are allowed."
+        )
+
+    # 3. Read content with size bound (2MB max)
+    content = await file.read(MAX_LOGO_FILE_SIZE + 1)
+    if len(content) > MAX_LOGO_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Logo file size exceeds the maximum allowed limit of 2MB."
+        )
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty."
+        )
+
+    # 4. Magic-byte signature verification
+    is_png = content.startswith(b"\x89PNG\r\n\x1a\n")
+    is_jpeg = content.startswith(b"\xff\xd8\xff")
+    is_webp = content.startswith(b"RIFF") and len(content) >= 12 and content[8:12] == b"WEBP"
+
+    if not (is_png or is_jpeg or is_webp):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File signature verification failed. The file is not a valid PNG, JPEG, or WEBP image."
+        )
+
+    # 5. Deep inspection against embedded scripts, SVG, or HTML polyglots
+    content_lower = content.lower()
+    dangerous_signatures = [b"<script", b"<html", b"<svg", b"javascript:", b"onload=", b"onerror=", b"<?php", b"<%"]
+    if any(sig in content_lower for sig in dangerous_signatures):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Security violation: Active script or markup content detected within uploaded image."
+        )
+
+    # 6. Safe server-side randomized filename outside user control
+    import secrets
     uploads_dir = os.path.join(os.getcwd(), "uploads", "logos")
     os.makedirs(uploads_dir, exist_ok=True)
-
-    clean_filename = os.path.basename(file.filename).replace(" ", "_")
-    saved_filename = f"{current_user.org_id}_{clean_filename}"
+    saved_filename = f"logo_{current_user.org_id}_{secrets.token_hex(8)}{ext}"
     file_path = os.path.join(uploads_dir, saved_filename)
 
-    content = await file.read()
     with open(file_path, "wb") as f:
         f.write(content)
 
+    # 7. Update organization record
     org_res = await db.execute(select(Organization).where(Organization.id == current_user.org_id))
     org = org_res.scalars().first()
     if org:
@@ -158,7 +243,7 @@ async def upload_logo(
 
     return {
         "status": "success",
-        "message": "Corporate logo uploaded successfully",
+        "message": "Corporate logo uploaded and verified successfully",
         "logo_path": file_path,
         "logo_url": logo_url
     }

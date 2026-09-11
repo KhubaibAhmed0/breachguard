@@ -73,6 +73,11 @@ async def create_privileged_identity(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if current_user.role not in ("admin", "analyst"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators and analysts can add privileged identities."
+        )
     """
     Add a new privileged identity:
     - Validates domain belongs to user's org.
@@ -153,6 +158,11 @@ async def delete_privileged_identity(
     """
     Delete or unmark privileged identity.
     """
+    if current_user.role not in ("admin", "analyst"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators and analysts can remove privileged identities."
+        )
     res = await db.execute(
         select(MonitoredEmail, MonitoredDomain)
         .join(MonitoredDomain, MonitoredEmail.domain_id == MonitoredDomain.id)

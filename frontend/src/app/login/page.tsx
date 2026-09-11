@@ -58,7 +58,7 @@ export default function LoginPage() {
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs"
+              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 text-zinc-100 font-roboto text-xs"
               placeholder="you@company.com"
               required
             />
@@ -66,13 +66,13 @@ export default function LoginPage() {
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="text-zinc-400 font-medium">Password</label>
-              <a href="#" className="text-zinc-500 hover:text-zinc-300">Forgot?</a>
+              <Link href="/forgot-password" className="text-zinc-500 hover:text-zinc-300">Forgot?</Link>
             </div>
             <input 
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs"
+              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 text-zinc-100 font-roboto text-xs"
               placeholder="••••••••"
               required
             />

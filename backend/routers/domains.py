@@ -8,6 +8,8 @@ from models.organization import Organization
 from models.domain import MonitoredDomain, MonitoredEmail
 from models.exposure import Exposure
 from models.scan_job import ScanJob
+from models.asset import DiscoveredAsset, EmailSecurityAssessment, RiskAssessment
+from models.finding import Finding
 from schemas.domain import DomainCreate, DomainResponse, DomainScanStatus
 from routers.deps import get_current_user, require_scope
 from services.scan_service import run_domain_scan
@@ -196,12 +198,47 @@ async def delete_domain(
         delete(ScanJob).where(ScanJob.domain_id == domain.id)
     )
 
-    # 5. Delete domain record
+    # 5. Delete discovered assets associated with this domain
+    await db.execute(
+        delete(DiscoveredAsset).where(DiscoveredAsset.domain_id == domain.id)
+    )
+
+    # 6. Delete findings associated with this domain
+    await db.execute(
+        delete(Finding).where(Finding.domain_id == domain.id)
+    )
+
+    # 7. Delete email security assessments
+    await db.execute(
+        delete(EmailSecurityAssessment).where(EmailSecurityAssessment.domain_id == domain.id)
+    )
+
+    # 8. Delete risk assessments associated with this domain
+    await db.execute(
+        delete(RiskAssessment).where(RiskAssessment.domain_id == domain.id)
+    )
+
+    # 9. Delete domain record itself
     await db.delete(domain)
     await db.commit()
+
+    # 10. Check if any monitored domains remain for this organization
+    remaining_res = await db.execute(
+        select(func.count(MonitoredDomain.id)).where(MonitoredDomain.org_id == current_user.org_id)
+    )
+    remaining_count = remaining_res.scalar() or 0
+
+    # If zero domains remain, clean any dangling organization-level records to ensure 100% data consistency
+    if remaining_count == 0:
+        await db.execute(delete(DiscoveredAsset).where(DiscoveredAsset.org_id == current_user.org_id))
+        await db.execute(delete(Finding).where(Finding.org_id == current_user.org_id))
+        await db.execute(delete(RiskAssessment).where(RiskAssessment.org_id == current_user.org_id))
+        await db.execute(delete(EmailSecurityAssessment).where(EmailSecurityAssessment.org_id == current_user.org_id))
+        await db.commit()
 
     return {
         "status": "success", 
         "message": f"Domain {domain_name} and all associated monitoring data removed successfully.", 
-        "id": id
+        "id": id,
+        "remaining_domains": remaining_count
     }

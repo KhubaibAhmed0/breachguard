@@ -347,7 +347,8 @@ async def run_domain_scan(domain_id: int, db: AsyncSession) -> Dict[str, Any]:
             email_sec_score=email_sec_res.get("score", 50),
             threat_intel_findings=[f for f in deduped if f.get("category") == "threat_intel"],
             breaches_count=threat_intel_res.get("breaches_count", 0),
-            exposures=current_exposures
+            exposures=current_exposures,
+            email_sec_details=email_sec_res
         )
 
         # Count finding severities

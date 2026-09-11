@@ -55,25 +55,17 @@ export function useExposures() {
         };
       });
 
-      // Ensure infostealer tier gating sample is present to showcase Business tier gating
-      const hasGatedStealer = items.some((i: any) => i.upgradeRequired);
-      if (!hasGatedStealer) {
-        items.unshift({
-          id: 'stealer-locked-101',
-          domainId: '1',
-          email: 'cfo-vault@acme-corp.com',
-          source: 'RedLine Stealer Botnet Log [Tele-C2-404]',
-          severity: 'critical',
-          credentialType: 'Infostealer Log / Exfiltrated Credentials',
-          firstSeenAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-          detectedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-          status: 'open',
-          upgradeRequired: true,
-          isStealerLog: true,
-        });
-      }
-
       return items;
+    },
+  });
+}
+
+export function useExposureTimeline() {
+  return useQuery<{ month: string; count: number }[]>({
+    queryKey: ['exposureTimeline'],
+    queryFn: async () => {
+      const res = await api.get('/exposures/timeline');
+      return res.data?.timeline || [];
     },
   });
 }
@@ -91,7 +83,7 @@ export function useExposureStats() {
         medium: d.by_severity?.medium ?? 0,
         low: d.by_severity?.low ?? 0,
         trend: (d.new_in_last_30_days ?? 0) > 0 ? 'up' : 'flat',
-        riskScore: d.risk_score ?? 66,
+        riskScore: d.risk_score ?? 0,
       };
     },
   });
@@ -216,11 +208,11 @@ export function useIdentities() {
       try {
         const res = await api.get('/identities');
         const list = Array.isArray(res.data) ? res.data : (res.data?.identities || []);
-        if (Array.isArray(list) && list.length > 0) {
+        if (Array.isArray(list)) {
           return list.map((item: any) => ({
             id: String(item.id),
-            domainId: String(item.domain_id || item.domainId || '1'),
-            domain: item.domain || 'acme-corp.com',
+            domainId: String(item.domain_id || item.domainId || ''),
+            domain: item.domain || '',
             email: item.email,
             role: item.role || 'Executive / High-Value Account',
             status: item.status || 'monitored',
@@ -228,13 +220,9 @@ export function useIdentities() {
           }));
         }
       } catch (err) {
-        console.warn('Could not load identities from API, using default inventory:', err);
+        console.warn('Could not load identities from API:', err);
       }
-      return [
-        { id: '1', domainId: '1', domain: 'acme-corp.com', email: 'ciso@acme-corp.com', role: 'Chief Information Security Officer', status: 'monitored', createdAt: '2024-01-15T08:30:00Z' },
-        { id: '2', domainId: '1', domain: 'acme-corp.com', email: 'devops-lead@acme-corp.com', role: 'DevOps & Cloud Administrator', status: 'monitored', createdAt: '2024-01-20T11:15:00Z' },
-        { id: '3', domainId: '1', domain: 'acme-corp.com', email: 'finance-dir@acme-corp.com', role: 'Executive / Finance Director', status: 'monitored', createdAt: '2024-02-01T14:45:00Z' },
-      ];
+      return [];
     },
   });
 }

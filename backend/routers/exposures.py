@@ -117,6 +117,37 @@ async def update_exposure_status(
 
 @router.get("/timeline")
 async def get_timeline(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
-    months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"]
-    data = [2, 5, 8, 4, 12, 6]
-    return {"labels": months, "data": data}
+    # Generate past 6 months chronologically (oldest to newest)
+    now = datetime.utcnow()
+    month_keys = []
+    labels = []
+    
+    for i in range(5, -1, -1):
+        y = now.year
+        m = now.month - i
+        while m <= 0:
+            m += 12
+            y -= 1
+        month_keys.append((y, m))
+        labels.append(datetime(y, m, 1).strftime("%b"))
+
+    # Query actual exposures for this organization
+    res = await db.execute(select(Exposure).where(Exposure.org_id == current_user.org_id))
+    exposures = res.scalars().all()
+
+    counts = [0] * len(labels)
+    for exp in exposures:
+        dt = exp.detected_at or exp.first_seen_at
+        if dt:
+            for idx, (y, m) in enumerate(month_keys):
+                if dt.year == y and dt.month == m:
+                    counts[idx] += 1
+                    break
+
+    timeline = [{"month": labels[i], "count": counts[i]} for i in range(len(labels))]
+    return {
+        "labels": labels,
+        "data": counts,
+        "timeline": timeline,
+        "total_in_window": sum(counts)
+    }

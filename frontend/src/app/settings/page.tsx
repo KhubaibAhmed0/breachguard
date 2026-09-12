@@ -5,11 +5,12 @@ import { useState, useRef, useEffect } from 'react';
 import { 
   User, Bell, CreditCard, Check, Loader2, Send, 
   Upload, Sparkles, Image as ImageIcon, Trash2, AlertCircle, CheckCircle2,
-  Users, Plus, Shield, X, ExternalLink, ShieldCheck, UserPlus
+  Users, Plus, Shield, X, ExternalLink, ShieldCheck, UserPlus, FileText
 } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { useIntegrationsSettings, useTestSlackWebhook, useUpdateIntegrations } from '@/hooks/useApi';
 import api from '@/lib/api';
+import { InvoiceRequestModal } from '@/components/InvoiceRequestModal';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -47,6 +48,8 @@ export default function SettingsPage() {
   // Billing state
   const [isCheckoutLoading, setIsCheckoutLoading] = useState<string | null>(null);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invoicePlan, setInvoicePlan] = useState<'business' | 'enterprise'>('business');
 
   // Load User & Org info
   const fetchUserMe = async () => {
@@ -667,23 +670,27 @@ export default function SettingsPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleStripeCheckout('price_business_monthly')}
-                    disabled={isCheckoutLoading === 'price_business_monthly' || userMe?.plan === 'business'}
-                    className={`w-full py-2 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
+                    onClick={() => {
+                      setInvoicePlan('business');
+                      setIsInvoiceModalOpen(true);
+                    }}
+                    disabled={userMe?.plan === 'business'}
+                    className={`w-full py-2 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 text-xs ${
                       userMe?.plan === 'business'
                         ? 'bg-zinc-800/80 text-emerald-400 border border-emerald-500/20 cursor-default'
                         : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-100 cursor-pointer disabled:opacity-50'
                     }`}
                   >
-                    {isCheckoutLoading === 'price_business_monthly' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : userMe?.plan === 'business' ? (
+                    {userMe?.plan === 'business' ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Current Plan</span>
                       </>
                     ) : (
-                      'Switch to Business'
+                      <>
+                        <FileText className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Request Business Invoice</span>
+                      </>
                     )}
                   </button>
                 </div>
@@ -704,47 +711,52 @@ export default function SettingsPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleStripeCheckout('price_enterprise_monthly')}
-                    disabled={isCheckoutLoading === 'price_enterprise_monthly' || userMe?.plan === 'enterprise'}
-                    className={`w-full py-2 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-md ${
+                    onClick={() => {
+                      setInvoicePlan('enterprise');
+                      setIsInvoiceModalOpen(true);
+                    }}
+                    disabled={userMe?.plan === 'enterprise'}
+                    className={`w-full py-2 font-medium rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-md text-xs ${
                       userMe?.plan === 'enterprise'
                         ? 'bg-indigo-500/20 text-indigo-200 border border-indigo-500/40 cursor-default'
                         : 'bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer disabled:opacity-50'
                     }`}
                   >
-                    {isCheckoutLoading === 'price_enterprise_monthly' ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : userMe?.plan === 'enterprise' ? (
+                    {userMe?.plan === 'enterprise' ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Current Active Plan</span>
                       </>
                     ) : (
-                      'Upgrade to Enterprise'
+                      <>
+                        <FileText className="w-3.5 h-3.5 text-white" />
+                        <span>Request Enterprise Invoice</span>
+                      </>
                     )}
                   </button>
                 </div>
               </div>
 
-              {/* Portal Button */}
-              <div className="pt-2 flex items-center justify-between border-t border-zinc-800">
-                <span className="text-zinc-500 text-[11px]">
-                  Need invoices, tax receipts, or payment method updates?
-                </span>
+              {/* Corporate Invoicing & Wire Coordinates */}
+              <div className="pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-zinc-800">
+                <div className="space-y-0.5">
+                  <span className="text-zinc-300 text-xs font-medium block">
+                    Enterprise Procurement &amp; Wire Settlement (Net-30)
+                  </span>
+                  <span className="text-zinc-500 text-[11px] block">
+                    Need a formal invoice, vendor W-9 packet, or direct SWIFT/ACH corporate wire coordinates?
+                  </span>
+                </div>
                 <button
                   type="button"
-                  onClick={handleStripePortal}
-                  disabled={isPortalLoading}
-                  className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  onClick={() => {
+                    setInvoicePlan(userMe?.plan === 'enterprise' ? 'enterprise' : 'business');
+                    setIsInvoiceModalOpen(true);
+                  }}
+                  className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer self-start sm:self-auto shrink-0 text-xs"
                 >
-                  {isPortalLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <>
-                      <ExternalLink className="w-3 h-3" />
-                      <span>Stripe Customer Portal</span>
-                    </>
-                  )}
+                  <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Generate Corporate Invoice</span>
                 </button>
               </div>
             </div>
@@ -822,6 +834,13 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Enterprise Procurement & Invoicing Modal */}
+      <InvoiceRequestModal 
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        defaultPlan={invoicePlan}
+      />
     </DashboardLayout>
   );
 }

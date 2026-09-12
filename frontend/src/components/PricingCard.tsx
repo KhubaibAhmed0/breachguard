@@ -11,6 +11,8 @@ interface PricingCardProps {
   badge?: string;
   ctaText?: string;
   subtext?: string;
+  ctaHref?: string;
+  onCtaClick?: () => void;
 }
 
 export function PricingCard({ 
@@ -21,7 +23,9 @@ export function PricingCard({
   isPopular, 
   badge = "MOST POPULAR",
   ctaText = "Get started",
-  subtext
+  subtext,
+  ctaHref = "/register",
+  onCtaClick
 }: PricingCardProps) {
   return (
     <div className={cn(
@@ -52,17 +56,32 @@ export function PricingCard({
         ))}
       </ul>
       <div>
-        <Link 
-          href="/register"
-          className={cn(
-            "w-full py-2.5 px-3.5 rounded-lg text-xs font-semibold transition-colors text-center block",
-            isPopular 
-              ? "bg-zinc-100 hover:bg-white text-zinc-950 shadow" 
-              : "bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200"
-          )}
-        >
-          {ctaText}
-        </Link>
+        {onCtaClick ? (
+          <button
+            type="button"
+            onClick={onCtaClick}
+            className={cn(
+              "w-full py-2.5 px-3.5 rounded-lg text-xs font-semibold transition-colors text-center block cursor-pointer",
+              isPopular 
+                ? "bg-zinc-100 hover:bg-white text-zinc-950 shadow" 
+                : "bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200"
+            )}
+          >
+            {ctaText}
+          </button>
+        ) : (
+          <Link 
+            href={ctaHref}
+            className={cn(
+              "w-full py-2.5 px-3.5 rounded-lg text-xs font-semibold transition-colors text-center block",
+              isPopular 
+                ? "bg-zinc-100 hover:bg-white text-zinc-950 shadow" 
+                : "bg-zinc-800/90 hover:bg-zinc-700 text-zinc-200"
+            )}
+          >
+            {ctaText}
+          </Link>
+        )}
         {subtext && (
           <p className="text-[11px] text-zinc-500 text-center mt-2 font-medium">{subtext}</p>
         )}

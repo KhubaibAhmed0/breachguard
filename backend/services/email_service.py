@@ -308,3 +308,92 @@ def render_team_invite_email(inviter_email: str, org_name: str, role: str, temp_
   </table>
 </body>
 </html>"""
+
+def render_invoice_request_email(
+    company_name: str, 
+    billing_email: str, 
+    plan: str, 
+    billing_cycle: str, 
+    price_str: str, 
+    po_number: Optional[str] = None
+) -> str:
+    po_html = f"""
+    <tr>
+      <td style="padding: 6px 0; color: #a1a1aa; font-size: 12px;">Purchase Order (PO):</td>
+      <td style="padding: 6px 0; color: #ffffff; font-weight: 600; font-size: 12px; text-align: right;">{po_number}</td>
+    </tr>
+    """ if po_number else ""
+
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BreachGuard Enterprise Invoice Request</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #09090b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #f4f4f5;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #09090b; padding: 40px 15px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" max-width="560px" cellspacing="0" cellpadding="0" border="0" style="max-width: 560px; background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; overflow: hidden; padding: 36px 32px;">
+          <tr>
+            <td align="left" style="padding-bottom: 20px; border-bottom: 1px solid #27272a;">
+              <span style="font-size: 16px; font-weight: 700; color: #ffffff;">🛡️ BREACHGUARD</span>
+              <span style="display: block; font-size: 11px; color: #a1a1aa; margin-top: 2px;">Enterprise Procurement &amp; Invoicing</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding-top: 24px; padding-bottom: 24px;">
+              <h2 style="font-size: 18px; font-weight: 600; color: #ffffff; margin: 0 0 12px 0;">Order &amp; Invoice Request Received</h2>
+              <p style="font-size: 13px; line-height: 1.6; color: #d4d4d8; margin: 0 0 20px 0;">
+                Thank you for choosing BreachGuard for your perimeter exposure surveillance. We have received the enterprise procurement order for <strong style="color: #ffffff;">{company_name}</strong>.
+              </p>
+              
+              <!-- Order Details Table -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #27272a; border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+                <tr>
+                  <td style="padding: 6px 0; color: #a1a1aa; font-size: 12px;">Organization:</td>
+                  <td style="padding: 6px 0; color: #ffffff; font-weight: 600; font-size: 12px; text-align: right;">{company_name}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #a1a1aa; font-size: 12px;">Plan Tier:</td>
+                  <td style="padding: 6px 0; color: #60a5fa; font-weight: 600; font-size: 12px; text-align: right;">{plan.upper()} TIER</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #a1a1aa; font-size: 12px;">Billing Cadence:</td>
+                  <td style="padding: 6px 0; color: #ffffff; font-weight: 600; font-size: 12px; text-align: right;">{billing_cycle.capitalize()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; color: #a1a1aa; font-size: 12px;">Investment Total:</td>
+                  <td style="padding: 6px 0; color: #10b981; font-weight: 700; font-size: 13px; text-align: right;">{price_str}</td>
+                </tr>
+                {po_html}
+                <tr>
+                  <td style="padding: 6px 0; color: #a1a1aa; font-size: 12px;">Payment Terms:</td>
+                  <td style="padding: 6px 0; color: #e4e4e7; font-size: 12px; text-align: right;">Net-30 Corporate Wire / ACH</td>
+                </tr>
+              </table>
+
+              <h3 style="font-size: 14px; font-weight: 600; color: #ffffff; margin: 0 0 8px 0;">What Happens Next?</h3>
+              <ol style="font-size: 12px; line-height: 1.7; color: #a1a1aa; padding-left: 18px; margin: 0 0 24px 0;">
+                <li>Our corporate billing desk is generating your official Pro-Forma Invoice with international SWIFT, Wire, and ACH bank coordinates.</li>
+                <li>The PDF invoice will be delivered directly to <strong style="color: #ffffff;">{billing_email}</strong> within 1 business day.</li>
+                <li>Your workspace monitoring and multi-tenant capabilities remain fully active while payment is processed.</li>
+              </ol>
+
+              <p style="font-size: 12px; color: #71717a; margin: 0;">
+                If your procurement department requires custom vendor registration forms (W-9 / W-8BEN, security questionnaires), simply reply directly to this email.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="border-top: 1px solid #27272a; padding-top: 20px; font-size: 11px; color: #71717a; text-align: center;">
+              BreachGuard Intelligence • Global Procurement &amp; Enterprise Licensing<br>
+              Inquiries: billing@breachguard.io • security@breachguard.io
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""

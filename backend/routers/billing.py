@@ -3,9 +3,9 @@ import json
 import hmac
 import hashlib
 import logging
-from typing import Optional, Dict, Any, Set
+from typing import Optional, Dict, Any, Set, Literal
 from fastapi import APIRouter, Request, HTTPException, Depends, status, Header
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -13,7 +13,7 @@ from core.config import settings
 from core.database import get_db
 from models.user import User
 from models.organization import Organization
-from routers.deps import get_current_user
+from routers.deps import get_current_user, get_optional_current_user
 
 logger = logging.getLogger("breachguard.billing")
 
@@ -33,6 +33,15 @@ PROCESSED_EVENT_IDS: Set[str] = set()
 class CheckoutRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     price_id: str = Field(..., description="Stripe Price ID from official catalog")
+
+class InvoiceRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    company_name: str = Field(..., min_length=2, max_length=150)
+    billing_email: EmailStr
+    plan: Literal["business", "enterprise"] = "enterprise"
+    billing_cycle: Literal["annual", "monthly"] = "annual"
+    po_number: Optional[str] = Field(None, max_length=50)
+    notes: Optional[str] = Field(None, max_length=500)
 
 def verify_stripe_signature(payload_bytes: bytes, sig_header: str, secret: str) -> bool:
     """
@@ -240,3 +249,82 @@ async def stripe_webhook(
                 logger.error(f"[STRIPE_WEBHOOK] Failed to downgrade org {client_ref_id}: {e}")
 
     return {"status": "success", "event_type": event_type, "id": event_id}
+
+@router.post("/invoice-request")
+async def request_invoice(
+    invoice_in: InvoiceRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user)
+):
+    """
+    Submits a formal B2B enterprise procurement order & generates Net-30 invoice request.
+    Dispatches automated confirmation email with order summary and bank wire coordinates to billing contact.
+    """
+    from services.email_service import send_email, render_invoice_request_email
+
+    plan_name = invoice_in.plan.lower()
+    cycle_name = invoice_in.billing_cycle.lower()
+
+    if plan_name == "business":
+        price_str = "$2,438 / year (15% Annual Savings)" if cycle_name == "annual" else "$239 / month"
+    else:
+        price_str = "$9,170 / year (15% Annual Savings)" if cycle_name == "annual" else "$899 / month"
+
+    html_content = render_invoice_request_email(
+        company_name=invoice_in.company_name,
+        billing_email=invoice_in.billing_email,
+        plan=plan_name,
+        billing_cycle=cycle_name,
+        price_str=price_str,
+        po_number=invoice_in.po_number
+    )
+
+    subject = f"Order Confirmation: BreachGuard {plan_name.capitalize()} License for {invoice_in.company_name}"
+    
+    # 1. Dispatch confirmation email to client billing email
+    try:
+        await send_email(
+            to_email=invoice_in.billing_email,
+            subject=subject,
+            html_body=html_content,
+            text_body=f"Thank you for choosing BreachGuard. We have received your enterprise order for {invoice_in.company_name} ({plan_name.upper()} plan, {cycle_name}). A Net-30 invoice will be delivered shortly."
+        )
+    except Exception as e:
+        logger.warning(f"Error dispatching invoice confirmation to {invoice_in.billing_email}: {e}")
+
+    # 2. Notify internal administrative contact
+    admin_recipient = settings.FROM_EMAIL or "security@breachguard.io"
+    internal_notice = f"""
+    New B2B Invoicing / Enterprise Procurement Request Received:
+    Organization: {invoice_in.company_name}
+    Contact Email: {invoice_in.billing_email}
+    Plan: {plan_name.upper()}
+    Cadence: {cycle_name}
+    Investment Total: {price_str}
+    PO Number: {invoice_in.po_number or 'N/A'}
+    Notes: {invoice_in.notes or 'None'}
+    """
+    try:
+        await send_email(
+            to_email=admin_recipient,
+            subject=f"[NEW ORDER] {invoice_in.company_name} — {plan_name.upper()} ({cycle_name})",
+            html_body=f"<pre style='font-family: monospace; background:#18181b; color:#f4f4f5; padding:20px; border-radius:8px;'>{internal_notice}</pre>",
+            text_body=internal_notice
+        )
+    except Exception as e:
+        logger.debug(f"Admin invoice alert notification skipped: {e}")
+
+    logger.info(f"[INVOICE_REQUEST] Received order from {invoice_in.company_name} ({invoice_in.billing_email}) for {plan_name} ({cycle_name})")
+
+    return {
+        "status": "success",
+        "message": f"Enterprise procurement request for {invoice_in.company_name} submitted successfully. A formal Net-30 invoice and bank wire details have been dispatched to {invoice_in.billing_email}.",
+        "order_summary": {
+            "company_name": invoice_in.company_name,
+            "billing_email": invoice_in.billing_email,
+            "plan": plan_name,
+            "billing_cycle": cycle_name,
+            "investment_total": price_str,
+            "payment_terms": "Net-30 Corporate Wire / ACH"
+        }
+    }

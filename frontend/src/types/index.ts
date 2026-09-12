@@ -3,6 +3,8 @@ export interface User {
   email: string;
   name: string;
   organizationId: string;
+  org_name?: string;
+  organizationName?: string;
   plan?: string;
   isTrial?: boolean;
   trialDaysRemaining?: number;

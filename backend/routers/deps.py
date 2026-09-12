@@ -160,3 +160,14 @@ def require_scope(required_scope: str):
         return current_user
     return scope_dependency
 
+async def get_optional_current_user(
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    db: AsyncSession = Depends(get_db)
+) -> Optional[User]:
+    try:
+        return await get_current_user(request=request, token=token, x_api_key=x_api_key, db=db)
+    except HTTPException:
+        return None
+

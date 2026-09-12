@@ -2,6 +2,7 @@
 
 import { ScanInput, ScanResultData } from '@/components/ScanInput';
 import { PricingCard } from '@/components/PricingCard';
+import { InvoiceRequestModal } from '@/components/InvoiceRequestModal';
 import { 
   Shield, FileText, CheckCircle2, ArrowRight, Database, 
   Lock, Check, AlertCircle, ShieldCheck, X, Network, MailCheck, Radar, KeyRound, Globe, Server
@@ -11,6 +12,8 @@ import { useState } from 'react';
 
 export default function LandingPage() {
   const [scanResult, setScanResult] = useState<ScanResultData | null>(null);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+  const [invoicePlan, setInvoicePlan] = useState<'business' | 'enterprise'>('enterprise');
 
   const overallScore = scanResult?.overall_risk_score ?? 15;
   const riskLevel = scanResult?.risk_level ?? 'LOW RISK';
@@ -356,8 +359,12 @@ export default function LandingPage() {
                 'Unlimited telemetry retention',
                 'Dedicated compliance support'
               ]}
-              ctaText="Deploy MSP Console"
-              subtext="Custom invoicing available"
+              ctaText="Request Enterprise Invoice"
+              onCtaClick={() => {
+                setInvoicePlan('enterprise');
+                setIsInvoiceModalOpen(true);
+              }}
+              subtext="Direct Wire / ACH (Net-30) Available"
             />
           </div>
         </section>
@@ -387,6 +394,12 @@ export default function LandingPage() {
         </div>
       </footer>
 
+      {/* Enterprise Procurement & Invoicing Modal */}
+      <InvoiceRequestModal 
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        defaultPlan={invoicePlan}
+      />
     </div>
   );
 }

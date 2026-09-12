@@ -39,10 +39,10 @@ export default function ExposuresPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800 mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">Threat Exposures</h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+          <h1 className="text-xl font-semibold text-zinc-100 tracking-tight">Threat Exposures</h1>
+          <p className="text-xs text-zinc-400 mt-1">
             Complete inventory of compromised credentials, infostealer detections, and breach records.
           </p>
         </div>
@@ -55,14 +55,14 @@ export default function ExposuresPage() {
               placeholder="Filter by email, breach name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
+              className="w-full pl-9 pr-3 py-1.5 bg-[#121214] border border-zinc-800 rounded-md text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700"
             />
           </div>
 
           <select
             value={severityFilter}
             onChange={(e) => setSeverityFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-zinc-700 cursor-pointer"
+            className="px-2.5 py-1.5 bg-[#121214] border border-zinc-800 rounded-md text-xs text-zinc-300 focus:outline-none focus:border-zinc-700 cursor-pointer"
           >
             <option value="all">All Severities</option>
             <option value="critical">Critical</option>
@@ -74,7 +74,7 @@ export default function ExposuresPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-zinc-700 cursor-pointer"
+            className="px-2.5 py-1.5 bg-[#121214] border border-zinc-800 rounded-md text-xs text-zinc-300 focus:outline-none focus:border-zinc-700 cursor-pointer"
           >
             <option value="all">All Statuses</option>
             <option value="open">Open</option>
@@ -86,35 +86,34 @@ export default function ExposuresPage() {
 
       {/* Infostealer Tier Gating Notice Banner */}
       {hasLockedStealer && (
-        <div className="relative overflow-hidden mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-950/30 via-zinc-900/90 to-zinc-950 border border-amber-500/35 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs animate-fadeIn shadow-[0_0_24px_rgba(245,158,11,0.08)]">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-amber-400 to-amber-600 shadow-[0_0_10px_rgba(245,158,11,0.8)]" />
-          <div className="flex items-center gap-3 text-amber-300">
-            <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.2)] shrink-0">
-              <Lock className="w-5 h-5" />
+        <div className="mb-6 p-4 rounded-lg bg-[#141416] border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
+              <Lock className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-white tracking-tight text-sm">Infostealer Botnet Telemetry Requires Business Tier</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-roboto font-semibold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                <span className="font-semibold text-zinc-200 text-xs">Infostealer Botnet Telemetry Requires Business Tier</span>
+                <span className="px-1.5 py-0.5 rounded text-[10.5px] font-mono uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20">
                   Feature Gated
                 </span>
               </div>
-              <p className="text-zinc-300 mt-0.5 text-xs font-roboto leading-relaxed">
+              <p className="text-zinc-400 mt-1 text-xs leading-relaxed">
                 RedLine, LummaC2, and Vidar botnet logs, exfiltrated credentials, and threat forensic details are encrypted and locked under your current plan.
               </p>
             </div>
           </div>
           <Link
             href="/settings"
-            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-zinc-950 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-md"
+            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-medium rounded-md text-xs transition-colors flex items-center justify-center gap-1.5 shrink-0"
           >
-            <span>Upgrade to View</span>
+            <span>Upgrade Plan</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       )}
 
-      <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-3 sm:p-4">
+      <div className="bg-[#121214] border border-zinc-800 rounded-lg p-3 sm:p-4">
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
         ) : (

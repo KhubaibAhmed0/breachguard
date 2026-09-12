@@ -48,12 +48,12 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
                     {exposure.source}
                   </div>
                   {isLockedStealer && (
-                    <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+                    <div className="mt-1.5 inline-flex flex-wrap items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-900 border border-amber-500/30 text-[11px] text-zinc-300">
                       <Lock className="w-3 h-3 text-amber-400 shrink-0" />
-                      <span>Infostealer botnet telemetry requires Business tier.</span>
+                      <span>Infostealer telemetry requires Business tier.</span>
                       <Link 
                         href="/settings" 
-                        className="ml-1 text-amber-200 hover:text-white underline font-semibold transition-colors inline-flex items-center gap-0.5"
+                        className="ml-1 text-amber-400 hover:text-amber-300 underline font-medium transition-colors inline-flex items-center gap-0.5"
                       >
                         Upgrade to view <ArrowUpRight className="w-2.5 h-2.5" />
                       </Link>

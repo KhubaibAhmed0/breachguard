@@ -4,77 +4,43 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import { Radar, ShieldAlert, Database, History, CheckCircle2, Lock, ExternalLink, Filter, ShieldCheck } from 'lucide-react';
 import { useFindings, useExposures } from '@/hooks/useApi';
 import { FindingListSkeleton } from '@/components/Skeletons';
+import { SeverityBadge } from '@/components/SeverityBadge';
+import { StatusBadge } from '@/components/StatusBadge';
 
 export default function ThreatIntelligencePage() {
   const { data: findings = [], isLoading: findingsLoading } = useFindings({ category: 'threat_intel' });
   const { data: exposures = [], isLoading: exposuresLoading } = useExposures();
 
-  const getSeverityBadge = (severity: string) => {
-    switch (severity?.toLowerCase()) {
-      case 'critical':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_12px_rgba(244,63,94,0.18)]">
-            CRITICAL
-          </span>
-        );
-      case 'high':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_12px_rgba(249,115,22,0.18)]">
-            HIGH
-          </span>
-        );
-      case 'medium':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_12px_rgba(245,158,11,0.18)]">
-            MEDIUM
-          </span>
-        );
-      case 'low':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]">
-            LOW
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider font-roboto bg-zinc-900 text-zinc-400 border border-zinc-750">
-            INFO
-          </span>
-        );
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-900">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight flex items-center gap-2">
               <Radar className="w-5 h-5 text-zinc-400" />
-              Public Threat Intelligence & Breach Telemetry
+              Public Threat Intelligence &amp; Breach Telemetry
             </h1>
             <p className="text-xs sm:text-sm text-zinc-400 mt-1">
               Cross-indexed public breach disclosures, security vendor reputation feeds, and historical compromised identities.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center px-3.5 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs font-medium text-blue-300 font-roboto shadow-[0_0_12px_rgba(59,130,246,0.12)]">
-              <span><strong className="text-white font-semibold font-roboto">{findings.length}</strong> Intelligence Indicators</span>
+            <div className="inline-flex items-center px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-md text-xs text-zinc-300 font-mono">
+              <span><strong className="text-zinc-100 font-semibold">{findings.length}</strong> Indicators</span>
             </div>
           </div>
         </div>
 
-        {/* Data Provenance & Telemetry Integrity Banner - Modernized */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-950/30 via-zinc-900/80 to-zinc-950 border border-blue-500/30 p-5 space-y-2 shadow-sm">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-400 to-indigo-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
-          <div className="flex items-center gap-2.5 text-xs font-semibold text-blue-300">
-            <div className="p-1.5 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-300">
-              <ShieldCheck className="w-4 h-4" />
+        {/* Data Provenance & Telemetry Integrity Banner */}
+        <div className="rounded-lg bg-zinc-900/50 border border-zinc-800 p-4 space-y-2">
+          <div className="flex items-center gap-2.5 text-xs font-medium text-zinc-200">
+            <div className="p-1 rounded bg-zinc-800 border border-zinc-700 text-zinc-300">
+              <ShieldCheck className="w-3.5 h-3.5" />
             </div>
-            <span>Verified Data Provenance & Ethical Sourcing</span>
+            <span>Verified Data Provenance &amp; Ethical Sourcing</span>
           </div>
-          <p className="text-xs text-zinc-300 leading-relaxed font-roboto pl-8">
+          <p className="text-xs text-zinc-400 leading-relaxed pl-6">
             BreachGuard telemetry is derived exclusively from authorized public breach notifications (Have I Been Pwned), 
             security vendor reputation feeds (VirusTotal), and public network registries. 
             In compliance with zero-credential exposure standards, raw passwords and active session tokens are never persisted or returned.
@@ -82,52 +48,52 @@ export default function ThreatIntelligencePage() {
         </div>
 
         {/* Threat Intelligence Findings */}
-        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-5 py-3.5 border-b border-zinc-800/60 bg-zinc-900/60 flex items-center justify-between">
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/40 flex items-center justify-between font-mono">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-400" />
-              Intelligence Observations & Disclosures ({findings.length})
+              <ShieldAlert className="w-3.5 h-3.5 text-zinc-400" />
+              Intelligence Observations &amp; Disclosures ({findings.length})
             </h2>
-            <span className="text-[11px] font-roboto text-zinc-500">Public Index Correlation</span>
+            <span className="text-[11px] text-zinc-500">Public Index Correlation</span>
           </div>
 
-          <div className="divide-y divide-zinc-800/40">
+          <div className="divide-y divide-zinc-800/60">
             {findingsLoading && !findings.length ? (
               <FindingListSkeleton count={3} />
             ) : findings.length === 0 ? (
-              <div className="py-10 text-center text-zinc-500 text-xs font-roboto">
+              <div className="py-10 text-center text-zinc-500 text-xs font-mono">
                 No active threat intelligence matches detected for monitored domains.
               </div>
             ) : (
               findings.map((f: any) => (
-                <div key={f.id} className="p-5 hover:bg-zinc-800/20 transition-colors space-y-2.5 font-roboto">
+                <div key={f.id} className="p-4 hover:bg-zinc-850/40 transition-colors space-y-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-2.5 flex-wrap">
-                      {getSeverityBadge(f.severity)}
-                      <span className="text-sm font-semibold text-white tracking-tight">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <SeverityBadge severity={f.severity} />
+                      <span className="text-sm font-medium text-zinc-100 tracking-tight">
                         {f.title}
                       </span>
-                      <span className="text-[11px] font-roboto text-zinc-500">
+                      <span className="text-[11px] font-mono text-zinc-500">
                         [{f.finding_id}]
                       </span>
                     </div>
-                    <span className="text-xs text-zinc-400 font-roboto">
-                      Confidence: <strong className="text-zinc-200 uppercase font-semibold">{f.confidence}</strong>
+                    <span className="text-xs font-mono text-zinc-400">
+                      Confidence: <strong className="text-zinc-200 uppercase">{f.confidence}</strong>
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-300 leading-relaxed font-roboto">
+                  <p className="text-xs text-zinc-400 leading-relaxed">
                     {f.description}
                   </p>
 
-                  <div className="p-3 bg-zinc-950/70 border border-zinc-800/80 rounded-xl text-xs space-y-1.5 font-roboto">
-                    <div className="text-xs text-zinc-400 font-roboto">
-                      <strong className="text-zinc-200 font-medium">Observed Evidence:</strong>{' '}
-                      <span className="text-zinc-300 font-roboto text-[11px]">{f.evidence}</span>
+                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800 rounded-md text-xs space-y-1 font-mono text-[11px]">
+                    <div>
+                      <span className="text-zinc-400 font-medium">Observed Evidence:</span>{' '}
+                      <span className="text-zinc-300">{f.evidence}</span>
                     </div>
                     {f.recommended_remediation && (
-                      <div className="text-xs text-zinc-400 font-roboto">
-                        <strong className="text-zinc-200 font-medium">Remediation:</strong>{' '}
+                      <div>
+                        <span className="text-zinc-400 font-medium">Remediation:</span>{' '}
                         <span className="text-zinc-300">{f.recommended_remediation}</span>
                       </div>
                     )}
@@ -139,62 +105,62 @@ export default function ThreatIntelligencePage() {
         </div>
 
         {/* Masked Monitored Identities Table */}
-        <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
-          <div className="px-5 py-3.5 border-b border-zinc-800/60 bg-zinc-900/60 flex items-center justify-between">
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/40 flex items-center justify-between font-mono">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <Lock className="w-4 h-4 text-zinc-400" />
+              <Lock className="w-3.5 h-3.5 text-zinc-400" />
               Corporate Identity Exposure History (Masked)
             </h2>
-            <span className="text-xs text-zinc-400 font-roboto font-medium">Zero Raw Credential Storage</span>
+            <span className="text-xs text-zinc-500">Zero Raw Credential Storage</span>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-roboto">
-              <thead className="bg-zinc-950/60 text-zinc-400 border-b border-zinc-800/60 font-medium text-xs">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-zinc-950/60 text-zinc-400 border-b border-zinc-800 font-mono text-xs">
                 <tr>
-                  <th className="py-3 px-5">Masked Identity</th>
-                  <th className="py-3 px-5">Breach / Incident</th>
-                  <th className="py-3 px-5">Severity</th>
-                  <th className="py-3 px-5">Telemetry Type</th>
-                  <th className="py-3 px-5 text-right">Status</th>
+                  <th className="py-2.5 px-4">Masked Identity</th>
+                  <th className="py-2.5 px-4">Breach / Incident</th>
+                  <th className="py-2.5 px-4">Severity</th>
+                  <th className="py-2.5 px-4">Telemetry Type</th>
+                  <th className="py-2.5 px-4 text-right">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/40 text-zinc-300 font-roboto">
+              <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
                 {exposuresLoading && !exposures.length ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td className="py-3.5 px-5"><div className="h-3.5 bg-zinc-800 rounded w-28" /></td>
-                      <td className="py-3.5 px-5"><div className="h-3.5 bg-zinc-800 rounded w-24" /></td>
-                      <td className="py-3.5 px-5"><div className="h-3.5 bg-zinc-800 rounded w-16" /></td>
-                      <td className="py-3.5 px-5"><div className="h-3.5 bg-zinc-800 rounded w-20" /></td>
-                      <td className="py-3.5 px-5 text-right"><div className="h-3.5 bg-zinc-800 rounded w-12 ml-auto" /></td>
+                      <td className="py-3 px-4"><div className="h-3.5 bg-zinc-800 rounded w-28" /></td>
+                      <td className="py-3 px-4"><div className="h-3.5 bg-zinc-800 rounded w-24" /></td>
+                      <td className="py-3 px-4"><div className="h-3.5 bg-zinc-800 rounded w-16" /></td>
+                      <td className="py-3 px-4"><div className="h-3.5 bg-zinc-800 rounded w-20" /></td>
+                      <td className="py-3 px-4 text-right"><div className="h-3.5 bg-zinc-800 rounded w-12 ml-auto" /></td>
                     </tr>
                   ))
                 ) : exposures.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-zinc-500 font-roboto">
+                    <td colSpan={5} className="py-10 text-center text-zinc-500 font-mono">
                       No corporate identities currently observed in exposure telemetry.
                     </td>
                   </tr>
                 ) : (
                   exposures.slice(0, 10).map((exp) => (
-                    <tr key={exp.id} className="hover:bg-zinc-800/30 transition-colors">
-                      <td className="py-3.5 px-5 font-roboto font-medium text-xs text-zinc-200">
+                    <tr key={exp.id} className="hover:bg-zinc-850/40 transition-colors">
+                      <td className="py-3 px-4 font-mono font-medium text-xs text-zinc-200">
                         {exp.email ? (exp.email.length > 5 ? `${exp.email[0]}***@${exp.email.split('@')[1] || 'domain'}` : exp.email) : 'identity@monitored.com'}
                       </td>
-                      <td className="py-3.5 px-5 text-white font-medium text-sm">
+                      <td className="py-3 px-4 text-zinc-100 font-medium">
                         {exp.source}
                       </td>
-                      <td className="py-3.5 px-5">
-                        {getSeverityBadge(exp.severity)}
+                      <td className="py-3 px-4">
+                        <SeverityBadge severity={exp.severity} />
                       </td>
-                      <td className="py-3.5 px-5 text-zinc-400 text-xs">
-                        <span className="px-2 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[11px] font-roboto">
+                      <td className="py-3 px-4 text-zinc-400 text-xs">
+                        <span className="px-1.5 py-0.5 bg-zinc-950 border border-zinc-800 rounded text-[10.5px] font-mono">
                           {exp.credentialType || 'Breach metadata'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-5 text-right font-roboto text-xs text-zinc-400 font-medium uppercase">
-                        {exp.status || 'OPEN'}
+                      <td className="py-3 px-4 text-right">
+                        <StatusBadge status={exp.status || 'open'} />
                       </td>
                     </tr>
                   ))

@@ -6,6 +6,7 @@ import {
   AlertTriangle, CheckCircle2, ArrowRight, HelpCircle, 
   Calculator, Sparkles, AlertCircle, Info, TrendingDown
 } from 'lucide-react';
+import { SeverityBadge } from './SeverityBadge';
 
 export type PillarKey = 'overall' | 'attack_surface' | 'email_security' | 'threat_intelligence' | 'credential_exposure';
 
@@ -116,21 +117,21 @@ export function ScoreBreakdownModal({
   const currentPillar = getPillarData(activeTab);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 animate-fadeIn">
       <div 
-        className="relative w-full max-w-3xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
+        className="relative w-full max-w-3xl bg-zinc-950 border border-zinc-800 rounded-lg overflow-hidden flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-zinc-800/80 bg-zinc-900/50">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-zinc-800 bg-zinc-900/60">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-              <Calculator className="w-5 h-5" />
+            <div className="p-1.5 rounded bg-zinc-850 border border-zinc-750 text-zinc-300">
+              <Calculator className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white tracking-tight flex items-center gap-2">
-                Score Transparency & Deduction Breakdown
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-roboto font-normal">
+              <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+                Score Transparency &amp; Deduction Breakdown
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-850 text-zinc-400 border border-zinc-800 font-mono font-normal">
                   Deterministic v2.4
                 </span>
               </h3>
@@ -141,133 +142,133 @@ export function ScoreBreakdownModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 transition-colors cursor-pointer"
+            className="p-1 rounded text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 px-6 pt-3 pb-2 border-b border-zinc-800/60 bg-zinc-950 overflow-x-auto">
+        <div className="flex items-center gap-1.5 px-4 sm:px-6 pt-3 pb-2 border-b border-zinc-800 bg-zinc-950 overflow-x-auto">
           <button
             onClick={() => setActiveTab('overall')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium font-roboto transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium font-mono transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'overall'
-                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                ? 'bg-zinc-850 text-white border border-zinc-750'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
-            <Shield className="w-3.5 h-3.5 text-indigo-400" />
+            <Shield className="w-3.5 h-3.5 text-zinc-400" />
             Overall Risk ({overallScore}/100)
           </button>
           <button
             onClick={() => setActiveTab('attack_surface')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium font-roboto transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium font-mono transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'attack_surface'
-                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                ? 'bg-zinc-850 text-white border border-zinc-750'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
-            <Network className="w-3.5 h-3.5 text-cyan-400" />
+            <Network className="w-3.5 h-3.5 text-zinc-400" />
             Attack Surface ({categories.attack_surface}/100)
           </button>
           <button
             onClick={() => setActiveTab('email_security')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium font-roboto transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium font-mono transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'email_security'
-                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                ? 'bg-zinc-850 text-white border border-zinc-750'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
-            <MailCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <MailCheck className="w-3.5 h-3.5 text-zinc-400" />
             Email Security ({categories.email_security}/100)
           </button>
           <button
             onClick={() => setActiveTab('threat_intelligence')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium font-roboto transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium font-mono transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'threat_intelligence'
-                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                ? 'bg-zinc-850 text-white border border-zinc-750'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
-            <Radar className="w-3.5 h-3.5 text-blue-400" />
+            <Radar className="w-3.5 h-3.5 text-zinc-400" />
             Threat Intel ({categories.threat_intelligence}/100)
           </button>
           <button
             onClick={() => setActiveTab('credential_exposure')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium font-roboto transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+            className={`px-2.5 py-1.5 rounded-md text-xs font-medium font-mono transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'credential_exposure'
-                ? 'bg-zinc-800 text-white shadow-sm border border-zinc-700'
+                ? 'bg-zinc-850 text-white border border-zinc-750'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
             }`}
           >
-            <KeyRound className="w-3.5 h-3.5 text-amber-400" />
+            <KeyRound className="w-3.5 h-3.5 text-zinc-400" />
             Credential Exposure ({categories.credential_exposure}/100)
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 flex-1 text-sm font-roboto">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1 text-sm font-roboto">
           {activeTab === 'overall' ? (
             /* OVERALL RISK VIEW */
-            <div className="space-y-6">
+            <div className="space-y-5">
               {/* Important Clarification Banner */}
-              <div className="p-4 rounded-xl bg-indigo-950/30 border border-indigo-500/30 space-y-2">
-                <div className="flex items-center gap-2 text-indigo-300 font-semibold text-xs">
-                  <Info className="w-4 h-4 text-indigo-400 shrink-0" />
+              <div className="p-3.5 rounded-lg bg-zinc-900/60 border border-zinc-800 space-y-1.5">
+                <div className="flex items-center gap-2 text-zinc-200 font-medium text-xs">
+                  <Info className="w-4 h-4 text-zinc-400 shrink-0" />
                   Understanding BreachGuard Risk vs. Posture
                 </div>
-                <p className="text-xs text-zinc-300 leading-relaxed">
-                  The <strong className="text-white">4 Category Pillars</strong> represent <strong className="text-emerald-400">Security Defense Posture (0–100)</strong>, where 100 represents a clean perimeter with zero vulnerabilities.
-                  The <strong className="text-white">External Cyber Risk Score (0–100)</strong> inverts your weighted defense posture into active attacker exposure (<code className="text-indigo-300 px-1 py-0.5 rounded bg-indigo-900/40">100 − Posture</code>), where 0 is minimal risk and 100 is critical exposure.
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  The <strong className="text-zinc-200">4 Category Pillars</strong> represent <strong className="text-emerald-400">Security Defense Posture (0–100)</strong>, where 100 represents a clean perimeter.
+                  The <strong className="text-zinc-200">External Cyber Risk Score (0–100)</strong> inverts your defense posture into active attacker exposure (<code className="text-zinc-200 px-1 py-0.5 rounded bg-zinc-900 border border-zinc-800">100 − Posture</code>), where 0 is minimal risk and 100 is critical exposure.
                 </p>
               </div>
 
               {/* Mathematical Formula Card */}
-              <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-3">
-                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Weighted Derivation Formula</span>
-                <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 font-roboto text-xs text-zinc-200 overflow-x-auto leading-relaxed">
+              <div className="p-4 rounded-lg bg-zinc-900/40 border border-zinc-800 space-y-2.5">
+                <span className="text-xs font-medium text-zinc-400">Weighted Derivation Formula</span>
+                <div className="p-2.5 rounded bg-zinc-950 border border-zinc-800 font-mono text-xs text-zinc-300 overflow-x-auto leading-relaxed">
                   Risk = 100 − [ (30% × Attack Surface) + (25% × Email Posture) + (20% × Threat Intel) + (25% × Credential Posture) ]
                 </div>
-                <div className="flex flex-wrap items-center justify-between text-xs text-zinc-400 pt-1">
-                  <span>Weighted Defense Posture: <strong className="text-white font-roboto">{breakdown?.weighted_posture_score ?? (100 - overallScore)}/100</strong></span>
-                  <span>Active Cyber Risk: <strong className="text-indigo-400 font-roboto">{overallScore}/100 ({riskLevel})</strong></span>
+                <div className="flex flex-wrap items-center justify-between text-xs text-zinc-400 pt-1 font-mono">
+                  <span>Weighted Defense Posture: <strong className="text-zinc-100">{breakdown?.weighted_posture_score ?? (100 - overallScore)}/100</strong></span>
+                  <span>Active Cyber Risk: <strong className="text-zinc-100">{overallScore}/100 ({riskLevel})</strong></span>
                 </div>
               </div>
 
               {/* Risk Level Thresholds & Interpretation Scale */}
-              <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+              <div className="p-4 rounded-lg bg-zinc-900/40 border border-zinc-800 space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Risk Score Interpretation Scale (0–100)</span>
-                  <span className="text-[11px] text-zinc-400 font-roboto">Lower score is safer (0 = Pristine)</span>
+                  <span className="text-xs font-medium text-zinc-400">Risk Score Interpretation Scale (0–100)</span>
+                  <span className="text-[11px] text-zinc-500 font-mono">Lower score is safer (0 = Pristine)</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs font-roboto">
-                  <div className={`p-3 rounded-lg border transition-all ${overallScore < 35 ? 'bg-emerald-500/10 border-emerald-500/50 shadow-sm ring-1 ring-emerald-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
-                    <div className="font-semibold text-emerald-400 flex items-center justify-between">
+                  <div className={`p-3 rounded-md border transition-colors ${overallScore < 35 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
+                    <div className="font-semibold text-emerald-400 flex items-center justify-between font-mono">
                       <span>Low Risk</span>
-                      <span className="text-[11px] font-mono">0–34</span>
+                      <span className="text-[11px]">0–34</span>
                     </div>
                     <div className="text-[11px] text-zinc-400 mt-1">Perimeter secure. Minimal external exposure detected.</div>
                   </div>
-                  <div className={`p-3 rounded-lg border transition-all ${overallScore >= 35 && overallScore < 60 ? 'bg-amber-500/10 border-amber-500/50 shadow-sm ring-1 ring-amber-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
-                    <div className="font-semibold text-amber-400 flex items-center justify-between">
+                  <div className={`p-3 rounded-md border transition-colors ${overallScore >= 35 && overallScore < 60 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
+                    <div className="font-semibold text-amber-400 flex items-center justify-between font-mono">
                       <span>Medium Risk</span>
-                      <span className="text-[11px] font-mono">35–59</span>
+                      <span className="text-[11px]">35–59</span>
                     </div>
-                    <div className="text-[11px] text-zinc-400 mt-1">Moderate exposure. Email hardening & perimeter clean-up advised.</div>
+                    <div className="text-[11px] text-zinc-400 mt-1">Moderate exposure. Email hardening &amp; perimeter clean-up advised.</div>
                   </div>
-                  <div className={`p-3 rounded-lg border transition-all ${overallScore >= 60 && overallScore < 75 ? 'bg-orange-500/10 border-orange-500/50 shadow-sm ring-1 ring-orange-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
-                    <div className="font-semibold text-orange-400 flex items-center justify-between">
+                  <div className={`p-3 rounded-md border transition-colors ${overallScore >= 60 && overallScore < 75 ? 'bg-orange-500/10 border-orange-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
+                    <div className="font-semibold text-orange-400 flex items-center justify-between font-mono">
                       <span>High Risk</span>
-                      <span className="text-[11px] font-mono">60–74</span>
+                      <span className="text-[11px]">60–74</span>
                     </div>
                     <div className="text-[11px] text-zinc-400 mt-1">Elevated threat. Vulnerable open ports or active breaches observed.</div>
                   </div>
-                  <div className={`p-3 rounded-lg border transition-all ${overallScore >= 75 ? 'bg-rose-500/10 border-rose-500/50 shadow-sm ring-1 ring-rose-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
-                    <div className="font-semibold text-rose-400 flex items-center justify-between">
+                  <div className={`p-3 rounded-md border transition-colors ${overallScore >= 75 ? 'bg-rose-500/10 border-rose-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
+                    <div className="font-semibold text-rose-400 flex items-center justify-between font-mono">
                       <span>Critical Risk</span>
-                      <span className="text-[11px] font-mono">75–100</span>
+                      <span className="text-[11px]">75–100</span>
                     </div>
                     <div className="text-[11px] text-zinc-400 mt-1">Immediate action required. Sensitive services or plaintext creds exposed.</div>
                   </div>
@@ -275,30 +276,30 @@ export function ScoreBreakdownModal({
               </div>
 
               {/* Pillar Contributions Breakdown Table */}
-              <div className="space-y-3">
-                <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Pillar Risk Contributions</span>
+              <div className="space-y-2.5">
+                <span className="text-xs font-medium text-zinc-400">Pillar Risk Contributions</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Attack Surface */}
                   <div 
                     onClick={() => setActiveTab('attack_surface')}
-                    className="p-3.5 rounded-xl bg-zinc-900/40 hover:bg-zinc-900/80 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer space-y-2 group"
+                    className="p-3.5 rounded-lg bg-zinc-900/40 hover:bg-zinc-900/70 border border-zinc-800 hover:border-zinc-750 transition-colors cursor-pointer space-y-2 group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Network className="w-4 h-4 text-cyan-400" />
-                        <span className="font-semibold text-zinc-200 text-xs">Attack Surface (30% weight)</span>
+                        <Network className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="font-medium text-zinc-200 text-xs">Attack Surface (30% weight)</span>
                       </div>
-                      <span className="text-xs font-roboto text-zinc-400 group-hover:text-cyan-400 flex items-center gap-1">
+                      <span className="text-xs font-mono text-zinc-500 group-hover:text-zinc-300">
                         Inspect &rarr;
                       </span>
                     </div>
-                    <div className="flex items-baseline justify-between text-xs font-roboto">
-                      <span className="text-zinc-400">Defense Posture: <strong className="text-white">{categories.attack_surface}/100</strong></span>
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-zinc-400">Posture: <strong className="text-zinc-100">{categories.attack_surface}/100</strong></span>
                       <span className="text-zinc-400">Risk Added: <strong className="text-amber-400">+{contributions.attack_surface?.risk_points ?? ((100 - categories.attack_surface) * 0.3).toFixed(1)} pts</strong></span>
                     </div>
                     <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                       <div 
-                        className="bg-cyan-500 h-full rounded-full transition-all" 
+                        className="bg-zinc-400 h-full rounded-full transition-all" 
                         style={{ width: `${categories.attack_surface}%` }}
                       />
                     </div>
@@ -307,24 +308,24 @@ export function ScoreBreakdownModal({
                   {/* Email Security */}
                   <div 
                     onClick={() => setActiveTab('email_security')}
-                    className="p-3.5 rounded-xl bg-zinc-900/40 hover:bg-zinc-900/80 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer space-y-2 group"
+                    className="p-3.5 rounded-lg bg-zinc-900/40 hover:bg-zinc-900/70 border border-zinc-800 hover:border-zinc-750 transition-colors cursor-pointer space-y-2 group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <MailCheck className="w-4 h-4 text-emerald-400" />
-                        <span className="font-semibold text-zinc-200 text-xs">Email Security (25% weight)</span>
+                        <MailCheck className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="font-medium text-zinc-200 text-xs">Email Security (25% weight)</span>
                       </div>
-                      <span className="text-xs font-roboto text-zinc-400 group-hover:text-emerald-400 flex items-center gap-1">
+                      <span className="text-xs font-mono text-zinc-500 group-hover:text-zinc-300">
                         Inspect &rarr;
                       </span>
                     </div>
-                    <div className="flex items-baseline justify-between text-xs font-roboto">
-                      <span className="text-zinc-400">Defense Posture: <strong className="text-white">{categories.email_security}/100</strong></span>
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-zinc-400">Posture: <strong className="text-zinc-100">{categories.email_security}/100</strong></span>
                       <span className="text-zinc-400">Risk Added: <strong className="text-amber-400">+{contributions.email_security?.risk_points ?? ((100 - categories.email_security) * 0.25).toFixed(1)} pts</strong></span>
                     </div>
                     <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                       <div 
-                        className="bg-emerald-500 h-full rounded-full transition-all" 
+                        className="bg-zinc-400 h-full rounded-full transition-all" 
                         style={{ width: `${categories.email_security}%` }}
                       />
                     </div>
@@ -333,24 +334,24 @@ export function ScoreBreakdownModal({
                   {/* Threat Intelligence */}
                   <div 
                     onClick={() => setActiveTab('threat_intelligence')}
-                    className="p-3.5 rounded-xl bg-zinc-900/40 hover:bg-zinc-900/80 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer space-y-2 group"
+                    className="p-3.5 rounded-lg bg-zinc-900/40 hover:bg-zinc-900/70 border border-zinc-800 hover:border-zinc-750 transition-colors cursor-pointer space-y-2 group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Radar className="w-4 h-4 text-blue-400" />
-                        <span className="font-semibold text-zinc-200 text-xs">Threat Intel (20% weight)</span>
+                        <Radar className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="font-medium text-zinc-200 text-xs">Threat Intel (20% weight)</span>
                       </div>
-                      <span className="text-xs font-roboto text-zinc-400 group-hover:text-blue-400 flex items-center gap-1">
+                      <span className="text-xs font-mono text-zinc-500 group-hover:text-zinc-300">
                         Inspect &rarr;
                       </span>
                     </div>
-                    <div className="flex items-baseline justify-between text-xs font-roboto">
-                      <span className="text-zinc-400">Defense Posture: <strong className="text-white">{categories.threat_intelligence}/100</strong></span>
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-zinc-400">Posture: <strong className="text-zinc-100">{categories.threat_intelligence}/100</strong></span>
                       <span className="text-zinc-400">Risk Added: <strong className="text-amber-400">+{contributions.threat_intelligence?.risk_points ?? ((100 - categories.threat_intelligence) * 0.2).toFixed(1)} pts</strong></span>
                     </div>
                     <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                       <div 
-                        className="bg-blue-500 h-full rounded-full transition-all" 
+                        className="bg-zinc-400 h-full rounded-full transition-all" 
                         style={{ width: `${categories.threat_intelligence}%` }}
                       />
                     </div>
@@ -359,24 +360,24 @@ export function ScoreBreakdownModal({
                   {/* Credential Exposure */}
                   <div 
                     onClick={() => setActiveTab('credential_exposure')}
-                    className="p-3.5 rounded-xl bg-zinc-900/40 hover:bg-zinc-900/80 border border-zinc-800/80 hover:border-zinc-700 transition-all cursor-pointer space-y-2 group"
+                    className="p-3.5 rounded-lg bg-zinc-900/40 hover:bg-zinc-900/70 border border-zinc-800 hover:border-zinc-750 transition-colors cursor-pointer space-y-2 group"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <KeyRound className="w-4 h-4 text-amber-400" />
-                        <span className="font-semibold text-zinc-200 text-xs">Credential Exposure (25% weight)</span>
+                        <KeyRound className="w-3.5 h-3.5 text-zinc-400" />
+                        <span className="font-medium text-zinc-200 text-xs">Credential Exposure (25% weight)</span>
                       </div>
-                      <span className="text-xs font-roboto text-zinc-400 group-hover:text-amber-400 flex items-center gap-1">
+                      <span className="text-xs font-mono text-zinc-500 group-hover:text-zinc-300">
                         Inspect &rarr;
                       </span>
                     </div>
-                    <div className="flex items-baseline justify-between text-xs font-roboto">
-                      <span className="text-zinc-400">Defense Posture: <strong className="text-white">{categories.credential_exposure}/100</strong></span>
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-zinc-400">Posture: <strong className="text-zinc-100">{categories.credential_exposure}/100</strong></span>
                       <span className="text-zinc-400">Risk Added: <strong className="text-amber-400">+{contributions.credential_exposure?.risk_points ?? ((100 - categories.credential_exposure) * 0.25).toFixed(1)} pts</strong></span>
                     </div>
                     <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                       <div 
-                        className="bg-amber-500 h-full rounded-full transition-all" 
+                        className="bg-zinc-400 h-full rounded-full transition-all" 
                         style={{ width: `${categories.credential_exposure}%` }}
                       />
                     </div>
@@ -384,21 +385,20 @@ export function ScoreBreakdownModal({
                 </div>
               </div>
 
-              {/* Remediation Simulator Tip - Modernized Enterprise Advisory */}
-              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950/30 via-zinc-900/90 to-zinc-950 border border-emerald-500/35 p-5 flex items-start gap-3.5 shadow-[0_0_20px_rgba(16,185,129,0.08)]">
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
-                <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)] shrink-0 mt-0.5">
-                  <Sparkles className="w-5 h-5" />
+              {/* Remediation Simulator Tip */}
+              <div className="p-4 rounded-lg bg-zinc-900/40 border border-zinc-800 flex items-start gap-3">
+                <div className="p-1.5 rounded bg-zinc-850 border border-zinc-750 text-zinc-300 shrink-0 mt-0.5">
+                  <Sparkles className="w-4 h-4" />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-semibold text-white tracking-tight">Deterministic Path to Minimal Risk</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-roboto font-semibold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <span className="text-xs font-medium text-white">Deterministic Path to Minimal Risk</span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-zinc-850 text-zinc-300 border border-zinc-800">
                       High Impact
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-300 leading-relaxed font-roboto">
-                    Remediating open perimeter findings or advancing your email anti-spoofing policy (<code className="text-emerald-300 px-1.5 py-0.5 rounded bg-zinc-900 border border-emerald-900/60 font-roboto">p=reject</code>) restores up to +20 posture points, driving active cyber risk down to single digits.
+                  <p className="text-xs text-zinc-400 leading-relaxed font-roboto">
+                    Remediating open perimeter findings or advancing your email anti-spoofing policy (<code className="text-zinc-200 px-1 py-0.5 rounded bg-zinc-950 border border-zinc-800 font-mono">p=reject</code>) restores up to +20 posture points, driving active cyber risk down to single digits.
                   </p>
                 </div>
               </div>
@@ -461,58 +461,32 @@ export function ScoreBreakdownModal({
                     {currentPillar.deductions.map((d: any, idx: number) => {
                       const points = d.points_deducted ?? 0;
                       const sev = (d.severity || (points >= 20 ? 'critical' : points >= 15 ? 'high' : 'medium')).toLowerCase();
-                      const getDeductionBadge = (severity: string) => {
-                        switch (severity) {
-                          case 'critical':
-                            return (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-roboto uppercase font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_10px_rgba(244,63,94,0.18)]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-                                CRITICAL
-                              </span>
-                            );
-                          case 'high':
-                            return (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-roboto uppercase font-semibold bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_10px_rgba(249,115,22,0.18)]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                                HIGH
-                              </span>
-                            );
-                          default:
-                            return (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-roboto uppercase font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_10px_rgba(245,158,11,0.18)]">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                MEDIUM
-                              </span>
-                            );
-                        }
-                      };
-
                       return (
                         <div 
                           key={idx} 
-                          className="p-4 rounded-xl bg-zinc-900/50 border border-zinc-800/90 space-y-2 hover:bg-zinc-900/80 transition-colors"
+                          className="p-3.5 rounded-lg bg-zinc-900/40 border border-zinc-800 space-y-2 hover:bg-zinc-900/70 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1.5">
                               <div className="flex items-center gap-2 flex-wrap">
-                                {getDeductionBadge(sev)}
-                                <span className="font-semibold text-white text-xs">
+                                <SeverityBadge severity={sev as any} />
+                                <span className="font-medium text-zinc-100 text-xs">
                                   {d.title || d.reason}
                                 </span>
                                 {d.finding_id && (
-                                  <span className="text-[11px] font-roboto text-zinc-500">
+                                  <span className="text-[11px] font-mono text-zinc-500">
                                     [{d.finding_id}]
                                   </span>
                                 )}
                               </div>
                               {d.asset && (
-                                <div className="text-xs text-zinc-400 font-roboto">
+                                <div className="text-xs text-zinc-400 font-mono">
                                   Asset Target: <strong className="text-zinc-200">{d.asset}</strong>
                                 </div>
                               )}
                               {d.evidence && (
-                                <div className="text-xs text-zinc-300 bg-zinc-950/80 p-2 rounded-lg border border-zinc-800/80 font-roboto">
-                                  Telemetry Evidence: <span className="text-zinc-200 font-medium">{d.evidence}</span>
+                                <div className="text-xs text-zinc-300 bg-zinc-950/60 p-2 rounded-md border border-zinc-800/80 font-mono text-[11px]">
+                                  Telemetry Evidence: <span className="text-zinc-200 font-normal">{d.evidence}</span>
                                 </div>
                               )}
                               {d.impact && (
@@ -522,7 +496,7 @@ export function ScoreBreakdownModal({
                               )}
                             </div>
 
-                            <div className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 font-roboto font-bold text-xs shrink-0 shadow-[0_0_10px_rgba(244,63,94,0.12)]">
+                            <div className="px-2 py-0.5 rounded bg-rose-500/10 border border-rose-500/25 text-rose-400 font-mono font-medium text-xs shrink-0">
                               -{points} pts
                             </div>
                           </div>
@@ -537,14 +511,14 @@ export function ScoreBreakdownModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3.5 border-t border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between text-xs text-zinc-400">
-          <span className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-zinc-400" />
+        <div className="px-6 py-3.5 border-t border-zinc-800 bg-zinc-900/40 flex items-center justify-between text-xs text-zinc-400">
+          <span className="flex items-center gap-1.5 text-zinc-400">
+            <Shield className="w-3.5 h-3.5 text-zinc-500" />
             Active scope: {domainCount} Monitored Domain(s)
           </span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-medium transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white font-medium text-xs transition-colors cursor-pointer"
           >
             Close Breakdown
           </button>

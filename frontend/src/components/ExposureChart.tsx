@@ -26,21 +26,22 @@ export function ExposureChart() {
       <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+            <stop offset="5%" stopColor="#71717a" stopOpacity={0.15} />
+            <stop offset="95%" stopColor="#71717a" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
-        <XAxis dataKey="month" stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} />
-        <YAxis stroke="#4b5563" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+        <CartesianGrid strokeDasharray="2 2" stroke="#27272a" vertical={false} />
+        <XAxis dataKey="month" stroke="#52525b" fontSize={11} tickLine={false} axisLine={false} />
+        <YAxis stroke="#52525b" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
         <Tooltip 
-          contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', color: '#f3f4f6' }}
-          itemStyle={{ color: '#06b6d4' }}
+          contentStyle={{ backgroundColor: '#121215', borderColor: '#27272a', color: '#e4e4e7', fontSize: '11px', borderRadius: '6px' }}
+          itemStyle={{ color: '#a1a1aa' }}
         />
         <Area 
           type="monotone" 
           dataKey="count" 
-          stroke="#06b6d4" 
+          stroke="#a1a1aa" 
+          strokeWidth={1.5}
           fillOpacity={1} 
           fill="url(#colorCount)" 
         />

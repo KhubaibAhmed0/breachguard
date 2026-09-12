@@ -81,7 +81,7 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
               </span>
             </Link>
             <div className="flex items-center gap-2">
-              <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-roboto font-medium">
+              <span className="px-1.5 py-0.5 rounded bg-zinc-850 text-zinc-400 border border-zinc-800 text-[10px] font-mono">
                 MSP
               </span>
               {isMobile && (
@@ -228,11 +228,11 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
 
       {/* Add Client Tenant Modal */}
       {isAddTenantOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-lg p-5">
             <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                <div className="w-6 h-6 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300">
                   <Building2 className="w-3.5 h-3.5" />
                 </div>
                 <h3 className="text-sm font-semibold text-white">Provision Client Tenant Organization</h3>
@@ -255,7 +255,7 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
                   placeholder="e.g. MedTech Clinic or Apex Law"
                   value={newOrgName}
                   onChange={(e) => setNewOrgName(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-zinc-700"
                   required
                   autoFocus
                 />
@@ -270,7 +270,7 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
                   placeholder="e.g. medtech-clinic.com"
                   value={newOrgDomain}
                   onChange={(e) => setNewOrgDomain(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
                 />
                 <p className="text-[11px] text-zinc-500 mt-1">
                   Domain will be automatically scheduled for continuous dark web exposure discovery.
@@ -286,12 +286,12 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
                   placeholder="e.g. security-lead@medtech-clinic.com"
                   value={newOrgAdminEmail}
                   onChange={(e) => setNewOrgAdminEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 font-roboto text-xs focus:outline-none focus:border-zinc-700"
                 />
               </div>
 
               {createError && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/35 text-xs text-rose-300 shadow-[0_0_12px_rgba(244,63,94,0.12)]">
+                <div className="p-2.5 rounded bg-rose-500/10 border border-rose-500/25 text-xs text-rose-400">
                   {createError}
                 </div>
               )}
@@ -300,14 +300,14 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
                 <button
                   type="button"
                   onClick={() => setIsAddTenantOpen(false)}
-                  className="px-3.5 py-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-3.5 py-1.5 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-md bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>

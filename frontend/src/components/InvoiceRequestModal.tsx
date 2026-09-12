@@ -99,22 +99,22 @@ export function InvoiceRequestModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col animate-fadeIn">
+      <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden max-h-[92vh] flex flex-col">
         
         {/* Header */}
-        <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
+        <div className="p-4 sm:p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <FileText className="w-4 h-4" />
+            <div className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700/80 flex items-center justify-center text-zinc-300">
+              <FileText className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-white">Enterprise Procurement &amp; Invoicing</h3>
+              <h3 className="text-sm font-semibold text-zinc-100">Enterprise Procurement &amp; Invoicing</h3>
               <p className="text-[11px] text-zinc-400">Corporate Purchase Orders &bull; Net-30 International Wire / ACH</p>
             </div>
           </div>
           <button 
             onClick={onClose} 
-            className="text-zinc-500 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="text-zinc-500 hover:text-zinc-200 p-1 rounded-md hover:bg-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -123,37 +123,37 @@ export function InvoiceRequestModal({
         {isSuccess ? (
           /* Success State */
           <div className="p-5 sm:p-6 space-y-5 text-center overflow-y-auto flex-1">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(16,185,129,0.15)]">
-              <CheckCircle2 className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
             
             <div className="space-y-1">
-              <h4 className="text-base font-semibold text-white">Order &amp; Invoice Request Received</h4>
+              <h4 className="text-sm font-semibold text-zinc-100">Order &amp; Invoice Request Received</h4>
               <p className="text-xs text-zinc-400 max-w-sm mx-auto">
                 A formal Pro-Forma Invoice and SWIFT/ACH wire transfer coordinates have been dispatched to:
               </p>
-              <div className="inline-block mt-2 px-3 py-1 bg-zinc-950 border border-zinc-800 rounded-lg text-xs font-mono text-emerald-300">
+              <div className="inline-block mt-2 px-3 py-1 bg-zinc-950 border border-zinc-800 rounded-md text-xs font-mono text-zinc-200">
                 {orderSummary?.billing_email}
               </div>
             </div>
 
             {/* Summary Box */}
-            <div className="p-4 bg-zinc-950/80 border border-zinc-800 rounded-xl text-left text-xs space-y-2 max-w-md mx-auto">
+            <div className="p-4 bg-zinc-950/80 border border-zinc-800 rounded-lg text-left text-xs space-y-2 max-w-md mx-auto">
               <div className="flex justify-between text-zinc-400">
                 <span>Organization:</span>
-                <span className="font-medium text-white">{orderSummary?.company_name}</span>
+                <span className="font-medium text-zinc-200">{orderSummary?.company_name}</span>
               </div>
               <div className="flex justify-between text-zinc-400">
                 <span>License Tier:</span>
-                <span className="font-semibold text-indigo-300 uppercase">{orderSummary?.plan} Plan</span>
+                <span className="font-mono text-zinc-200 uppercase">{orderSummary?.plan} Plan</span>
               </div>
               <div className="flex justify-between text-zinc-400">
                 <span>Payment Terms:</span>
                 <span className="text-zinc-200 font-mono">Net-30 Corporate Wire / ACH</span>
               </div>
               <div className="flex justify-between text-zinc-400 pt-2 border-t border-zinc-800">
-                <span className="font-semibold text-white">Total Amount:</span>
-                <span className="font-bold text-emerald-400 font-mono text-sm">{orderSummary?.investment_total}</span>
+                <span className="font-medium text-zinc-200">Total Amount:</span>
+                <span className="font-semibold text-zinc-100 font-mono text-sm">{orderSummary?.investment_total}</span>
               </div>
             </div>
 
@@ -163,7 +163,7 @@ export function InvoiceRequestModal({
 
             <button
               onClick={onClose}
-              className="w-full py-2.5 bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs rounded-lg transition-colors cursor-pointer"
+              className="w-full py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium text-xs rounded-md transition-colors cursor-pointer"
             >
               Return to Console
             </button>
@@ -173,44 +173,44 @@ export function InvoiceRequestModal({
           <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto flex-1">
             
             {error && (
-              <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+              <div className="p-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
                 {error}
               </div>
             )}
 
-            {/* Plan Selector Pills */}
+            {/* Plan Selector */}
             <div>
               <label className="block text-zinc-400 mb-1.5 font-medium">Select License Tier</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setSelectedPlan('business')}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                  className={`p-3 rounded-lg border text-left transition-colors cursor-pointer ${
                     selectedPlan === 'business'
-                      ? 'bg-zinc-800/90 border-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.15)]'
+                      ? 'bg-zinc-800/80 border-zinc-500 text-white'
                       : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:bg-zinc-850'
                   }`}
                 >
-                  <div className="font-semibold text-xs text-white">Business Tier</div>
+                  <div className="font-medium text-xs text-zinc-200">Business Tier</div>
                   <div className="text-[11px] text-zinc-400 mt-0.5">3 Domains &bull; 25 Identities</div>
-                  <div className="text-xs font-semibold text-zinc-200 mt-1 font-mono">$239<span className="text-[10px] font-normal text-zinc-500">/mo</span></div>
+                  <div className="text-xs font-semibold text-zinc-100 mt-1 font-mono">$239<span className="text-[10px] font-normal text-zinc-500">/mo</span></div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setSelectedPlan('enterprise')}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer relative ${
+                  className={`p-3 rounded-lg border text-left transition-colors cursor-pointer ${
                     selectedPlan === 'enterprise'
-                      ? 'bg-zinc-800/90 border-indigo-500 text-white shadow-[0_0_12px_rgba(99,102,241,0.15)]'
+                      ? 'bg-zinc-800/80 border-zinc-500 text-white'
                       : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:bg-zinc-850'
                   }`}
                 >
-                  <div className="font-semibold text-xs text-white flex items-center justify-between">
+                  <div className="font-medium text-xs text-zinc-200 flex items-center justify-between">
                     <span>Enterprise / MSP</span>
-                    <span className="text-[9px] px-1.5 py-0.2 bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30">POPULAR</span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-zinc-800 text-zinc-300 rounded border border-zinc-700 font-mono">POPULAR</span>
                   </div>
                   <div className="text-[11px] text-zinc-400 mt-0.5">Unlimited Assets &bull; Continuous ASM</div>
-                  <div className="text-xs font-semibold text-indigo-300 mt-1 font-mono">$899<span className="text-[10px] font-normal text-zinc-500">/mo</span></div>
+                  <div className="text-xs font-semibold text-zinc-100 mt-1 font-mono">$899<span className="text-[10px] font-normal text-zinc-500">/mo</span></div>
                 </button>
               </div>
             </div>
@@ -222,27 +222,27 @@ export function InvoiceRequestModal({
                 <button
                   type="button"
                   onClick={() => setBillingCycle('annual')}
-                  className={`px-3 py-2 rounded-lg border text-left transition-colors cursor-pointer flex items-center justify-between ${
+                  className={`px-3 py-2 rounded-md border text-left transition-colors cursor-pointer flex items-center justify-between ${
                     billingCycle === 'annual'
-                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
+                      ? 'bg-zinc-800 border-zinc-600 text-zinc-100'
                       : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:bg-zinc-850'
                   }`}
                 >
                   <span className="font-medium text-xs">Annual License</span>
-                  <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded">Save 15%</span>
+                  <span className="text-[10px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded">Save 15%</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setBillingCycle('monthly')}
-                  className={`px-3 py-2 rounded-lg border text-left transition-colors cursor-pointer flex items-center justify-between ${
+                  className={`px-3 py-2 rounded-md border text-left transition-colors cursor-pointer flex items-center justify-between ${
                     billingCycle === 'monthly'
-                      ? 'bg-zinc-800 border-zinc-600 text-white'
+                      ? 'bg-zinc-800 border-zinc-600 text-zinc-100'
                       : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:bg-zinc-850'
                   }`}
                 >
                   <span className="font-medium text-xs">Monthly Billing</span>
-                  <span className="text-[10px] text-zinc-500">Standard</span>
+                  <span className="text-[10px] font-mono text-zinc-500">Standard</span>
                 </button>
               </div>
             </div>
@@ -258,7 +258,7 @@ export function InvoiceRequestModal({
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="Acme Cybersecurity Corp"
-                    className="w-full pl-8 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 font-roboto text-xs focus:outline-none focus:border-zinc-700"
+                    className="w-full pl-8 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 text-xs focus:outline-none focus:border-zinc-600"
                   />
                   <Building className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2.5" />
                 </div>
@@ -273,7 +273,7 @@ export function InvoiceRequestModal({
                     value={billingEmail}
                     onChange={(e) => setBillingEmail(e.target.value)}
                     placeholder="ap@company.com"
-                    className="w-full pl-8 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 font-roboto text-xs focus:outline-none focus:border-zinc-700"
+                    className="w-full pl-8 pr-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 text-xs focus:outline-none focus:border-zinc-600"
                   />
                   <Mail className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2.5" />
                 </div>
@@ -288,7 +288,7 @@ export function InvoiceRequestModal({
                   value={poNumber}
                   onChange={(e) => setPoNumber(e.target.value)}
                   placeholder="PO-2026-XXXX"
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 font-roboto text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 text-xs focus:outline-none focus:border-zinc-600 font-mono"
                 />
               </div>
 
@@ -299,21 +299,21 @@ export function InvoiceRequestModal({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="EU / US Tax Identifier"
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 font-roboto text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 text-xs focus:outline-none focus:border-zinc-600 font-mono"
                 />
               </div>
             </div>
 
             {/* Pricing Callout Banner */}
-            <div className="p-3.5 rounded-xl bg-zinc-950/80 border border-zinc-800 flex items-center justify-between">
+            <div className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-between">
               <div>
-                <div className="text-[11px] text-zinc-500">Total Invoice Amount ({billingCycle}):</div>
-                <div className="text-base font-bold text-white font-mono mt-0.5">
-                  {currentPricing.total} <span className="text-xs text-zinc-400 font-normal">USD</span>
+                <div className="text-[11px] text-zinc-400">Total Invoice Amount ({billingCycle}):</div>
+                <div className="text-sm font-semibold text-zinc-100 font-mono mt-0.5">
+                  {currentPricing.total} <span className="text-xs text-zinc-400 font-normal font-sans">USD</span>
                 </div>
               </div>
               <div className="text-right">
-                <span className="px-2 py-0.5 rounded text-[10.5px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-300">
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-400">
                   Net-30 Terms &bull; SWIFT / ACH Wire
                 </span>
               </div>
@@ -324,14 +324,14 @@ export function InvoiceRequestModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/60 transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/60 text-xs transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-5 py-2 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-sm"
+                className="px-4 py-1.5 rounded-md bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
               >
                 {isSubmitting ? (
                   <>

@@ -74,7 +74,7 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2.5 p-1.5 bg-zinc-900/90 border border-zinc-800 rounded-xl shadow-sm focus-within:border-zinc-700 focus-within:ring-1 focus-within:ring-zinc-700 transition-all">
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2 p-1.5 bg-[#121214] border border-zinc-800 rounded-lg shadow-sm focus-within:border-zinc-700 transition-colors">
         <div className="relative flex-1 w-full flex items-center pl-3">
           <Search className="w-4 h-4 text-zinc-500 flex-shrink-0" />
           <input 
@@ -82,7 +82,7 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
             value={domain}
             onChange={(e) => setDomain(e.target.value)}
             placeholder="Enter corporate domain or email (e.g. acme.com or user@acme.com)" 
-            className="w-full px-3 py-2.5 bg-transparent text-zinc-100 placeholder-zinc-500 focus:outline-none text-sm"
+            className="w-full px-3 py-2 bg-transparent text-zinc-100 placeholder-zinc-500 focus:outline-none text-xs sm:text-sm font-mono"
             required
           />
         </div>
@@ -90,11 +90,11 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
         <button 
           type="submit" 
           disabled={isScanning}
-          className="w-full sm:w-auto px-5 py-2.5 bg-zinc-100 hover:bg-white text-zinc-950 disabled:opacity-60 font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
+          className="w-full sm:w-auto px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-950 disabled:opacity-60 font-medium rounded-md text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
         >
           {isScanning ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin text-zinc-700" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-700" />
               <span>Analyzing...</span>
             </>
           ) : (
@@ -104,7 +104,7 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
       </form>
 
       {error && (
-        <div className="mt-2.5 p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 text-center animate-fadeIn">
+        <div className="mt-2.5 p-3 rounded-md bg-[#18181b] border border-zinc-800 text-xs text-zinc-300 text-center">
           {error}
         </div>
       )}

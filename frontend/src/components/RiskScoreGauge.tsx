@@ -20,9 +20,9 @@ export function getRiskTier(score: number, isZeroDomain: boolean = false): RiskT
       level: 'NOT ASSESSED',
       label: 'Not Assessed',
       description: 'Add a monitored domain to calculate risk',
-      badgeClass: 'bg-zinc-800 text-zinc-400 border-zinc-750',
-      textClass: 'text-zinc-500',
-      barColor: 'bg-zinc-750',
+      badgeClass: 'bg-zinc-850 text-zinc-400 border-zinc-800',
+      textClass: 'text-zinc-400',
+      barColor: 'bg-zinc-700',
       recommendation: 'Configure your primary domain to initiate passive external security reconnaissance.'
     };
   }
@@ -32,7 +32,7 @@ export function getRiskTier(score: number, isZeroDomain: boolean = false): RiskT
       level: 'CRITICAL RISK',
       label: 'Critical Risk',
       description: 'Severe external perimeter exposures detected',
-      badgeClass: 'bg-rose-500/10 text-rose-300 border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.2)]',
+      badgeClass: 'bg-rose-500/10 text-rose-400 border-rose-500/25',
       textClass: 'text-rose-400',
       barColor: 'bg-rose-500',
       recommendation: 'Immediate action required. Exposed administrative services or botnet-exfiltrated credentials require immediate containment.'
@@ -44,7 +44,7 @@ export function getRiskTier(score: number, isZeroDomain: boolean = false): RiskT
       level: 'HIGH RISK',
       label: 'High Risk',
       description: 'Elevated threat posture requiring attention',
-      badgeClass: 'bg-orange-500/10 text-orange-300 border-orange-500/40 shadow-[0_0_12px_rgba(249,115,22,0.2)]',
+      badgeClass: 'bg-orange-500/10 text-orange-400 border-orange-500/25',
       textClass: 'text-orange-400',
       barColor: 'bg-orange-500',
       recommendation: 'Active attention recommended. High-severity CVEs, multiple breach exposures, or missing email security policies identified.'
@@ -56,7 +56,7 @@ export function getRiskTier(score: number, isZeroDomain: boolean = false): RiskT
       level: 'MEDIUM RISK',
       label: 'Medium Risk',
       description: 'Moderate exposure — perimeter improvements advised',
-      badgeClass: 'bg-amber-500/10 text-amber-300 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]',
+      badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
       textClass: 'text-amber-400',
       barColor: 'bg-amber-500',
       recommendation: 'Preventative hardening advised. Enable DMARC enforcement (p=reject) and close unnecessary public subdomains.'
@@ -67,7 +67,7 @@ export function getRiskTier(score: number, isZeroDomain: boolean = false): RiskT
     level: 'LOW RISK',
     label: 'Low Risk',
     description: 'Perimeter is secure with strong defenses',
-    badgeClass: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]',
+    badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
     textClass: 'text-emerald-400',
     barColor: 'bg-emerald-500',
     recommendation: 'Excellent security posture. Maintain automated continuous monitoring to prevent future drift.'
@@ -95,31 +95,31 @@ export function RiskScoreGauge({
   const clampedScore = Math.max(0, Math.min(100, score));
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-4", className)}>
       {/* Top Value & Badge Row */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex items-baseline gap-2">
             <span className={cn(
-              "font-extrabold font-roboto tracking-tight",
+              "font-bold font-mono tracking-tight",
               tier.textClass,
               size === 'lg' ? "text-4xl sm:text-5xl" : size === 'md' ? "text-3xl sm:text-4xl" : "text-2xl"
             )}>
               {isZeroDomain ? 0 : clampedScore}
             </span>
-            <span className="text-xs text-zinc-500 font-roboto">/ 100 Risk Index</span>
+            <span className="text-xs text-zinc-500 font-mono">/ 100 Risk Index</span>
           </div>
-          <div className="text-[11px] text-zinc-400 flex items-center gap-1 font-roboto mt-0.5">
-            <span className="font-semibold text-zinc-300">Lower score is safer</span>
-            <span>(0 = Pristine &bull; 100 = Critical Risk)</span>
+          <div className="text-[11px] text-zinc-400 flex items-center gap-1 font-roboto mt-1">
+            <span className="text-zinc-300 font-medium">Lower score is safer</span>
+            <span className="text-zinc-500">&bull; 0 = Pristine &bull; 100 = Critical Exposure</span>
           </div>
         </div>
 
         <div className="flex flex-col items-end gap-1">
-          <span className={cn("px-2.5 py-1 rounded-full text-xs font-roboto font-semibold uppercase border tracking-wider", tier.badgeClass)}>
+          <span className={cn("px-2 py-0.5 rounded text-[11px] font-mono font-medium uppercase border tracking-normal", tier.badgeClass)}>
             {tier.level}
           </span>
-          <span className="text-[10px] text-zinc-400 font-roboto">
+          <span className="text-[11px] text-zinc-500 font-roboto">
             {tier.description}
           </span>
         </div>
@@ -129,13 +129,13 @@ export function RiskScoreGauge({
       {showSpectrumBar && !isZeroDomain && (
         <div className="space-y-1.5 pt-1">
           {/* Bar track with 4 colored zones */}
-          <div className="relative h-2.5 w-full bg-zinc-950 rounded-full overflow-visible border border-zinc-800">
+          <div className="relative h-2 w-full bg-zinc-950 rounded-sm overflow-visible border border-zinc-800">
             {/* Zone fills */}
-            <div className="absolute inset-0 flex rounded-full overflow-hidden">
-              <div className="w-[35%] bg-emerald-500/30 border-r border-zinc-900" title="Low Risk: 0-34" />
-              <div className="w-[25%] bg-amber-500/30 border-r border-zinc-900" title="Medium Risk: 35-59" />
-              <div className="w-[15%] bg-orange-500/30 border-r border-zinc-900" title="High Risk: 60-74" />
-              <div className="w-[25%] bg-rose-500/30" title="Critical Risk: 75-100" />
+            <div className="absolute inset-0 flex rounded-sm overflow-hidden">
+              <div className="w-[35%] bg-emerald-500/20 border-r border-zinc-900" title="Low Risk: 0-34" />
+              <div className="w-[25%] bg-amber-500/20 border-r border-zinc-900" title="Medium Risk: 35-59" />
+              <div className="w-[15%] bg-orange-500/20 border-r border-zinc-900" title="High Risk: 60-74" />
+              <div className="w-[25%] bg-rose-500/20" title="Critical Risk: 75-100" />
             </div>
 
             {/* Current Score Indicator Pin */}
@@ -144,29 +144,28 @@ export function RiskScoreGauge({
               style={{ left: `${clampedScore}%` }}
             >
               <div className={cn(
-                "w-4 h-4 rounded-full border-2 border-zinc-950 shadow-lg ring-2 transition-all",
-                tier.barColor,
-                score >= 75 ? "ring-rose-500/50" : score >= 60 ? "ring-orange-500/50" : score >= 35 ? "ring-amber-500/50" : "ring-emerald-500/50"
+                "w-3.5 h-3.5 rounded-full border-2 border-zinc-950 transition-all",
+                tier.barColor
               )} />
             </div>
           </div>
 
           {/* Scale Labels */}
-          <div className="flex justify-between text-[10px] font-roboto px-0.5">
-            <span className="text-emerald-400 font-medium">0 Low (0-34)</span>
-            <span className="text-amber-400 font-medium">Medium (35-59)</span>
-            <span className="text-orange-400 font-medium">High (60-74)</span>
-            <span className="text-rose-400 font-medium">Critical (75-100)</span>
+          <div className="flex justify-between text-[10px] font-mono text-zinc-500 px-0.5">
+            <span className="text-emerald-400">0 Low (0-34)</span>
+            <span className="text-amber-400">Medium (35-59)</span>
+            <span className="text-orange-400">High (60-74)</span>
+            <span className="text-rose-400">Critical (75-100)</span>
           </div>
         </div>
       )}
 
       {/* Plain-English Recommendation Text */}
       {showExplanation && !isZeroDomain && (
-        <p className="text-xs text-zinc-400 font-roboto leading-relaxed bg-zinc-950/60 p-2.5 rounded-lg border border-zinc-800/80">
-          <strong className="text-zinc-200">Verdict: </strong>
-          {tier.recommendation}
-        </p>
+        <div className="text-xs text-zinc-400 font-roboto leading-relaxed pt-1 border-t border-zinc-850">
+          <span className="text-zinc-300 font-medium">Verdict: </span>
+          <span>{tier.recommendation}</span>
+        </div>
       )}
     </div>
   );

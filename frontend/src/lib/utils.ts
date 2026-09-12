@@ -17,15 +17,15 @@ export function formatDate(date: string | Date, formatStr: string = "MMM d, yyyy
 export function severityColor(severity: string) {
   switch (severity?.toLowerCase()) {
     case 'critical':
-      return 'bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_12px_rgba(244,63,94,0.18)]';
+      return 'bg-rose-500/10 text-rose-400 border border-rose-500/25';
     case 'high':
-      return 'bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_12px_rgba(249,115,22,0.18)]';
+      return 'bg-orange-500/10 text-orange-400 border border-orange-500/25';
     case 'medium':
-      return 'bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_12px_rgba(245,158,11,0.18)]';
+      return 'bg-amber-500/10 text-amber-400 border border-amber-500/25';
     case 'low':
-      return 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]';
+      return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25';
     default:
-      return 'bg-zinc-900 text-zinc-400 border border-zinc-750';
+      return 'bg-zinc-900 text-zinc-400 border border-zinc-800';
   }
 }
 

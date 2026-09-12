@@ -35,18 +35,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
-      <div className="w-full max-w-sm p-7 bg-zinc-900/60 border border-zinc-800 rounded-2xl shadow-xl">
-        <div className="flex flex-col items-center mb-6">
-          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-3">
-            <Shield className="w-5 h-5 text-zinc-100" />
+    <div className="min-h-screen flex items-center justify-center bg-[#09090b] p-4">
+      <div className="w-full max-w-sm p-6 bg-[#121214] border border-zinc-800 rounded-lg shadow-xl">
+        <div className="flex flex-col items-center mb-5">
+          <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-2.5">
+            <Shield className="w-4 h-4 text-zinc-200" />
           </div>
-          <h1 className="text-lg font-semibold text-white tracking-tight">Sign in to BreachGuard</h1>
-          <p className="text-xs text-zinc-400 mt-1">Access your organization security workspace</p>
+          <h1 className="text-sm font-semibold text-zinc-100 tracking-tight">Sign in to BreachGuard</h1>
+          <p className="text-xs text-zinc-400 mt-0.5">Access your organization security workspace</p>
         </div>
 
         {error && (
-          <div className="p-3 mb-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+          <div className="p-2.5 mb-3.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
             {error}
           </div>
         )}
@@ -58,7 +58,7 @@ export default function LoginPage() {
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 text-zinc-100 font-roboto text-xs"
+              className="w-full px-3 py-2 bg-[#0e0e10] border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs"
               placeholder="you@company.com"
               required
             />
@@ -72,7 +72,7 @@ export default function LoginPage() {
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 text-zinc-100 font-roboto text-xs"
+              className="w-full px-3 py-2 bg-[#0e0e10] border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs"
               placeholder="••••••••"
               required
             />
@@ -80,11 +80,11 @@ export default function LoginPage() {
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-lg transition-colors mt-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2 px-3 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-md transition-colors mt-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
                 <span>Authenticating...</span>
               </>
             ) : (
@@ -93,7 +93,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-5 pt-4 border-t border-zinc-850 text-center text-xs text-zinc-500">
+        <div className="mt-5 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-500">
           Don&apos;t have an account?{' '}
           <Link href="/register" className="text-zinc-300 hover:text-white underline underline-offset-4">
             Register here

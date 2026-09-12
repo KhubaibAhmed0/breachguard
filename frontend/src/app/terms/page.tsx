@@ -7,16 +7,16 @@ export default function TermsOfServicePage() {
   const lastUpdated = "September 12, 2026";
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-200 flex flex-col selection:bg-zinc-800 selection:text-zinc-100">
+    <div className="min-h-screen bg-[#09090b] text-zinc-200 flex flex-col selection:bg-zinc-800 selection:text-zinc-100">
       
       {/* Top Navigation */}
-      <nav className="border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <nav className="border-b border-zinc-800 bg-[#09090b]/90 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover:border-zinc-700 transition-colors">
-              <Shield className="w-4 h-4 text-zinc-100" />
+            <div className="w-7 h-7 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover:border-zinc-700 transition-colors">
+              <Shield className="w-3.5 h-3.5 text-zinc-200" />
             </div>
-            <span className="font-semibold text-sm tracking-tight text-white">
+            <span className="font-semibold text-xs tracking-tight text-zinc-100 uppercase font-mono">
               BreachGuard
             </span>
           </Link>
@@ -30,7 +30,7 @@ export default function TermsOfServicePage() {
             </Link>
             <Link 
               href="/login" 
-              className="text-xs font-medium px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 rounded-lg transition-colors"
+              className="text-xs font-medium px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 rounded-md transition-colors"
             >
               Console Login
             </Link>
@@ -39,31 +39,31 @@ export default function TermsOfServicePage() {
       </nav>
 
       {/* Hero Header */}
-      <header className="border-b border-zinc-900 bg-zinc-900/20 py-12 px-4">
-        <div className="max-w-4xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-zinc-800 bg-zinc-900/80 text-zinc-400 text-[11px] font-mono">
-            <Scale className="w-3 h-3 text-indigo-400" />
+      <header className="border-b border-zinc-800 bg-[#0e0e10] py-10 px-4">
+        <div className="max-w-4xl mx-auto space-y-2">
+          <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded border border-zinc-800 bg-zinc-900 text-zinc-400 text-[10.5px] font-mono">
+            <Scale className="w-3 h-3 text-zinc-400" />
             LEGAL COMPLIANCE
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight">
             Terms of Service
           </h1>
-          <p className="text-xs sm:text-sm text-zinc-400">
+          <p className="text-xs text-zinc-400">
             Last updated: {lastUpdated} &bull; Effective immediately for all users, organizations, and MSP partners.
           </p>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 flex-1 space-y-10 text-xs sm:text-sm leading-relaxed text-zinc-300">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 flex-1 space-y-8 text-xs sm:text-sm leading-relaxed text-zinc-300">
         
         {/* Important Notice Callout */}
-        <div className="p-4 rounded-xl bg-zinc-900/60 border border-indigo-500/30 text-zinc-300 space-y-2">
-          <div className="flex items-center gap-2 font-semibold text-white text-sm">
-            <Shield className="w-4 h-4 text-indigo-400" />
+        <div className="p-4 rounded-lg bg-[#121214] border border-zinc-800 text-zinc-300 space-y-1.5">
+          <div className="flex items-center gap-2 font-semibold text-zinc-200 text-xs">
+            <Shield className="w-4 h-4 text-zinc-400" />
             External Risk &amp; Passive Reconnaissance Scope
           </div>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-zinc-400 leading-relaxed">
             BreachGuard operates exclusively through non-intrusive, non-destructive external telemetry: passive Certificate Transparency (CT) logs, public DNS lookups, public threat intelligence feeds, and non-exploitative network telemetry. We do not perform intrusive port penetration testing, exploit execution, or vulnerability exploitation against client systems.
           </p>
         </div>

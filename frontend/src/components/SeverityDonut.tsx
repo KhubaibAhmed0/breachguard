@@ -58,7 +58,7 @@ export function SeverityDonut({ data }: SeverityDonutProps) {
           ))}
         </Pie>
         <Tooltip 
-          contentStyle={{ backgroundColor: '#111827', borderColor: '#1f2937', color: '#f3f4f6', borderRadius: '0.5rem' }}
+          contentStyle={{ backgroundColor: '#121215', borderColor: '#27272a', color: '#e4e4e7', fontSize: '11px', borderRadius: '6px' }}
           itemStyle={{ color: '#fff' }}
         />
       </PieChart>

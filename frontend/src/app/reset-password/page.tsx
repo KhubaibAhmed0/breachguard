@@ -53,19 +53,19 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-sm p-7 bg-zinc-900/60 border border-zinc-800 rounded-2xl shadow-xl">
-      <div className="flex flex-col items-center mb-6">
-        <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-3">
-          <KeyRound className="w-5 h-5 text-zinc-100" />
+    <div className="w-full max-w-sm p-6 bg-[#121214] border border-zinc-800 rounded-lg shadow-xl">
+      <div className="flex flex-col items-center mb-5">
+        <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-2.5">
+          <KeyRound className="w-4 h-4 text-zinc-200" />
         </div>
-        <h1 className="text-lg font-semibold text-white tracking-tight">Create New Password</h1>
-        <p className="text-xs text-zinc-400 mt-1 text-center">
+        <h1 className="text-sm font-semibold text-zinc-100 tracking-tight">Create New Password</h1>
+        <p className="text-xs text-zinc-400 mt-0.5 text-center">
           Choose a secure passphrase for your BreachGuard workspace
         </p>
       </div>
 
       {error && (
-        <div className="p-3 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/35 text-rose-300 text-xs flex items-start gap-2 leading-relaxed">
+        <div className="p-2.5 mb-3.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2 leading-relaxed">
           <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -73,8 +73,8 @@ function ResetPasswordForm() {
 
       {isSuccess ? (
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-start gap-3 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+          <div className="p-3.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-start gap-3">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
             <div className="leading-relaxed">
               <strong className="block text-emerald-200 font-semibold mb-1">Password updated!</strong>
               Your password has been changed successfully. Redirecting you to sign in...
@@ -83,7 +83,7 @@ function ResetPasswordForm() {
 
           <Link
             href="/login"
-            className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-lg transition-colors text-xs flex items-center justify-center gap-2"
+            className="w-full py-2 px-3 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-md transition-colors text-xs flex items-center justify-center gap-2"
           >
             <span>Continue to sign in</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -97,7 +97,7 @@ function ResetPasswordForm() {
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 text-zinc-100 font-roboto text-xs"
+              className="w-full px-3 py-2 bg-[#0e0e10] border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs"
               placeholder="Minimum 8 characters"
               required
               autoFocus
@@ -110,7 +110,7 @@ function ResetPasswordForm() {
               type="password" 
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg focus:outline-none focus:border-zinc-700 text-zinc-100 font-roboto text-xs"
+              className="w-full px-3 py-2 bg-[#0e0e10] border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs"
               placeholder="Re-enter password"
               required
             />
@@ -119,11 +119,11 @@ function ResetPasswordForm() {
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 px-4 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-lg transition-colors mt-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full py-2 px-3 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-md transition-colors mt-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
                 <span>Updating password...</span>
               </>
             ) : (
@@ -147,11 +147,11 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#09090b] p-4">
       <Suspense fallback={
-        <div className="p-8 bg-zinc-900 border border-zinc-800 rounded-2xl flex items-center justify-center text-zinc-400 gap-2">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-xs font-roboto">Loading recovery session...</span>
+        <div className="p-6 bg-[#121214] border border-zinc-800 rounded-lg flex items-center justify-center text-zinc-400 gap-2">
+          <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+          <span className="text-xs font-mono">Loading recovery session...</span>
         </div>
       }>
         <ResetPasswordForm />

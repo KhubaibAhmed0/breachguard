@@ -96,3 +96,17 @@ BreachGuard is an **External Cyber Risk & Perimeter Monitoring Platform** built 
   cd frontend
   npm run dev
   ```
+
+---
+
+## 6. Live Integrations & B2B Procurement Status
+
+* **Threat Intelligence (VirusTotal)**:
+  * Integrated multi-engine reputation analysis in `threat_intelligence.py` using `VIRUSTOTAL_API_KEY`.
+* **Transactional Delivery (Resend)**:
+  * Connected for automated invoice requests, member invites, and breach notifications using `RESEND_API_KEY`.
+  * Fallback configured to `onboarding@resend.dev` for immediate sandboxed email delivery.
+* **B2B Procurement & Net-30 Invoicing (Option B)**:
+  * Dedicated enterprise procurement pipeline (`POST /api/billing/invoice-request`).
+  * Replaces credit-card requirement with corporate SWIFT/ACH wire transfer workflows and formal Net-30 invoice PDF generation.
+  * Live modal active on `/settings` (Subscription & Billing) and the landing page pricing cards.

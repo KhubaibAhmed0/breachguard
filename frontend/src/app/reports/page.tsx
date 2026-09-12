@@ -50,8 +50,7 @@ export default function ReportsPage() {
       })
       .catch(() => {
         if (isMounted) {
-          const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim().replace(/\/api$/, '').replace(/\/$/, '');
-          setPreviewBlobUrl(`${baseUrl}/api/reports/${previewId}/download`);
+          setPreviewBlobUrl(null);
         }
       })
       .finally(() => {
@@ -83,7 +82,7 @@ export default function ReportsPage() {
       }
 
       await generateReportMutation.mutateAsync({
-        reportType,
+        reportType: reportType.toLowerCase(),
         domainName: targetDomain,
       });
 
@@ -178,7 +177,7 @@ export default function ReportsPage() {
                     Includes posture scorecard, stealer log forensics, compromised identities, and targeted remediation steps.
                   </p>
                   <p className="text-[10px] text-zinc-600 font-roboto pt-1">
-                    Generated: {formatDate(report.generatedAt)}
+                    Generated: {report.generatedAt ? formatDate(report.generatedAt) : 'Recent'}
                   </p>
                 </div>
               </div>

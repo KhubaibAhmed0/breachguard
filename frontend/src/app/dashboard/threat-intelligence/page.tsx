@@ -13,35 +13,31 @@ export default function ThreatIntelligencePage() {
     switch (severity?.toLowerCase()) {
       case 'critical':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_12px_rgba(244,63,94,0.18)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.8)]" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-rose-500/10 text-rose-300 border border-rose-500/35 shadow-[0_0_12px_rgba(244,63,94,0.18)]">
             CRITICAL
           </span>
         );
       case 'high':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_12px_rgba(249,115,22,0.18)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse shadow-[0_0_6px_rgba(251,146,60,0.8)]" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-orange-500/10 text-orange-300 border border-orange-500/35 shadow-[0_0_12px_rgba(249,115,22,0.18)]">
             HIGH
           </span>
         );
       case 'medium':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_12px_rgba(245,158,11,0.18)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-amber-500/10 text-amber-300 border border-amber-500/35 shadow-[0_0_12px_rgba(245,158,11,0.18)]">
             MEDIUM
           </span>
         );
       case 'low':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.14)]">
             LOW
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider font-roboto bg-zinc-900 text-zinc-400 border border-zinc-750">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium uppercase tracking-wider font-roboto bg-zinc-900 text-zinc-400 border border-zinc-750">
             INFO
           </span>
         );
@@ -63,8 +59,7 @@ export default function ThreatIntelligencePage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs font-medium text-blue-300 font-roboto shadow-[0_0_12px_rgba(59,130,246,0.12)]">
-              <span className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_6px_rgba(96,165,250,0.8)]" />
+            <div className="inline-flex items-center px-3.5 py-1.5 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs font-medium text-blue-300 font-roboto shadow-[0_0_12px_rgba(59,130,246,0.12)]">
               <span><strong className="text-white font-semibold font-roboto">{findings.length}</strong> Intelligence Indicators</span>
             </div>
           </div>

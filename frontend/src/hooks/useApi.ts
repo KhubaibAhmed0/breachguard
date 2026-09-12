@@ -6,15 +6,23 @@ export function useDomains() {
   return useQuery<Domain[]>({
     queryKey: ['domains'],
     queryFn: async () => {
-      const res = await api.get('/domains');
-      return res.data.map((d: any) => ({
-        id: String(d.id),
-        name: d.domain || d.name,
-        status: d.verified ? 'verified' : 'unverified',
-        lastScannedAt: d.last_scanned_at,
-        exposureCount: d.exposure_count || 0,
-        scanFrequency: d.scan_frequency || 'daily',
-      }));
+      try {
+        const res = await api.get('/domains');
+        const list = Array.isArray(res.data) ? res.data : (res.data?.domains || []);
+        if (Array.isArray(list)) {
+          return list.map((d: any) => ({
+            id: String(d.id),
+            name: d.domain || d.name,
+            status: d.verified ? 'verified' : 'unverified',
+            lastScannedAt: d.last_scanned_at,
+            exposureCount: d.exposure_count || 0,
+            scanFrequency: d.scan_frequency || 'daily',
+          }));
+        }
+      } catch (err) {
+        console.warn('Could not load domains:', err);
+      }
+      return [];
     },
   });
 }
@@ -93,14 +101,22 @@ export function useReports() {
   return useQuery<Report[]>({
     queryKey: ['reports'],
     queryFn: async () => {
-      const res = await api.get('/reports');
-      return res.data.map((r: any) => ({
-        id: String(r.id),
-        type: r.report_type || 'Executive',
-        domainName: r.domain_name || null,
-        generatedAt: r.generated_at,
-        downloadUrl: `${API_BASE_URL}/reports/${r.id}/download`,
-      }));
+      try {
+        const res = await api.get('/reports');
+        const list = Array.isArray(res.data) ? res.data : (res.data?.reports || []);
+        if (Array.isArray(list)) {
+          return list.map((r: any) => ({
+            id: String(r.id),
+            type: r.report_type || 'Executive',
+            domainName: r.domain_name || null,
+            generatedAt: r.generated_at || new Date().toISOString(),
+            downloadUrl: `${API_BASE_URL}/reports/${r.id}/download`,
+          }));
+        }
+      } catch (err) {
+        console.warn('Could not load reports from API:', err);
+      }
+      return [];
     },
   });
 }
@@ -194,12 +210,12 @@ export function useGenerateReport() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (args: { reportType?: string; domainName?: string | null } | string = {}) => {
-      let reportType = 'Executive';
+      let reportType = 'executive';
       let domainName: string | null = null;
       if (typeof args === 'string') {
-        reportType = args;
+        reportType = args.toLowerCase();
       } else {
-        reportType = args.reportType || 'Executive';
+        reportType = (args.reportType || 'executive').toLowerCase();
         domainName = args.domainName || null;
       }
       const payload: { report_type: string; domain_name?: string } = { report_type: reportType };

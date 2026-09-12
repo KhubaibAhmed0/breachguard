@@ -32,10 +32,9 @@ export function StatusBadge({ status }: { status: string }) {
 
   return (
     <span className={cn(
-      "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-roboto font-semibold uppercase tracking-wider border backdrop-blur-sm",
+      "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-roboto font-semibold uppercase tracking-wider border backdrop-blur-sm",
       style.wrapper
     )}>
-      <span className={cn("w-1.5 h-1.5 rounded-full", style.dot)} />
       {status}
     </span>
   );

@@ -64,8 +64,20 @@ async def download_report(
         )
     )
     report = result.scalars().first()
-    if not report or not os.path.exists(report.file_url):
+    if not report:
         raise HTTPException(status_code=404, detail="Report not found")
+    
+    if not os.path.exists(report.file_url):
+        # Serverless container ephemeral storage handler: regenerate on demand
+        new_file_url = await generate_pdf_report(
+            org_id=current_user.org_id, 
+            report_type=report.report_type, 
+            domain_name=report.domain_name, 
+            db=db
+        )
+        report.file_url = new_file_url
+        await db.commit()
+        await db.refresh(report)
     
     domain_part = f"_{report.domain_name}" if report.domain_name else ""
     dl_filename = f"Security_Audit_Report{domain_part}_{id}.pdf"

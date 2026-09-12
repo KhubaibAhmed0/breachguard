@@ -116,8 +116,7 @@ export function RiskScoreGauge({
         </div>
 
         <div className="flex flex-col items-end gap-1">
-          <span className={cn("px-2.5 py-1 rounded-full text-xs font-roboto font-semibold uppercase border tracking-wider flex items-center gap-1.5", tier.badgeClass)}>
-            <span className={cn("w-1.5 h-1.5 rounded-full", tier.barColor)} />
+          <span className={cn("px-2.5 py-1 rounded-full text-xs font-roboto font-semibold uppercase border tracking-wider", tier.badgeClass)}>
             {tier.level}
           </span>
           <span className="text-[10px] text-zinc-400 font-roboto">

@@ -3,6 +3,7 @@ import uuid
 import html
 import json
 import logging
+import tempfile
 from datetime import datetime, timedelta
 from typing import Optional, List, Tuple, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -147,10 +148,12 @@ async def generate_pdf_report(
     ti_score = risk_assessment.threat_intel_score if risk_assessment else 80
     cr_score = risk_assessment.credential_score if risk_assessment else 90
 
-    # Ensure reports output directory exists
-    os.makedirs("reports", exist_ok=True)
+    # Ensure reports output directory exists in writable location (e.g. /tmp on Vercel)
+    reports_dir = os.path.join(tempfile.gettempdir(), "reports")
+    os.makedirs(reports_dir, exist_ok=True)
     report_id = f"BG-{uuid.uuid4().hex[:8].upper()}"
-    filename = f"reports/Security_Assessment_{target_domain}_{report_id}.pdf"
+    clean_target = "".join(c for c in target_domain if c.isalnum() or c in ".-_")
+    filename = os.path.join(reports_dir, f"Security_Assessment_{clean_target}_{report_id}.pdf")
 
     # Setup styles
     doc = SimpleDocTemplate(

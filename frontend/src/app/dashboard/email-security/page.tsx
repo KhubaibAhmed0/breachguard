@@ -33,29 +33,25 @@ export default function EmailSecurityPage() {
     switch (status?.toLowerCase()) {
       case 'pass':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)] backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.9)]" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider font-roboto bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)] backdrop-blur-sm">
             PASS
           </span>
         );
       case 'warning':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider font-roboto bg-amber-500/10 text-amber-300 border border-amber-500/40 shadow-[0_0_14px_rgba(245,158,11,0.2)] backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_6px_rgba(251,191,36,0.9)]" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider font-roboto bg-amber-500/10 text-amber-300 border border-amber-500/40 shadow-[0_0_14px_rgba(245,158,11,0.2)] backdrop-blur-sm">
             WARNING
           </span>
         );
       case 'fail':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider font-roboto bg-rose-500/10 text-rose-300 border border-rose-500/40 shadow-[0_0_14px_rgba(244,63,94,0.2)] backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.9)]" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider font-roboto bg-rose-500/10 text-rose-300 border border-rose-500/40 shadow-[0_0_14px_rgba(244,63,94,0.2)] backdrop-blur-sm">
             FAIL
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wider font-roboto bg-zinc-900/90 text-zinc-400 border border-zinc-700/80">
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-500" />
+          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wider font-roboto bg-zinc-900/90 text-zinc-400 border border-zinc-700/80">
             NOT DETECTED
           </span>
         );
@@ -137,8 +133,7 @@ export default function EmailSecurityPage() {
                     </span>
                     <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2.5">
                       Email Protection Index
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wider font-roboto border ${badge.classes}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wider font-roboto border ${badge.classes}`}>
                         {badge.label}
                       </span>
                     </h2>
@@ -313,8 +308,7 @@ export default function EmailSecurityPage() {
                     <p className="text-[11px] text-zinc-400 leading-snug">
                       Verify SPF and DKIM alignment across Google Workspace, Office 365, and marketing relays.
                     </p>
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-roboto font-semibold text-emerald-300 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.12)]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="inline-flex items-center text-[10px] font-roboto font-semibold text-emerald-300 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.12)]">
                       SPF + DKIM Aligned
                     </span>
                   </div>

@@ -98,8 +98,8 @@ export function InvoiceRequestModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden animate-fadeIn">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col animate-fadeIn">
         
         {/* Header */}
         <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-950/60">
@@ -122,7 +122,7 @@ export function InvoiceRequestModal({
 
         {isSuccess ? (
           /* Success State */
-          <div className="p-6 space-y-5 text-center">
+          <div className="p-5 sm:p-6 space-y-5 text-center overflow-y-auto flex-1">
             <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(16,185,129,0.15)]">
               <CheckCircle2 className="w-6 h-6" />
             </div>
@@ -170,7 +170,7 @@ export function InvoiceRequestModal({
           </div>
         ) : (
           /* Request Form */
-          <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 text-xs overflow-y-auto flex-1">
             
             {error && (
               <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">

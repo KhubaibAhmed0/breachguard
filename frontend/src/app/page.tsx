@@ -5,7 +5,7 @@ import { PricingCard } from '@/components/PricingCard';
 import { InvoiceRequestModal } from '@/components/InvoiceRequestModal';
 import { 
   Shield, FileText, CheckCircle2, ArrowRight, Database, 
-  Lock, Check, AlertCircle, ShieldCheck, X, Network, MailCheck, Radar, KeyRound, Globe, Server
+  Lock, Check, AlertCircle, ShieldCheck, X, Network, MailCheck, Radar, KeyRound, Globe, Server, Menu
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ export default function LandingPage() {
   const [scanResult, setScanResult] = useState<ScanResultData | null>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [invoicePlan, setInvoicePlan] = useState<'business' | 'enterprise'>('enterprise');
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const overallScore = scanResult?.overall_risk_score ?? 15;
   const riskLevel = scanResult?.risk_level ?? 'LOW RISK';
@@ -43,30 +44,65 @@ export default function LandingPage() {
             <a href="#pricing" className="hover:text-zinc-200 transition-colors">Pricing</a>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-xs font-medium text-zinc-400 hover:text-white px-3 py-1.5 transition-colors">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/login" className="text-xs font-medium text-zinc-400 hover:text-white px-2.5 sm:px-3 py-1.5 transition-colors">
               Log in
             </Link>
-            <Link href="/register" className="text-xs font-medium px-3.5 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 rounded-lg transition-colors">
+            <Link href="/register" className="text-xs font-medium px-3 sm:px-3.5 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 rounded-lg transition-colors">
               Get started
             </Link>
+            <button
+              type="button"
+              onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+              className="md:hidden p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+              aria-label="Toggle mobile menu"
+            >
+              {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown Navigation */}
+        {isMobileNavOpen && (
+          <div className="md:hidden px-4 py-3 bg-zinc-950 border-b border-zinc-900 flex flex-col gap-2.5 text-sm text-zinc-300 animate-in slide-in-from-top-2 duration-150">
+            <a 
+              href="#features" 
+              onClick={() => setIsMobileNavOpen(false)}
+              className="py-1.5 px-2 rounded-md hover:bg-zinc-900 text-zinc-300 transition-colors"
+            >
+              Pillars
+            </a>
+            <a 
+              href="#compliance" 
+              onClick={() => setIsMobileNavOpen(false)}
+              className="py-1.5 px-2 rounded-md hover:bg-zinc-900 text-zinc-300 transition-colors"
+            >
+              Architecture
+            </a>
+            <a 
+              href="#pricing" 
+              onClick={() => setIsMobileNavOpen(false)}
+              className="py-1.5 px-2 rounded-md hover:bg-zinc-900 text-zinc-300 transition-colors"
+            >
+              Pricing
+            </a>
+          </div>
+        )}
       </nav>
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="pt-24 pb-16 px-4 text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/60 text-zinc-400 text-xs mb-8">
+        <section className="pt-16 sm:pt-24 pb-12 sm:pb-16 px-4 text-center max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/60 text-zinc-400 text-xs mb-6 sm:mb-8">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            External Cyber Risk &amp; Perimeter Monitoring &bull; 7-day free trial
+            <span>External Cyber Risk &amp; Perimeter Monitoring &bull; 7-day trial</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-semibold tracking-tight text-white leading-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-white leading-tight mb-4 sm:mb-6">
             External cyber risk &amp; perimeter monitoring for modern organizations.
           </h1>
 
-          <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
+          <p className="text-sm sm:text-lg text-zinc-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed font-normal">
             Discover exposed assets, identify email security weaknesses, monitor public threat intelligence, and track credential exposure from a single unified platform.
           </p>
 

@@ -186,33 +186,33 @@ export default function DashboardPage() {
               Continuous perimeter reconnaissance, email anti-spoofing posture, and breach intelligence.
             </p>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
             <button
               onClick={() => openBreakdown('overall')}
-              className="px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-indigo-300 border border-indigo-500/30 text-xs font-medium font-roboto transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-none px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-indigo-300 border border-indigo-500/30 text-xs font-medium font-roboto transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Calculator className="w-4 h-4 text-indigo-400" />
-              Scoring Breakdown
+              <span>Scoring Breakdown</span>
             </button>
             <Link 
               href="/reports" 
-              className="px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-100 border border-zinc-700/80 text-sm font-medium font-roboto transition-colors flex items-center gap-2 shadow-sm"
+              className="flex-1 sm:flex-none px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-zinc-100 border border-zinc-700/80 text-xs sm:text-sm font-medium font-roboto transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
               <Download className="w-4 h-4" />
-              Export PDF
+              <span>Export PDF</span>
             </Link>
           </div>
         </div>
 
         {/* Zero-State Monitored Domains Banner */}
         {isZeroDomain && (
-          <div className="p-6 rounded-2xl bg-zinc-900/60 border border-indigo-500/30 flex flex-col sm:flex-row items-center justify-between gap-5 animate-fadeIn">
-            <div className="flex items-center gap-4 text-center sm:text-left">
+          <div className="p-4 sm:p-6 rounded-2xl bg-zinc-900/60 border border-indigo-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeIn">
+            <div className="flex items-center gap-3 sm:gap-4 text-left">
               <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0 hidden sm:flex">
                 <Globe className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-base font-semibold text-white">No Monitored Domains Configured</h3>
+                <h3 className="text-sm sm:text-base font-semibold text-white">No Monitored Domains Configured</h3>
                 <p className="text-xs text-zinc-400 max-w-xl leading-relaxed">
                   Add your primary domain to initiate passive perimeter reconnaissance, certificate transparency discovery, email security audit (SPF/DMARC), and breach correlation.
                 </p>
@@ -220,32 +220,32 @@ export default function DashboardPage() {
             </div>
             <Link
               href="/domains"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-all shadow-md flex items-center gap-2 shrink-0"
+              className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 shrink-0"
             >
               <Plus className="w-4 h-4" />
-              Configure Monitored Domain
+              <span>Configure Monitored Domain</span>
             </Link>
           </div>
         )}
 
         {/* Top Hero Section: Unified External Cyber Risk Index */}
-        <div className="p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-zinc-800/60">
+        <div className="p-4 sm:p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl space-y-4 sm:space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 pb-4 sm:pb-6 border-b border-zinc-800/60">
             <div className="space-y-2">
               <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider font-roboto">Platform Telemetry Index</span>
-              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-3">
-                External Cyber Risk Score
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-roboto font-semibold uppercase border ${overallRiskBadge.classes}`}>
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex flex-wrap items-center gap-2 sm:gap-3">
+                <span>External Cyber Risk Score</span>
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-roboto font-semibold uppercase border ${overallRiskBadge.classes}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${overallRiskBadge.dot}`} />
                   {overallRiskBadge.label}
                 </span>
               </h2>
-              <p className="text-sm text-zinc-400 max-w-xl leading-relaxed font-roboto">
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-xl leading-relaxed font-roboto">
                 Deterministic risk score derived across your public attack surface, email security configuration, threat intelligence records, and credential exposure.
               </p>
             </div>
 
-            <div className="flex items-center gap-4 bg-zinc-950/60 p-4 border border-zinc-800/80 rounded-xl shrink-0">
+            <div className="flex items-center justify-center sm:justify-start gap-4 bg-zinc-950/60 p-4 border border-zinc-800/80 rounded-xl w-full sm:w-auto shrink-0">
               <div className="text-center min-w-[120px]">
                 <div className={`text-4xl font-extrabold font-roboto ${riskColor}`}>
                   {overallScore}

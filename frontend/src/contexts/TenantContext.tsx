@@ -50,6 +50,9 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   // Load from API or localStorage on mount
   useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return;
+
     const savedTenantId = typeof window !== 'undefined' ? localStorage.getItem('bg_active_tenant_id') : null;
     
     // Fetch current user and MSP tenants

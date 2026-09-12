@@ -15,8 +15,8 @@ interface ExposureTableProps {
 
 export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTableProps) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
+    <div className="overflow-x-auto -mx-3 sm:mx-0">
+      <table className="w-full text-left border-collapse min-w-[650px]">
         <thead>
           <tr className="border-b border-zinc-800/80 text-[11px] font-medium text-zinc-500 uppercase tracking-wider font-roboto">
             <th className="pb-3 px-4">Identity / Account</th>

@@ -67,8 +67,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If request gets 401 Unauthorized, automatically re-authenticate with default admin session
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // If request gets 401 Unauthorized, only attempt re-authentication if user was previously authenticated
+    const isAuthRoute = originalRequest?.url?.includes('/auth/login') || originalRequest?.url?.includes('/prospect/');
+    const hadToken = typeof window !== 'undefined' && Boolean(localStorage.getItem('token'));
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRoute && hadToken) {
       if (typeof window === 'undefined') return Promise.reject(error);
 
       if (isRefreshing) {

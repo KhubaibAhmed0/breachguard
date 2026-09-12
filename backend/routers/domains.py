@@ -130,15 +130,18 @@ async def list_domains(db: AsyncSession = Depends(get_db), current_user: User = 
         counts_map = dict(counts_res.all())
 
     response = []
+    has_updates = False
     for d in domains:
         if not d.verification_token:
             d.verification_token = f"bg-verify-{secrets.token_hex(16)}"
             db.add(d)
+            has_updates = True
         count = counts_map.get(d.id, 0)
         resp_obj = DomainResponse.model_validate(d)
         resp_obj.exposure_count = count
         response.append(resp_obj)
-    await db.commit()
+    if has_updates:
+        await db.commit()
     return response
 
 @router.get("/{id}/verification-record", response_model=VerificationRecordResponse)

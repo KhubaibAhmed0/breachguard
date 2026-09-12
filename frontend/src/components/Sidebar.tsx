@@ -12,7 +12,13 @@ import { useTenant } from '@/contexts/TenantContext';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobile?: boolean;
+  onClose?: () => void;
+  className?: string;
+}
+
+export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
   const pathname = usePathname();
   const { logout } = useAuth();
   const { tenants, activeTenant, setActiveTenant, addTenant, isMspUser } = useTenant();
@@ -58,11 +64,15 @@ export function Sidebar() {
 
   return (
     <>
-      <aside className="w-64 border-r border-zinc-800/80 bg-zinc-950 flex flex-col h-screen select-none shrink-0">
+      <aside className={cn("w-64 border-r border-zinc-800/80 bg-zinc-950 flex flex-col h-full select-none shrink-0", className)}>
         {/* Brand Header */}
         <div className="p-4 border-b border-zinc-900">
           <div className="flex items-center justify-between mb-3">
-            <Link href="/dashboard" className="flex items-center gap-2.5">
+            <Link 
+              href="/dashboard" 
+              onClick={() => onClose?.()}
+              className="flex items-center gap-2.5"
+            >
               <div className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center">
                 <Shield className="w-3.5 h-3.5 text-zinc-100" />
               </div>
@@ -70,9 +80,21 @@ export function Sidebar() {
                 BreachGuard
               </span>
             </Link>
-            <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-roboto font-medium">
-              MSP
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-roboto font-medium">
+                MSP
+              </span>
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Multi-Tenant MSP Switcher */}
@@ -167,6 +189,7 @@ export function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={() => onClose?.()}
                 className={cn(
                   "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
                   isActive 

@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api/risk", tags=["risk"])
 # Fast in-memory cache for repeated risk overview requests
 # Key: (org_id, domain_id), Value: (timestamp, data_dict)
 _RISK_CACHE: Dict[Tuple[int, Optional[int]], Tuple[float, Dict[str, Any]]] = {}
-_CACHE_TTL_SECONDS = 20.0
+_CACHE_TTL_SECONDS = 120.0
 
 def invalidate_risk_cache(org_id: Optional[int] = None):
     global _RISK_CACHE

@@ -236,6 +236,44 @@ export function ScoreBreakdownModal({
                 </div>
               </div>
 
+              {/* Risk Level Thresholds & Interpretation Scale */}
+              <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Risk Score Interpretation Scale (0–100)</span>
+                  <span className="text-[11px] text-zinc-400 font-roboto">Lower score is safer (0 = Pristine)</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs font-roboto">
+                  <div className={`p-3 rounded-lg border transition-all ${overallScore < 35 ? 'bg-emerald-500/10 border-emerald-500/50 shadow-sm ring-1 ring-emerald-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
+                    <div className="font-semibold text-emerald-400 flex items-center justify-between">
+                      <span>Low Risk</span>
+                      <span className="text-[11px] font-mono">0–34</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-1">Perimeter secure. Minimal external exposure detected.</div>
+                  </div>
+                  <div className={`p-3 rounded-lg border transition-all ${overallScore >= 35 && overallScore < 60 ? 'bg-amber-500/10 border-amber-500/50 shadow-sm ring-1 ring-amber-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
+                    <div className="font-semibold text-amber-400 flex items-center justify-between">
+                      <span>Medium Risk</span>
+                      <span className="text-[11px] font-mono">35–59</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-1">Moderate exposure. Email hardening & perimeter clean-up advised.</div>
+                  </div>
+                  <div className={`p-3 rounded-lg border transition-all ${overallScore >= 60 && overallScore < 75 ? 'bg-orange-500/10 border-orange-500/50 shadow-sm ring-1 ring-orange-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
+                    <div className="font-semibold text-orange-400 flex items-center justify-between">
+                      <span>High Risk</span>
+                      <span className="text-[11px] font-mono">60–74</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-1">Elevated threat. Vulnerable open ports or active breaches observed.</div>
+                  </div>
+                  <div className={`p-3 rounded-lg border transition-all ${overallScore >= 75 ? 'bg-rose-500/10 border-rose-500/50 shadow-sm ring-1 ring-rose-500/30' : 'bg-zinc-950/60 border-zinc-800 text-zinc-400'}`}>
+                    <div className="font-semibold text-rose-400 flex items-center justify-between">
+                      <span>Critical Risk</span>
+                      <span className="text-[11px] font-mono">75–100</span>
+                    </div>
+                    <div className="text-[11px] text-zinc-400 mt-1">Immediate action required. Sensitive services or plaintext creds exposed.</div>
+                  </div>
+                </div>
+              </div>
+
               {/* Pillar Contributions Breakdown Table */}
               <div className="space-y-3">
                 <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Pillar Risk Contributions</span>

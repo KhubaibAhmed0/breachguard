@@ -20,6 +20,7 @@ import {
   RefreshCw, Calculator, Plus, ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
+import { RiskScoreGauge } from '@/components/RiskScoreGauge';
 import { 
   HeroCardSkeleton, 
   CardSkeleton, 
@@ -101,42 +102,7 @@ export default function DashboardPage() {
     email_score: riskData?.summary?.email_score ?? 0
   };
 
-  const riskColor = 
-    isZeroDomain ? 'text-zinc-500' :
-    overallScore >= 65 ? 'text-rose-400' :
-    overallScore >= 40 ? 'text-orange-400' :
-    'text-emerald-400';
 
-  const getOverallRiskBadge = () => {
-    if (isZeroDomain) {
-      return {
-        classes: 'bg-zinc-900 text-zinc-400 border-zinc-750',
-        dot: 'bg-zinc-500',
-        label: 'NOT ASSESSED'
-      };
-    }
-    if (overallScore >= 65) {
-      return {
-        classes: 'bg-rose-500/10 text-rose-300 border-rose-500/40 shadow-[0_0_14px_rgba(244,63,94,0.2)]',
-        dot: 'bg-rose-400 animate-pulse shadow-[0_0_6px_rgba(251,113,133,0.8)]',
-        label: riskLevel
-      };
-    }
-    if (overallScore >= 40) {
-      return {
-        classes: 'bg-orange-500/10 text-orange-300 border-orange-500/40 shadow-[0_0_14px_rgba(249,115,22,0.2)]',
-        dot: 'bg-orange-400 animate-pulse shadow-[0_0_6px_rgba(251,146,60,0.8)]',
-        label: riskLevel
-      };
-    }
-    return {
-      classes: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]',
-      dot: 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]',
-      label: riskLevel
-    };
-  };
-
-  const overallRiskBadge = getOverallRiskBadge();
 
   return (
     <DashboardLayout>
@@ -230,170 +196,186 @@ export default function DashboardPage() {
 
         {/* Top Hero Section: Unified External Cyber Risk Index */}
         <div className="p-4 sm:p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl space-y-4 sm:space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 pb-4 sm:pb-6 border-b border-zinc-800/60">
-            <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-zinc-800/60">
+            <div>
               <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider font-roboto">Platform Telemetry Index</span>
-              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex flex-wrap items-center gap-2 sm:gap-3">
-                <span>External Cyber Risk Score</span>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-roboto font-semibold uppercase border ${overallRiskBadge.classes}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${overallRiskBadge.dot}`} />
-                  {overallRiskBadge.label}
-                </span>
+              <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <span>External Cyber Risk Assessment</span>
               </h2>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-xl leading-relaxed font-roboto">
-                Deterministic risk score derived across your public attack surface, email security configuration, threat intelligence records, and credential exposure.
-              </p>
             </div>
-
-            <div className="flex items-center justify-center sm:justify-start gap-4 bg-zinc-950/60 p-4 border border-zinc-800/80 rounded-xl w-full sm:w-auto shrink-0">
-              <div className="text-center min-w-[120px]">
-                <div className={`text-4xl font-extrabold font-roboto ${riskColor}`}>
-                  {overallScore}
-                  <span className="text-base font-normal text-zinc-500 font-roboto"> / 100</span>
-                </div>
-                <div className="text-xs font-medium uppercase text-zinc-400 mt-1 font-roboto">
-                  Overall Risk Rating
-                </div>
-                {!isZeroDomain && (
-                  <button
-                    onClick={() => openBreakdown('overall')}
-                    className="mt-2 text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center justify-center gap-1 font-roboto transition-colors cursor-pointer w-full py-0.5 rounded hover:bg-indigo-950/30"
-                  >
-                    <Calculator className="w-3 h-3" />
-                    Why this score?
-                  </button>
-                )}
-              </div>
-            </div>
+            {!isZeroDomain && (
+              <button
+                onClick={() => openBreakdown('overall')}
+                className="self-start sm:self-auto px-3 py-1.5 text-xs font-medium text-indigo-400 hover:text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-500/30 rounded-lg flex items-center gap-1.5 font-roboto transition-colors cursor-pointer"
+              >
+                <Calculator className="w-3.5 h-3.5" />
+                <span>Score Breakdown &amp; Transparency</span>
+              </button>
+            )}
           </div>
 
-          {/* 4 Pillar Categories Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* 1. Attack Surface */}
-            <div className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all flex flex-col justify-between group">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Link href="/dashboard/attack-surface" className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5 transition-colors">
-                    <Network className="w-4 h-4 text-zinc-400" />
-                    Attack Surface
-                  </Link>
-                  <span className="text-sm font-bold font-roboto text-zinc-200">
-                    {categories.attack_surface}/100
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
-                  {summary.discovered_assets} asset(s) discovered in certificate registries and DNS.
-                </p>
-              </div>
-              <div className="flex items-center justify-between pt-2 border-t border-zinc-800/40">
-                <Link href="/dashboard/attack-surface" className="text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1 font-roboto">
-                  View perimeter &rarr;
-                </Link>
-                {!isZeroDomain && (
-                  <button
-                    onClick={() => openBreakdown('attack_surface')}
-                    className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-roboto transition-colors cursor-pointer"
-                  >
-                    <Calculator className="w-3 h-3" />
-                    Why?
-                  </button>
-                )}
-              </div>
+          {/* Full-width Risk Score Gauge with explicit High/Low explanation & spectrum */}
+          <div className="p-4 sm:p-5 bg-zinc-950/60 border border-zinc-800/80 rounded-xl">
+            <RiskScoreGauge 
+              score={overallScore} 
+              isZeroDomain={isZeroDomain} 
+              size="lg" 
+              showSpectrumBar={true} 
+              showExplanation={true} 
+            />
+          </div>
+
+          {/* 4 Pillar Categories Section Header */}
+          <div className="pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-3">
+              <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider font-roboto">
+                Defense Posture Pillars
+              </span>
+              <span className="text-[11px] text-zinc-500 font-roboto">
+                Higher score is better (0 = Vulnerable &bull; 100 = Optimal Defenses)
+              </span>
             </div>
 
-            {/* 2. Email Security */}
-            <div className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all flex flex-col justify-between group">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Link href="/dashboard/email-security" className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5 transition-colors">
-                    <MailCheck className="w-4 h-4 text-zinc-400" />
-                    Email Security
-                  </Link>
-                  <span className="text-sm font-bold font-roboto text-zinc-200">
-                    {categories.email_security}/100
-                  </span>
+            {/* 4 Pillar Categories Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 1. Attack Surface */}
+              <div className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all flex flex-col justify-between group">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Link href="/dashboard/attack-surface" className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5 transition-colors">
+                      <Network className="w-4 h-4 text-zinc-400" />
+                      Attack Surface
+                    </Link>
+                    <div className="text-right">
+                      <span className="text-sm font-bold font-roboto text-zinc-200">
+                        {categories.attack_surface}/100
+                      </span>
+                      <div className="text-[10px] text-emerald-400/80 font-roboto">Posture</div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
+                    {summary.discovered_assets} asset(s) discovered in certificate registries and DNS.
+                  </p>
                 </div>
-                <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
-                  DMARC, SPF, and transport encryption posture.
-                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-800/40">
+                  <Link href="/dashboard/attack-surface" className="text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1 font-roboto">
+                    View perimeter &rarr;
+                  </Link>
+                  {!isZeroDomain && (
+                    <button
+                      onClick={() => openBreakdown('attack_surface')}
+                      className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-roboto transition-colors cursor-pointer"
+                    >
+                      <Calculator className="w-3 h-3" />
+                      Why?
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-zinc-800/40">
-                <Link href="/dashboard/email-security" className="text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1 font-roboto">
-                  Inspect policy &rarr;
-                </Link>
-                {!isZeroDomain && (
-                  <button
-                    onClick={() => openBreakdown('email_security')}
-                    className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-roboto transition-colors cursor-pointer"
-                  >
-                    <Calculator className="w-3 h-3" />
-                    Why?
-                  </button>
-                )}
-              </div>
-            </div>
 
-            {/* 3. Threat Intelligence */}
-            <div className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all flex flex-col justify-between group">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Link href="/dashboard/threat-intelligence" className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5 transition-colors">
-                    <Radar className="w-4 h-4 text-zinc-400" />
-                    Threat Intel
-                  </Link>
-                  <span className="text-sm font-bold font-roboto text-zinc-200">
-                    {categories.threat_intelligence}/100
-                  </span>
+              {/* 2. Email Security */}
+              <div className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all flex flex-col justify-between group">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Link href="/dashboard/email-security" className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5 transition-colors">
+                      <MailCheck className="w-4 h-4 text-zinc-400" />
+                      Email Security
+                    </Link>
+                    <div className="text-right">
+                      <span className="text-sm font-bold font-roboto text-zinc-200">
+                        {categories.email_security}/100
+                      </span>
+                      <div className="text-[10px] text-emerald-400/80 font-roboto">Posture</div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
+                    DMARC, SPF, and transport encryption posture.
+                  </p>
                 </div>
-                <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
-                  Public breach index correlation & reputation flags.
-                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-800/40">
+                  <Link href="/dashboard/email-security" className="text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1 font-roboto">
+                    Inspect policy &rarr;
+                  </Link>
+                  {!isZeroDomain && (
+                    <button
+                      onClick={() => openBreakdown('email_security')}
+                      className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-roboto transition-colors cursor-pointer"
+                    >
+                      <Calculator className="w-3 h-3" />
+                      Why?
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-zinc-800/40">
-                <Link href="/dashboard/threat-intelligence" className="text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1 font-roboto">
-                  View disclosures &rarr;
-                </Link>
-                {!isZeroDomain && (
-                  <button
-                    onClick={() => openBreakdown('threat_intelligence')}
-                    className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-roboto transition-colors cursor-pointer"
-                  >
-                    <Calculator className="w-3 h-3" />
-                    Why?
-                  </button>
-                )}
-              </div>
-            </div>
 
-            {/* 4. Credential Exposure */}
-            <div className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all flex flex-col justify-between group">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Link href="/exposures" className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5 transition-colors">
-                    <KeyRound className="w-4 h-4 text-zinc-400" />
-                    Credential Exposure
-                  </Link>
-                  <span className="text-sm font-bold font-roboto text-zinc-200">
-                    {categories.credential_exposure}/100
-                  </span>
+              {/* 3. Threat Intelligence */}
+              <div className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all flex flex-col justify-between group">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Link href="/dashboard/threat-intelligence" className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5 transition-colors">
+                      <Radar className="w-4 h-4 text-zinc-400" />
+                      Threat Intel
+                    </Link>
+                    <div className="text-right">
+                      <span className="text-sm font-bold font-roboto text-zinc-200">
+                        {categories.threat_intelligence}/100
+                      </span>
+                      <div className="text-[10px] text-emerald-400/80 font-roboto">Posture</div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
+                    Public breach index correlation &amp; reputation flags.
+                  </p>
                 </div>
-                <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
-                  {summary.exposed_identities} identity exposure(s) under active monitoring.
-                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-800/40">
+                  <Link href="/dashboard/threat-intelligence" className="text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1 font-roboto">
+                    View disclosures &rarr;
+                  </Link>
+                  {!isZeroDomain && (
+                    <button
+                      onClick={() => openBreakdown('threat_intelligence')}
+                      className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-roboto transition-colors cursor-pointer"
+                    >
+                      <Calculator className="w-3 h-3" />
+                      Why?
+                    </button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center justify-between pt-2 border-t border-zinc-800/40">
-                <Link href="/exposures" className="text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1 font-roboto">
-                  View credentials &rarr;
-                </Link>
-                {!isZeroDomain && (
-                  <button
-                    onClick={() => openBreakdown('credential_exposure')}
-                    className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-roboto transition-colors cursor-pointer"
-                  >
-                    <Calculator className="w-3 h-3" />
-                    Why?
-                  </button>
-                )}
+
+              {/* 4. Credential Exposure */}
+              <div className="p-4 bg-zinc-950/40 hover:bg-zinc-800/20 border border-zinc-800/80 rounded-xl space-y-2 transition-all flex flex-col justify-between group">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Link href="/exposures" className="text-sm font-semibold text-zinc-300 group-hover:text-white flex items-center gap-1.5 transition-colors">
+                      <KeyRound className="w-4 h-4 text-zinc-400" />
+                      Credential Exposure
+                    </Link>
+                    <div className="text-right">
+                      <span className="text-sm font-bold font-roboto text-zinc-200">
+                        {categories.credential_exposure}/100
+                      </span>
+                      <div className="text-[10px] text-emerald-400/80 font-roboto">Posture</div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-zinc-400 font-roboto leading-relaxed">
+                    {summary.exposed_identities} identity exposure(s) under active monitoring.
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-800/40">
+                  <Link href="/exposures" className="text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1 font-roboto">
+                    View credentials &rarr;
+                  </Link>
+                  {!isZeroDomain && (
+                    <button
+                      onClick={() => openBreakdown('credential_exposure')}
+                      className="text-[11px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-roboto transition-colors cursor-pointer"
+                    >
+                      <Calculator className="w-3 h-3" />
+                      Why?
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@
 import { ScanInput, ScanResultData } from '@/components/ScanInput';
 import { PricingCard } from '@/components/PricingCard';
 import { InvoiceRequestModal } from '@/components/InvoiceRequestModal';
+import { RiskScoreGauge } from '@/components/RiskScoreGauge';
 import { 
   Shield, FileText, CheckCircle2, ArrowRight, Database, 
   Lock, Check, AlertCircle, ShieldCheck, X, Network, MailCheck, Radar, KeyRound, Globe, Server, Menu
@@ -118,25 +119,20 @@ export default function LandingPage() {
           <section className="py-10 px-4 max-w-4xl mx-auto">
             <div className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 sm:p-8 backdrop-blur-sm space-y-6">
               
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-6">
-                <div>
-                  <div className="text-xs text-zinc-500 uppercase tracking-wider font-roboto mb-1">
-                    External Cyber Risk Snapshot
+              <div className="border-b border-zinc-800 pb-6 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs text-zinc-500 uppercase tracking-wider font-roboto mb-0.5">
+                      External Cyber Risk Snapshot
+                    </div>
+                    <h2 className="text-2xl font-bold text-white tracking-tight">
+                      {scanResult.domain}
+                    </h2>
                   </div>
-                  <h2 className="text-2xl font-semibold text-white tracking-tight">
-                    {scanResult.domain}
-                  </h2>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <div className="text-2xl font-bold font-roboto text-white">
-                      {overallScore} <span className="text-xs text-zinc-500 font-normal">/ 100</span>
-                    </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded font-roboto uppercase font-semibold border ${riskBadgeBg}`}>
-                      {riskLevel}
-                    </span>
-                  </div>
+                <div className="p-4 sm:p-5 bg-zinc-950/70 border border-zinc-800 rounded-xl">
+                  <RiskScoreGauge score={overallScore} size="md" showSpectrumBar={true} showExplanation={true} />
                 </div>
               </div>
 

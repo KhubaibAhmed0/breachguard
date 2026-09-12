@@ -55,7 +55,7 @@ async def check_email_breaches(email: str) -> List[Dict[str, Any]]:
     Includes rate limiting and retry logic.
     """
     if not settings.HIBP_API_KEY:
-        logger.warning("HIBP_API_KEY not set, skipping email breach check.")
+        logger.debug(f"HIBP_API_KEY not configured, skipping email breach query for {email}")
         return []
 
     url = f"{HIBP_BASE_URL}/breachedaccount/{email}"

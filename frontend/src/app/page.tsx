@@ -372,10 +372,12 @@ export default function LandingPage() {
             <span>&bull; External Cyber Risk Platform</span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-5 sm:gap-6">
             <a href="#features" className="hover:text-zinc-300 transition-colors">Pillars</a>
             <a href="#compliance" className="hover:text-zinc-300 transition-colors">Architecture</a>
             <a href="#pricing" className="hover:text-zinc-300 transition-colors">Pricing</a>
+            <Link href="/terms" className="hover:text-zinc-300 transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-zinc-300 transition-colors">Privacy Policy</Link>
             <Link href="/login" className="hover:text-zinc-300 transition-colors">Console</Link>
           </div>
 

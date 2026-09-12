@@ -96,36 +96,49 @@ async def autonomous_scan_scheduler():
     while True:
         try:
             now = datetime.utcnow()
+            
+            # Automated retention enforcement sweep in its own isolated session
+            try:
+                async with AsyncSessionLocal() as ret_session:
+                    try:
+                        from services.retention_service import enforce_retention_policy
+                        await enforce_retention_policy(ret_session)
+                        await ret_session.commit()
+                    except Exception as ret_err:
+                        await ret_session.rollback()
+                        logger.warning(f"Automated retention enforcement error: {ret_err}")
+            except Exception as e:
+                logger.warning(f"Retention session connection error: {e}")
+
+            # Autonomous domain scans
             async with AsyncSessionLocal() as session:
-                # Automated retention enforcement sweep
                 try:
-                    from services.retention_service import enforce_retention_policy
-                    await enforce_retention_policy(session)
-                except Exception as ret_err:
-                    logger.error(f"Automated retention enforcement error: {ret_err}")
+                    result = await session.execute(select(MonitoredDomain))
+                    domains_list = result.scalars().all()
 
-                result = await session.execute(select(MonitoredDomain))
-                domains_list = result.scalars().all()
+                    for domain in domains_list:
+                        needs_scan = False
+                        if not domain.last_scanned_at:
+                            needs_scan = True
+                        elif domain.scan_frequency == "continuous" and (now - domain.last_scanned_at) >= timedelta(hours=1):
+                            needs_scan = True
+                        elif domain.scan_frequency == "daily" and (now - domain.last_scanned_at) >= timedelta(hours=24):
+                            needs_scan = True
+                        elif domain.scan_frequency == "weekly" and (now - domain.last_scanned_at) >= timedelta(days=7):
+                            needs_scan = True
 
-                for domain in domains_list:
-                    needs_scan = False
-                    if not domain.last_scanned_at:
-                        needs_scan = True
-                    elif domain.scan_frequency == "continuous" and (now - domain.last_scanned_at) >= timedelta(hours=1):
-                        needs_scan = True
-                    elif domain.scan_frequency == "daily" and (now - domain.last_scanned_at) >= timedelta(hours=24):
-                        needs_scan = True
-                    elif domain.scan_frequency == "weekly" and (now - domain.last_scanned_at) >= timedelta(days=7):
-                        needs_scan = True
-
-                    if needs_scan:
-                        logger.info(f"Autonomous scan running for domain: {domain.domain} (id: {domain.id})")
-                        try:
-                            await run_domain_scan(domain.id, session)
-                            domain.last_scanned_at = datetime.utcnow()
-                            await session.commit()
-                        except Exception as scan_err:
-                            logger.error(f"Autonomous scan error on {domain.domain}: {scan_err}")
+                        if needs_scan:
+                            logger.info(f"Autonomous scan running for domain: {domain.domain} (id: {domain.id})")
+                            try:
+                                await run_domain_scan(domain.id, session)
+                                domain.last_scanned_at = datetime.utcnow()
+                                await session.commit()
+                            except Exception as scan_err:
+                                await session.rollback()
+                                logger.error(f"Autonomous scan error on {domain.domain}: {scan_err}")
+                except Exception as db_err:
+                    await session.rollback()
+                    logger.error(f"Database query error in scan scheduler: {db_err}")
 
         except asyncio.CancelledError:
             logger.info("Autonomous domain scan scheduler cancelled.")

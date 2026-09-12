@@ -25,9 +25,10 @@ async def check_email(email: str) -> List[Dict[str, Any]]:
             if response.status_code == 200:
                 data = response.json()
                 if not data.get("success"):
-                    if data.get("error") == "Not found":
-                        return []
-                    logger.error(f"LeakCheck API returned error: {data.get('error')}")
+                    if not is_pro:
+                        logger.debug(f"LeakCheck public query for {email}: {data.get('error')}")
+                    else:
+                        logger.error(f"LeakCheck API returned error: {data.get('error')}")
                     return []
                 
                 results = data.get("sources", []) if not is_pro else data.get("result", [])

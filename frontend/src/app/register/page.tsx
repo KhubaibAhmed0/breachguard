@@ -98,7 +98,12 @@ export default function RegisterPage() {
               'Start 7-Day Free Trial'
             )}
           </button>
-          <p className="text-[11px] text-zinc-500 text-center mt-2 font-normal">Instant activation &bull; Cancel anytime</p>
+          <p className="text-[11px] text-zinc-500 text-center mt-2 font-normal">
+            By signing up, you agree to our{' '}
+            <Link href="/terms" className="text-zinc-400 hover:text-white underline underline-offset-2">Terms</Link>
+            {' '}and{' '}
+            <Link href="/privacy" className="text-zinc-400 hover:text-white underline underline-offset-2">Privacy Policy</Link>.
+          </p>
         </form>
 
         <div className="mt-5 pt-4 border-t border-zinc-850 text-center text-xs text-zinc-500">

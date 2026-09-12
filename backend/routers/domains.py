@@ -10,7 +10,7 @@ from models.exposure import Exposure
 from models.scan_job import ScanJob
 from models.asset import DiscoveredAsset, EmailSecurityAssessment, RiskAssessment
 from models.finding import Finding
-from schemas.domain import DomainCreate, DomainResponse, DomainScanStatus, VerificationRecordResponse
+from schemas.domain import DomainCreate, DomainUpdate, DomainResponse, DomainScanStatus, VerificationRecordResponse
 from routers.deps import get_current_user, require_scope
 from services.scan_service import run_domain_scan
 from datetime import datetime
@@ -227,6 +227,37 @@ async def verify_domain(id: int, db: AsyncSession = Depends(get_db), current_use
     domain.verified = True
     await db.commit()
     return {"status": "verified", "domain": domain.domain, "message": "Domain ownership successfully verified via DNS."}
+
+@router.patch("/{id}", response_model=DomainResponse)
+async def update_domain(
+    id: int, 
+    domain_update: DomainUpdate, 
+    db: AsyncSession = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(MonitoredDomain).where(
+            MonitoredDomain.id == id, 
+            MonitoredDomain.org_id == current_user.org_id
+        )
+    )
+    domain = result.scalars().first()
+    if not domain:
+        raise HTTPException(status_code=404, detail="Domain not found")
+
+    domain.scan_frequency = domain_update.scan_frequency
+    await db.commit()
+    await db.refresh(domain)
+
+    # Compute exposure count
+    count_res = await db.execute(
+        select(func.count(Exposure.id))
+        .join(MonitoredEmail, Exposure.email_id == MonitoredEmail.id)
+        .where(MonitoredEmail.domain_id == domain.id)
+    )
+    resp_obj = DomainResponse.model_validate(domain)
+    resp_obj.exposure_count = count_res.scalar() or 0
+    return resp_obj
 
 @router.post("/{id}/scan")
 async def trigger_scan(id: int, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):

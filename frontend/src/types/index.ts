@@ -20,6 +20,7 @@ export interface Domain {
   status: 'verified' | 'unverified' | 'pending';
   lastScannedAt: string;
   exposureCount: number;
+  scanFrequency?: string;
 }
 
 export type DomainScanStatus = 'idle' | 'scanning' | 'completed' | 'failed';

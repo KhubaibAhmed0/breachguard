@@ -13,6 +13,7 @@ export function useDomains() {
         status: d.verified ? 'verified' : 'unverified',
         lastScannedAt: d.last_scanned_at,
         exposureCount: d.exposure_count || 0,
+        scanFrequency: d.scan_frequency || 'daily',
       }));
     },
   });
@@ -107,8 +108,22 @@ export function useReports() {
 export function useAddDomain() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (domain: string) => {
-      const res = await api.post('/domains', { domain, scan_frequency: 'daily' });
+    mutationFn: async (arg: string | { domain: string; scan_frequency?: string }) => {
+      const payload = typeof arg === 'string' ? { domain: arg, scan_frequency: 'daily' } : arg;
+      const res = await api.post('/domains', payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['domains'] });
+    },
+  });
+}
+
+export function useUpdateDomainFrequency() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ domainId, scanFrequency }: { domainId: string | number; scanFrequency: string }) => {
+      const res = await api.patch(`/domains/${domainId}`, { scan_frequency: scanFrequency });
       return res.data;
     },
     onSuccess: () => {

@@ -7,6 +7,10 @@ class DomainCreate(BaseModel):
     domain: str = Field(..., min_length=3, max_length=253, description="Fully qualified domain name")
     scan_frequency: Literal["daily", "weekly", "continuous"] = "daily"
 
+class DomainUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    scan_frequency: Literal["daily", "weekly", "continuous"]
+
 class DomainResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int

@@ -2,12 +2,12 @@
 
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { 
-  useDomains, useAddDomain, useScanDomain, useVerifyDomain, useDeleteDomain,
+  useDomains, useAddDomain, useScanDomain, useVerifyDomain, useDeleteDomain, useUpdateDomainFrequency,
   useIdentities, useAddIdentity, useDeleteIdentity 
 } from '@/hooks/useApi';
 import { 
   Globe, Plus, ShieldCheck, RefreshCw, AlertCircle, X, 
-  Check, Loader2, UserCheck, Shield, Trash2, KeyRound, Copy 
+  Check, Loader2, UserCheck, Shield, Trash2, KeyRound, Copy, Clock, Zap
 } from 'lucide-react';
 import { formatDate, cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -23,6 +23,7 @@ export default function DomainsPage() {
   const scanDomainMutation = useScanDomain();
   const verifyDomainMutation = useVerifyDomain();
   const deleteDomainMutation = useDeleteDomain();
+  const updateFrequencyMutation = useUpdateDomainFrequency();
 
   // Privileged Identities API
   const { data: identities, isLoading: isIdentitiesLoading, refetch: refetchIdentities } = useIdentities();
@@ -32,6 +33,7 @@ export default function DomainsPage() {
   // Dialog & Notification states
   const [isAddDomainOpen, setIsAddDomainOpen] = useState(false);
   const [newDomainInput, setNewDomainInput] = useState('');
+  const [newDomainFrequency, setNewDomainFrequency] = useState<'continuous' | 'daily' | 'weekly'>('continuous');
   const [activeScanId, setActiveScanId] = useState<string | null>(null);
   const [scanNotice, setScanNotice] = useState<string | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
@@ -84,14 +86,30 @@ export default function DomainsPage() {
     if (!newDomainInput.trim()) return;
     setAddError(null);
     try {
-      await addDomainMutation.mutateAsync(newDomainInput.trim());
+      await addDomainMutation.mutateAsync({
+        domain: newDomainInput.trim(),
+        scan_frequency: newDomainFrequency
+      });
       const added = newDomainInput.trim();
+      const freqLabel = newDomainFrequency === 'continuous' ? 'Continuous (Hourly)' : newDomainFrequency === 'daily' ? 'Daily' : 'Weekly';
       setNewDomainInput('');
       setIsAddDomainOpen(false);
-      setScanNotice(`Added ${added}. You can now scan its perimeter.`);
+      setScanNotice(`Added ${added} with ${freqLabel} monitoring cadence.`);
       setTimeout(() => setScanNotice(null), 5000);
     } catch (err: any) {
       setAddError(err?.response?.data?.detail || 'Failed to add domain. Please verify network or login.');
+    }
+  };
+
+  const handleFrequencyChange = async (domainId: string, domainName: string, frequency: string) => {
+    try {
+      await updateFrequencyMutation.mutateAsync({ domainId, scanFrequency: frequency });
+      const label = frequency === 'continuous' ? 'Continuous (Hourly)' : frequency === 'daily' ? 'Daily' : 'Weekly';
+      setScanNotice(`Updated ${domainName} monitoring cadence to ${label}.`);
+      setTimeout(() => setScanNotice(null), 4000);
+    } catch (err: any) {
+      setScanNotice(`Failed to update frequency: ${err?.response?.data?.detail || 'Network error'}`);
+      setTimeout(() => setScanNotice(null), 4000);
     }
   };
 
@@ -358,6 +376,33 @@ export default function DomainsPage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Monitoring Cadence */}
+                      <div className="py-2 px-3 mb-2 rounded-lg bg-zinc-950/60 border border-zinc-800/70 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 text-zinc-400">
+                          {domain.scanFrequency === 'continuous' ? (
+                            <span className="flex items-center gap-1.5 text-emerald-400 font-medium text-[11px]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+                              Continuous (1h)
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1.5 text-zinc-400 text-[11px]">
+                              <Clock className="w-3 h-3 text-zinc-500" />
+                              Cadence
+                            </span>
+                          )}
+                        </div>
+                        <select
+                          value={domain.scanFrequency || 'daily'}
+                          onChange={(e) => handleFrequencyChange(domain.id, domain.name, e.target.value)}
+                          className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-700 cursor-pointer font-roboto"
+                          title="Change automated monitoring frequency"
+                        >
+                          <option value="continuous">Continuous (1h)</option>
+                          <option value="daily">Daily (24h)</option>
+                          <option value="weekly">Weekly (7d)</option>
+                        </select>
+                      </div>
                     </div>
 
                     <div className="pt-3 border-t border-zinc-800/60 space-y-2">
@@ -549,6 +594,25 @@ export default function DomainsPage() {
                 />
                 <p className="text-[11px] text-zinc-500 mt-1">
                   We will automatically discover and track exposures across all company inboxes and public breach databases.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-zinc-400 mb-1 font-medium flex items-center justify-between">
+                  <span>Automated Monitoring Cadence</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">REAL-TIME READY</span>
+                </label>
+                <select
+                  value={newDomainFrequency}
+                  onChange={(e: any) => setNewDomainFrequency(e.target.value)}
+                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-200 text-xs focus:outline-none focus:border-zinc-700 cursor-pointer font-roboto"
+                >
+                  <option value="continuous">Continuous (Hourly) — Real-Time Perimeter Reconnaissance</option>
+                  <option value="daily">Daily (Every 24 Hours) — Standard Business Monitoring</option>
+                  <option value="weekly">Weekly (Every 7 Days) — Low Frequency Baseline</option>
+                </select>
+                <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+                  Continuous mode performs automated hourly reconnaissance across Certificate Transparency logs, newly resolved IP records, and email anti-spoofing headers.
                 </p>
               </div>
 

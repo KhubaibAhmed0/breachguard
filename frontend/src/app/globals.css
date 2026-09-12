@@ -1,14 +1,49 @@
 @import "tailwindcss";
 
+@theme {
+  /* Backgrounds */
+  --color-bg-base: #09090b;
+  --color-bg-surface: #111113;
+  --color-bg-inset: #161618;
+  --color-bg-hover: #1a1a1d;
+  --color-bg-overlay: rgba(0, 0, 0, 0.75);
+
+  /* Borders */
+  --color-border-default: #27272a;
+  --color-border-subtle: #1e1e21;
+  --color-border-strong: #3f3f46;
+
+  /* Text */
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #d4d4d8;
+  --color-text-muted: #a1a1aa;
+  --color-text-faint: #71717a;
+
+  /* Semantic — Severity */
+  --color-severity-critical: #ef4444;
+  --color-severity-high: #f97316;
+  --color-severity-medium: #eab308;
+  --color-severity-low: #22c55e;
+
+  /* Interactive */
+  --color-accent: #fafafa;
+  --color-accent-hover: #ffffff;
+  --color-accent-text: #09090b;
+
+  /* Typography */
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.875rem;
+}
+
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
+  --background: var(--color-bg-base);
+  --foreground: var(--color-text-primary);
 }
 
 body {
-  background-color: #09090b;
-  color: #fafafa;
-  font-family: var(--font-roboto), 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  font-family: var(--font-inter), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
 }
@@ -18,15 +53,34 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   font-family: var(--font-inter), 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 }
 
-.font-roboto,
 .font-mono,
 code,
 kbd,
 samp,
 pre {
-  font-family: var(--font-roboto), 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-family: var(--font-mono), 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 }
 
-.font-inter {
+.font-sans,
+.font-inter,
+.font-body {
   font-family: var(--font-inter), 'Inter', system-ui, sans-serif !important;
+}
+
+/* Global focus style */
+*:focus-visible {
+  outline: 2px solid #a1a1aa;
+  outline-offset: 2px;
+}
+
+/* Animation preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

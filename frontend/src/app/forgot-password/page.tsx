@@ -29,13 +29,13 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#09090b] p-4">
-      <div className="w-full max-w-sm p-6 bg-[#121214] border border-zinc-800 rounded-lg shadow-xl">
+      <div className="w-full max-w-sm p-6 bg-bg-surface border border-border-default rounded-lg shadow-xl">
         <div className="flex flex-col items-center mb-5">
-          <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-2.5">
-            <Shield className="w-4 h-4 text-zinc-200" />
+          <div className="w-8 h-8 rounded bg-bg-surface border border-border-default flex items-center justify-center mb-2.5">
+            <Shield className="w-4 h-4 text-text-secondary" />
           </div>
-          <h1 className="text-sm font-semibold text-zinc-100 tracking-tight">Account Recovery</h1>
-          <p className="text-xs text-zinc-400 mt-0.5 text-center">
+          <h1 className="text-sm font-semibold text-text-primary tracking-tight">Account Recovery</h1>
+          <p className="text-xs text-text-muted mt-0.5 text-center">
             Enter your work email to receive a password reset link
           </p>
         </div>
@@ -53,13 +53,13 @@ export default function ForgotPasswordPage() {
               <MailCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div className="leading-relaxed">
                 <strong className="block text-emerald-200 font-semibold mb-1">Check your inbox</strong>
-                If an account exists for <span className="text-white font-mono font-medium">{email}</span>, a secure recovery link has been dispatched. The link expires in 60 minutes.
+                If an account exists for <span className="text-text-primary font-mono font-medium">{email}</span>, a secure recovery link has been dispatched. The link expires in 60 minutes.
               </div>
             </div>
 
             <Link
               href="/login"
-              className="w-full py-2 px-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium rounded-md transition-colors text-xs flex items-center justify-center gap-2"
+              className="w-full py-2 px-3 bg-border-strong hover:bg-border-strong text-text-secondary font-medium rounded-md transition-colors text-xs flex items-center justify-center gap-2"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Return to sign in</span>
@@ -68,12 +68,12 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
             <div>
-              <label className="block text-zinc-400 mb-1.5 font-medium">Work email address</label>
+              <label className="block text-text-muted mb-1.5 font-medium">Work email address</label>
               <input 
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-[#0e0e10] border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs"
+                className="w-full px-3 py-2 bg-[#0e0e10] border border-border-default rounded-md focus:outline-none focus:border-border-strong text-text-primary font-mono text-xs"
                 placeholder="you@company.com"
                 required
                 autoFocus
@@ -83,11 +83,11 @@ export default function ForgotPasswordPage() {
             <button 
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2 px-3 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-md transition-colors mt-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
+              className="w-full py-2 px-3 bg-accent hover:bg-accent-hover text-accent-text font-medium rounded-md transition-colors mt-2 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-text" />
                   <span>Dispatching reset link...</span>
                 </>
               ) : (
@@ -98,7 +98,7 @@ export default function ForgotPasswordPage() {
             <div className="text-center pt-2">
               <Link 
                 href="/login" 
-                className="text-zinc-500 hover:text-zinc-300 text-xs inline-flex items-center gap-1 transition-colors"
+                className="text-text-faint hover:text-text-secondary text-xs inline-flex items-center gap-1 transition-colors"
               >
                 <ArrowLeft className="w-3 h-3" />
                 <span>Back to sign in</span>

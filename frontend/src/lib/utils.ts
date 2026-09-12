@@ -17,21 +17,21 @@ export function formatDate(date: string | Date, formatStr: string = "MMM d, yyyy
 export function severityColor(severity: string) {
   switch (severity?.toLowerCase()) {
     case 'critical':
-      return 'bg-rose-500/10 text-rose-400 border border-rose-500/25';
+      return 'bg-red-500/8 text-red-300 border border-red-500/20';
     case 'high':
-      return 'bg-orange-500/10 text-orange-400 border border-orange-500/25';
+      return 'bg-orange-500/8 text-orange-300 border border-orange-500/20';
     case 'medium':
-      return 'bg-amber-500/10 text-amber-400 border border-amber-500/25';
+      return 'bg-yellow-500/8 text-yellow-300 border border-yellow-500/20';
     case 'low':
-      return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/25';
+      return 'bg-green-500/8 text-green-300 border border-green-500/20';
     default:
-      return 'bg-zinc-900 text-zinc-400 border border-zinc-800';
+      return 'bg-bg-inset text-text-muted border border-border-default';
   }
 }
 
 export function riskScoreColor(score: number) {
-  if (score >= 80) return '#f43f5e'; // Rose
-  if (score >= 60) return '#f97316'; // Orange
-  if (score >= 40) return '#f59e0b'; // Amber
-  return '#10b981'; // Emerald
+  if (score >= 75) return '#ef4444'; // Critical (red)
+  if (score >= 60) return '#f97316'; // High (orange)
+  if (score >= 35) return '#eab308'; // Medium (yellow)
+  return '#22c55e'; // Low (green)
 }

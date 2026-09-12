@@ -210,20 +210,20 @@ export default function DomainsPage() {
   return (
     <DashboardLayout>
       {/* Top Header & Tab Switcher */}
-      <div className="pb-4 border-b border-zinc-900 mb-6">
+      <div className="pb-4 border-b border-border-default mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             {activeTab === 'domains' ? (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">Monitored Domains</h1>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+                <h1 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight">Monitored Domains</h1>
+                <p className="text-xs sm:text-sm text-text-muted mt-1">
                   Manage your organization perimeter and automated scanning schedules.
                 </p>
               </>
             ) : (
               <>
-                <h1 className="text-xl sm:text-2xl font-semibold text-white tracking-tight">Privileged / High-Value Identities</h1>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+                <h1 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight">Privileged / High-Value Identities</h1>
+                <p className="text-xs sm:text-sm text-text-muted mt-1">
                   Monitor executive, IT administrator, and DevOps accounts for targeted exposure.
                 </p>
               </>
@@ -234,7 +234,7 @@ export default function DomainsPage() {
             {activeTab === 'domains' ? (
               <button 
                 onClick={() => setIsAddDomainOpen(true)}
-                className="px-3.5 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 bg-accent hover:bg-accent-hover text-accent-text font-medium text-xs rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add domain
@@ -247,7 +247,7 @@ export default function DomainsPage() {
                   }
                   setIsAddIdentityOpen(true);
                 }}
-                className="px-3.5 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 font-medium text-xs rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 bg-accent hover:bg-accent-hover text-accent-text font-medium text-xs rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add Privileged Identity
@@ -263,13 +263,13 @@ export default function DomainsPage() {
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer border",
               activeTab === 'domains'
-                ? "bg-zinc-800 border-zinc-700 text-white"
-                : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                ? "bg-border-strong border-border-strong text-text-primary"
+                : "bg-bg-surface border-border-default text-text-muted hover:text-text-secondary hover:bg-bg-inset"
             )}
           >
             <Globe className="w-3.5 h-3.5" />
             <span>Monitored Domains</span>
-            <span className="px-1.5 py-0.2 rounded bg-zinc-700/60 text-[10px] text-zinc-300 font-mono">
+            <span className="px-1.5 py-0.5 rounded bg-border-strong text-2xs text-text-secondary font-mono">
               {domains?.length || 0}
             </span>
           </button>
@@ -279,13 +279,13 @@ export default function DomainsPage() {
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer border",
               activeTab === 'identities'
-                ? "bg-zinc-800 border-zinc-700 text-white"
-                : "bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850"
+                ? "bg-border-strong border-border-strong text-text-primary"
+                : "bg-bg-surface border-border-default text-text-muted hover:text-text-secondary hover:bg-bg-inset"
             )}
           >
             <UserCheck className="w-3.5 h-3.5" />
             <span>Privileged Identities</span>
-            <span className="px-1.5 py-0.2 rounded bg-zinc-800 text-[10px] text-zinc-300 font-mono border border-zinc-700">
+            <span className="px-1.5 py-0.5 rounded bg-border-strong text-2xs text-text-secondary font-mono border border-border-strong">
               {identities?.length || 0}
             </span>
           </button>
@@ -293,12 +293,12 @@ export default function DomainsPage() {
       </div>
 
       {scanNotice && (
-        <div className="mb-5 p-3 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs flex items-center justify-between">
+        <div className="mb-5 p-3 rounded-md bg-bg-surface border border-border-default text-text-secondary text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <RefreshCw className="w-3.5 h-3.5 text-zinc-400 animate-spin" />
+            <RefreshCw className="w-3.5 h-3.5 text-text-muted animate-spin" />
             <span>{scanNotice}</span>
           </div>
-          <button onClick={() => setScanNotice(null)} className="text-zinc-500 hover:text-zinc-300 cursor-pointer">
+          <button onClick={() => setScanNotice(null)} className="text-text-faint hover:text-text-secondary cursor-pointer">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -315,7 +315,7 @@ export default function DomainsPage() {
               </div>
               <button 
                 onClick={() => refetchDomains()} 
-                className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-md text-xs font-medium text-zinc-200 transition-colors cursor-pointer"
+                className="px-2.5 py-1 bg-border-strong hover:bg-border-strong border border-border-strong rounded-md text-xs font-medium text-text-secondary transition-colors cursor-pointer"
               >
                 Retry
               </button>
@@ -329,21 +329,21 @@ export default function DomainsPage() {
               {domains?.map(domain => {
                 const isScanning = activeScanId === domain.id;
                 return (
-                  <div key={domain.id} className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 flex flex-col justify-between">
+                  <div key={domain.id} className="bg-bg-surface border border-border-default rounded-lg p-4 flex flex-col justify-between">
                     <div>
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="p-2 bg-zinc-800 border border-zinc-700/80 rounded-md text-zinc-300">
+                          <div className="p-2 bg-border-strong border border-border-strong rounded-md text-text-secondary">
                             <Globe className="w-4 h-4" />
                           </div>
                           <div>
-                            <h3 className="text-sm font-semibold text-zinc-100 font-mono">{domain.name}</h3>
+                            <h3 className="text-sm font-semibold text-text-primary font-mono">{domain.name}</h3>
                             {domain.status === 'verified' ? (
-                              <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 mt-1">
+                              <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-2xs font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 mt-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Verified DNS
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium bg-amber-500/10 text-amber-400 border border-amber-500/25 mt-1">
+                              <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-2xs font-mono font-medium bg-amber-500/10 text-amber-400 border border-amber-500/25 mt-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Pending validation
                               </span>
                             )}
@@ -354,7 +354,7 @@ export default function DomainsPage() {
                           onClick={() => handleDeleteDomain(domain.id, domain.name)}
                           disabled={deleteDomainMutation.isPending}
                           title={`Delete ${domain.name}`}
-                          className="p-1.5 text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors cursor-pointer disabled:opacity-50"
+                          className="p-1.5 text-text-faint hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors cursor-pointer disabled:opacity-50"
                         >
                           {deletingDomainId === domain.id ? (
                             <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
@@ -364,30 +364,30 @@ export default function DomainsPage() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 py-2.5 border-t border-zinc-800 text-xs">
+                      <div className="grid grid-cols-2 gap-3 py-2.5 border-t border-border-default text-xs">
                         <div>
-                          <span className="text-[11px] text-zinc-500 font-mono">Exposures</span>
-                          <div className="font-semibold text-zinc-200 font-mono mt-0.5">{domain.exposureCount}</div>
+                          <span className="text-2xs text-text-faint font-mono">Exposures</span>
+                          <div className="font-semibold text-text-secondary font-mono mt-0.5">{domain.exposureCount}</div>
                         </div>
                         <div>
-                          <span className="text-[11px] text-zinc-500 font-mono">Last scanned</span>
-                          <div className="text-zinc-300 font-mono text-[11px] mt-0.5">
+                          <span className="text-2xs text-text-faint font-mono">Last scanned</span>
+                          <div className="text-text-secondary font-mono text-2xs mt-0.5">
                             {domain.lastScannedAt ? formatDate(domain.lastScannedAt) : 'Never'}
                           </div>
                         </div>
                       </div>
 
                       {/* Monitoring Cadence */}
-                      <div className="py-2 px-2.5 mb-2 rounded-md bg-zinc-950 border border-zinc-800 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-1.5 text-zinc-400">
+                      <div className="py-2 px-2.5 mb-2 rounded-md bg-bg-base border border-border-default flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 text-text-muted">
                           {domain.scanFrequency === 'continuous' ? (
-                            <span className="flex items-center gap-1.5 text-emerald-400 font-medium text-[11px] font-mono">
+                            <span className="flex items-center gap-1.5 text-emerald-400 font-medium text-2xs font-mono">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                               Continuous (1h)
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1.5 text-zinc-400 text-[11px] font-mono">
-                              <Clock className="w-3 h-3 text-zinc-500" />
+                            <span className="flex items-center gap-1.5 text-text-muted text-2xs font-mono">
+                              <Clock className="w-3 h-3 text-text-faint" />
                               Cadence
                             </span>
                           )}
@@ -395,7 +395,7 @@ export default function DomainsPage() {
                         <select
                           value={domain.scanFrequency || 'daily'}
                           onChange={(e) => handleFrequencyChange(domain.id, domain.name, e.target.value)}
-                          className="bg-zinc-900 border border-zinc-800 rounded px-2 py-0.5 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-700 cursor-pointer font-mono"
+                          className="bg-bg-surface border border-border-default rounded px-2 py-0.5 text-2xs text-text-secondary focus:outline-none focus:border-border-strong cursor-pointer font-mono"
                           title="Change automated monitoring frequency"
                         >
                           <option value="continuous">Continuous (1h)</option>
@@ -405,11 +405,11 @@ export default function DomainsPage() {
                       </div>
                     </div>
 
-                    <div className="pt-2.5 border-t border-zinc-800 space-y-2">
+                    <div className="pt-2.5 border-t border-border-default space-y-2">
                       <button 
                         onClick={() => handleScan(domain.id, domain.name)}
                         disabled={isScanning}
-                        className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-md text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-border-strong hover:bg-border-strong text-text-secondary rounded-md text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
                       >
                         <RefreshCw className={`w-3 h-3 ${isScanning ? 'animate-spin' : ''}`} />
                         {isScanning ? 'Scanning live sources...' : 'Scan perimeter'}
@@ -428,7 +428,7 @@ export default function DomainsPage() {
                 );
               })}
               {domains?.length === 0 && (
-                <div className="col-span-full py-12 text-center text-zinc-500 text-xs">
+                <div className="col-span-full py-12 text-center text-text-faint text-xs">
                   No monitored domains added yet. Click &quot;Add domain&quot; above to begin perimeter monitoring.
                 </div>
               )}
@@ -441,52 +441,52 @@ export default function DomainsPage() {
       {activeTab === 'identities' && (
         <div className="space-y-4">
           {/* Quota Bar Card */}
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
+          <div className="bg-bg-surface border border-border-default rounded-lg p-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-zinc-400" />
-                  <span className="text-sm font-semibold text-zinc-100 tracking-tight">
+                  <KeyRound className="w-4 h-4 text-text-muted" />
+                  <span className="text-sm font-semibold text-text-primary tracking-tight">
                     {isEnterprise ? `${currentCount} privileged identities tracked` : `${currentCount} / ${quotaLimit} privileged identities tracked`}
                   </span>
                 </div>
-                <p className="text-xs text-zinc-400 mt-1">
+                <p className="text-xs text-text-muted mt-1">
                   Surveillance active for executive credentials, SSO tokens, and botnet stealer logs.
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-[10.5px] font-mono font-medium bg-zinc-800 text-zinc-300 border border-zinc-700">
+                <span className="px-2 py-0.5 rounded text-2xs font-mono font-medium bg-border-strong text-text-secondary border border-border-strong">
                   {isEnterprise ? 'Enterprise Tier (Unlimited Quota)' : 'Business Tier (25 Quota)'}
                 </span>
               </div>
             </div>
 
             {/* Quota Progress Bar */}
-            <div className="w-full bg-zinc-950 rounded h-1.5 overflow-hidden border border-zinc-800">
+            <div className="w-full bg-bg-base rounded h-1.5 overflow-hidden border border-border-default">
               <div 
-                className="bg-zinc-400 h-full rounded transition-all duration-500" 
+                className="bg-text-secondary h-full rounded transition-all duration-500" 
                 style={{ width: isEnterprise ? '100%' : `${quotaPercent}%` }}
               />
             </div>
-            <div className="flex items-center justify-between text-[11px] text-zinc-500 font-mono mt-2">
+            <div className="flex items-center justify-between text-2xs text-text-faint font-mono mt-2">
               <span>{isEnterprise ? `${currentCount} identities monitored` : `${quotaPercent}% capacity utilized`}</span>
               <span>{isEnterprise ? 'Unlimited VIP identity surveillance enabled' : 'Need more? Upgrade to Enterprise for Unlimited VIP accounts'}</span>
             </div>
           </div>
 
           {/* Tracked Identities Table */}
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden">
-            <div className="p-3.5 sm:px-4 border-b border-zinc-800 flex items-center justify-between">
+          <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+            <div className="p-3.5 sm:px-4 border-b border-border-default flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-zinc-100">Tracked High-Value Accounts</h3>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <h3 className="text-sm font-semibold text-text-primary">Tracked High-Value Accounts</h3>
+                <p className="text-xs text-text-muted mt-0.5">
                   Automated telemetry checks against stealer botnets, dark web paste sites, and dumps.
                 </p>
               </div>
               <button 
                 onClick={() => setIsAddIdentityOpen(true)}
-                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 bg-border-strong hover:bg-border-strong text-text-secondary text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3 h-3" />
                 Add Identity
@@ -499,7 +499,7 @@ export default function DomainsPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-zinc-800 text-[11px] font-medium text-zinc-400 uppercase tracking-wider font-mono bg-zinc-950/40">
+                    <tr className="border-b border-border-default text-2xs font-medium text-text-muted uppercase tracking-wider font-mono bg-bg-base/40">
                       <th className="py-2.5 px-4">Privileged Identity</th>
                       <th className="py-2.5 px-4">Scope / Role</th>
                       <th className="py-2.5 px-4">Domain</th>
@@ -508,35 +508,35 @@ export default function DomainsPage() {
                       <th className="py-2.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+                  <tbody className="divide-y divide-border-default/60 text-text-secondary">
                     {identities?.map((idEntry) => (
-                      <tr key={idEntry.id} className="hover:bg-zinc-850/40 transition-colors">
+                      <tr key={idEntry.id} className="hover:bg-bg-inset/40 transition-colors">
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-6 h-6 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-400 flex items-center justify-center">
+                            <div className="w-6 h-6 rounded-md bg-border-strong border border-border-strong text-text-muted flex items-center justify-center">
                               <Shield className="w-3.5 h-3.5" />
                             </div>
                             <div>
-                              <div className="font-mono text-zinc-200 font-medium text-xs">{idEntry.email}</div>
-                              <div className="text-[10px] text-zinc-500 font-mono">ID: #{idEntry.id}</div>
+                              <div className="font-mono text-text-secondary font-medium text-xs">{idEntry.email}</div>
+                              <div className="text-2xs text-text-faint font-mono">ID: #{idEntry.id}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-zinc-300 font-medium">
+                        <td className="py-3 px-4 text-text-secondary font-medium">
                           {idEntry.role || 'Executive Account'}
                         </td>
                         <td className="py-3 px-4">
-                          <span className="px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-zinc-300 font-mono text-[10.5px]">
+                          <span className="px-1.5 py-0.5 rounded bg-bg-base border border-border-default text-text-secondary font-mono text-2xs">
                             {idEntry.domain}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                          <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-2xs font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                             Monitored
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-zinc-400 font-mono text-[11px]">
+                        <td className="py-3 px-4 text-text-muted font-mono text-2xs">
                           {formatDate(idEntry.createdAt)}
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -544,7 +544,7 @@ export default function DomainsPage() {
                             onClick={() => handleDeleteIdentity(idEntry.id, idEntry.email)}
                             disabled={deleteIdentityMutation.isPending}
                             title="Remove from monitoring"
-                            className="p-1.5 text-zinc-500 hover:text-rose-400 transition-colors rounded-md hover:bg-rose-500/10 cursor-pointer disabled:opacity-50"
+                            className="p-1.5 text-text-faint hover:text-rose-400 transition-colors rounded-md hover:bg-rose-500/10 cursor-pointer disabled:opacity-50"
                           >
                             {deletingIdentityId === idEntry.id ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
@@ -557,7 +557,7 @@ export default function DomainsPage() {
                     ))}
                     {identities?.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="py-10 text-center text-zinc-500 text-xs font-mono">
+                        <td colSpan={6} className="py-10 text-center text-text-faint text-xs font-mono">
                           No privileged identities added yet. Click &quot;Add Privileged Identity&quot; to configure high-value account surveillance.
                         </td>
                       </tr>
@@ -573,45 +573,45 @@ export default function DomainsPage() {
       {/* Add Domain Dialog */}
       {isAddDomainOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-lg p-5 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-              <h3 className="text-sm font-semibold text-zinc-100">Add domain to monitor</h3>
-              <button onClick={() => setIsAddDomainOpen(false)} className="text-zinc-500 hover:text-zinc-200 cursor-pointer p-1 rounded-md hover:bg-zinc-800">
+          <div className="w-full max-w-md bg-bg-surface border border-border-default rounded-lg p-5 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <h3 className="text-sm font-semibold text-text-primary">Add domain to monitor</h3>
+              <button onClick={() => setIsAddDomainOpen(false)} className="text-text-faint hover:text-text-secondary cursor-pointer p-1 rounded-md hover:bg-border-strong">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={handleAddDomain} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="block text-zinc-400 mb-1 font-medium">Domain name</label>
+                <label className="block text-text-muted mb-1 font-medium">Domain name</label>
                 <input 
                   type="text"
                   placeholder="e.g. acme-corp.com or startup.io"
                   value={newDomainInput}
                   onChange={(e) => setNewDomainInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 font-mono text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-bg-base border border-border-default rounded-md text-text-primary font-mono text-xs focus:outline-none focus:border-border-strong"
                   required
                   autoFocus
                 />
-                <p className="text-[11px] text-zinc-500 mt-1">
+                <p className="text-2xs text-text-faint mt-1">
                   We will automatically discover and track exposures across all company inboxes and public breach databases.
                 </p>
               </div>
 
               <div>
-                <label className="block text-zinc-400 mb-1 font-medium flex items-center justify-between">
+                <label className="block text-text-muted mb-1 font-medium flex items-center justify-between">
                   <span>Automated Monitoring Cadence</span>
-                  <span className="text-[10px] text-emerald-400 font-mono">REAL-TIME READY</span>
+                  <span className="text-2xs text-emerald-400 font-mono">REAL-TIME READY</span>
                 </label>
                 <select
                   value={newDomainFrequency}
                   onChange={(e: any) => setNewDomainFrequency(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-200 text-xs focus:outline-none focus:border-zinc-700 cursor-pointer font-mono"
+                  className="w-full px-3 py-2 bg-bg-base border border-border-default rounded-md text-text-secondary text-xs focus:outline-none focus:border-border-strong cursor-pointer font-mono"
                 >
                   <option value="continuous">Continuous (Hourly) — Real-Time Perimeter Reconnaissance</option>
                   <option value="daily">Daily (Every 24 Hours) — Standard Business Monitoring</option>
                   <option value="weekly">Weekly (Every 7 Days) — Low Frequency Baseline</option>
                 </select>
-                <p className="text-[11px] text-zinc-500 mt-1 leading-relaxed">
+                <p className="text-2xs text-text-faint mt-1 leading-relaxed">
                   Continuous mode performs automated hourly reconnaissance across Certificate Transparency logs, newly resolved IP records, and email anti-spoofing headers.
                 </p>
               </div>
@@ -623,18 +623,18 @@ export default function DomainsPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-default">
                 <button
                   type="button"
                   onClick={() => setIsAddDomainOpen(false)}
-                  className="px-3.5 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer text-xs"
+                  className="px-3.5 py-1.5 rounded-md text-text-muted hover:text-text-secondary border border-border-default hover:bg-bg-hover transition-colors cursor-pointer text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addDomainMutation.isPending}
-                  className="px-3.5 py-1.5 rounded-md bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-1.5 text-xs"
+                  className="px-3.5 py-1.5 rounded-md bg-accent hover:bg-accent-hover text-accent-text font-medium transition-colors disabled:opacity-50 cursor-pointer flex items-center gap-1.5 text-xs"
                 >
                   {addDomainMutation.isPending ? (
                     <>
@@ -654,26 +654,26 @@ export default function DomainsPage() {
       {/* Add Privileged Identity Dialog */}
       {isAddIdentityOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-lg p-5 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+          <div className="w-full max-w-md bg-bg-surface border border-border-default rounded-lg p-5 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-zinc-800 border border-zinc-700 text-zinc-400 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-md bg-border-strong border border-border-strong text-text-muted flex items-center justify-center">
                   <Shield className="w-3.5 h-3.5" />
                 </div>
-                <h3 className="text-sm font-semibold text-zinc-100">Add Privileged Identity</h3>
+                <h3 className="text-sm font-semibold text-text-primary">Add Privileged Identity</h3>
               </div>
-              <button onClick={() => setIsAddIdentityOpen(false)} className="text-zinc-500 hover:text-zinc-200 cursor-pointer p-1 rounded-md hover:bg-zinc-800">
+              <button onClick={() => setIsAddIdentityOpen(false)} className="text-text-faint hover:text-text-secondary cursor-pointer p-1 rounded-md hover:bg-border-strong">
                 <X className="w-4 h-4" />
               </button>
             </div>
             
             <form onSubmit={handleAddIdentity} className="mt-4 space-y-4 text-xs">
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-medium">Domain Perimeter</label>
+                <label className="block text-text-secondary mb-1.5 font-medium">Domain Perimeter</label>
                 <select
                   value={identityDomain}
                   onChange={(e) => setIdentityDomain(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-200 font-mono text-xs focus:outline-none focus:border-zinc-700 cursor-pointer"
+                  className="w-full px-3 py-2 bg-bg-base border border-border-default rounded-md text-text-secondary font-mono text-xs focus:outline-none focus:border-border-strong cursor-pointer"
                 >
                   {domains && domains.length > 0 ? (
                     domains.map(d => (
@@ -686,27 +686,27 @@ export default function DomainsPage() {
               </div>
 
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-medium">Email Address</label>
+                <label className="block text-text-secondary mb-1.5 font-medium">Email Address</label>
                 <input 
                   type="email"
                   placeholder="e.g. ciso@company.com or devops-lead@company.com"
                   value={identityEmail}
                   onChange={(e) => setIdentityEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 font-mono text-xs focus:outline-none focus:border-zinc-700"
+                  className="w-full px-3 py-2 bg-bg-base border border-border-default rounded-md text-text-primary placeholder-text-faint font-mono text-xs focus:outline-none focus:border-border-strong"
                   required
                   autoFocus
                 />
-                <p className="text-[11px] text-zinc-500 mt-1">
+                <p className="text-2xs text-text-faint mt-1">
                   Dedicated real-time monitoring across infostealer botnet logs, session hijack databases, and dark web leak sites.
                 </p>
               </div>
 
               <div>
-                <label className="block text-zinc-300 mb-1.5 font-medium">Identity Role / Category</label>
+                <label className="block text-text-secondary mb-1.5 font-medium">Identity Role / Category</label>
                 <select
                   value={identityRole}
                   onChange={(e) => setIdentityRole(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-950 border border-zinc-800 rounded-md text-zinc-200 text-xs focus:outline-none focus:border-zinc-700 cursor-pointer"
+                  className="w-full px-3 py-2 bg-bg-base border border-border-default rounded-md text-text-secondary text-xs focus:outline-none focus:border-border-strong cursor-pointer"
                 >
                   <option value="Executive / C-Suite">Executive / C-Suite</option>
                   <option value="DevOps & Cloud Administrator">DevOps & Cloud Administrator</option>
@@ -724,18 +724,18 @@ export default function DomainsPage() {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-default">
                 <button
                   type="button"
                   onClick={() => setIsAddIdentityOpen(false)}
-                  className="px-3.5 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer text-xs"
+                  className="px-3.5 py-1.5 rounded-md text-text-muted hover:text-text-secondary border border-border-default hover:bg-bg-hover transition-colors cursor-pointer text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addIdentityMutation.isPending}
-                  className="px-3.5 py-1.5 rounded-md bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer text-xs"
+                  className="px-3.5 py-1.5 rounded-md bg-accent hover:bg-accent-hover text-accent-text font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer text-xs"
                 >
                   {addIdentityMutation.isPending ? (
                     <>
@@ -755,41 +755,41 @@ export default function DomainsPage() {
       {/* DNS TXT Verification Dialog */}
       {verifyingDomain && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-lg p-5 shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+          <div className="w-full max-w-md bg-bg-surface border border-border-default rounded-lg p-5 shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-md bg-zinc-800 border border-zinc-700 text-emerald-400 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-md bg-border-strong border border-border-strong text-emerald-400 flex items-center justify-center">
                   <ShieldCheck className="w-3.5 h-3.5" />
                 </div>
-                <h3 className="text-sm font-semibold text-zinc-100">DNS Ownership Verification</h3>
+                <h3 className="text-sm font-semibold text-text-primary">DNS Ownership Verification</h3>
               </div>
-              <button onClick={() => setVerifyingDomain(null)} className="text-zinc-500 hover:text-zinc-200 cursor-pointer p-1 rounded-md hover:bg-zinc-800">
+              <button onClick={() => setVerifyingDomain(null)} className="text-text-faint hover:text-text-secondary cursor-pointer p-1 rounded-md hover:bg-border-strong">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="mt-4 space-y-3.5 text-xs">
-              <p className="text-zinc-300 leading-relaxed">
-                To confirm organizational ownership of <span className="font-mono text-zinc-100 font-semibold">{verifyingDomain.name}</span>, add this TXT record to your domain registrar or DNS management console (Cloudflare, Route53, GoDaddy):
+              <p className="text-text-secondary leading-relaxed">
+                To confirm organizational ownership of <span className="font-mono text-text-primary font-semibold">{verifyingDomain.name}</span>, add this TXT record to your domain registrar or DNS management console (Cloudflare, Route53, GoDaddy):
               </p>
               
               {verificationLoading ? (
-                <div className="p-6 bg-zinc-950 border border-zinc-800 rounded-md flex flex-col items-center justify-center text-zinc-400 gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin text-zinc-300" />
-                  <span className="text-[11px] font-mono">Generating cryptographic verification token...</span>
+                <div className="p-6 bg-bg-base border border-border-default rounded-md flex flex-col items-center justify-center text-text-muted gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin text-text-secondary" />
+                  <span className="text-2xs font-mono">Generating cryptographic verification token...</span>
                 </div>
               ) : (
-                <div className="p-3 bg-zinc-950 border border-zinc-800 rounded-md space-y-2.5 font-mono text-[11px]">
+                <div className="p-3 bg-bg-base border border-border-default rounded-md space-y-2.5 font-mono text-2xs">
                   <div className="flex items-center justify-between">
-                    <span className="text-zinc-500 font-medium">Record Type</span>
-                    <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 font-medium text-[10px]">
+                    <span className="text-text-faint font-medium">Record Type</span>
+                    <span className="px-1.5 py-0.5 rounded bg-border-strong text-text-secondary font-medium text-2xs">
                       {verificationRecord?.record_type || 'TXT'}
                     </span>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-zinc-500 font-medium">Host / Name</span>
+                      <span className="text-text-faint font-medium">Host / Name</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -798,7 +798,7 @@ export default function DomainsPage() {
                           setCopiedField('host');
                           setTimeout(() => setCopiedField(null), 2500);
                         }}
-                        className="text-[10px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1 cursor-pointer transition-colors"
+                        className="text-2xs text-text-muted hover:text-text-secondary flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         {copiedField === 'host' ? (
                           <>
@@ -813,14 +813,14 @@ export default function DomainsPage() {
                         )}
                       </button>
                     </div>
-                    <div className="p-2 bg-zinc-900 border border-zinc-800 rounded text-zinc-200 break-all select-all font-mono text-[10.5px]">
+                    <div className="p-2 bg-bg-surface border border-border-default rounded text-text-secondary break-all select-all font-mono text-2xs">
                       {verificationRecord?.host || `_breachguard-verify.${verifyingDomain.name}`}
                     </div>
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-zinc-500 font-medium">TXT Value</span>
+                      <span className="text-text-faint font-medium">TXT Value</span>
                       <button
                         type="button"
                         onClick={() => {
@@ -829,7 +829,7 @@ export default function DomainsPage() {
                           setCopiedField('value');
                           setTimeout(() => setCopiedField(null), 2500);
                         }}
-                        className="text-[10px] text-zinc-400 hover:text-zinc-200 flex items-center gap-1 cursor-pointer transition-colors"
+                        className="text-2xs text-text-muted hover:text-text-secondary flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         {copiedField === 'value' ? (
                           <>
@@ -844,7 +844,7 @@ export default function DomainsPage() {
                         )}
                       </button>
                     </div>
-                    <div className="p-2 bg-zinc-900 border border-zinc-800 rounded text-emerald-400 break-all select-all font-mono text-[10.5px]">
+                    <div className="p-2 bg-bg-surface border border-border-default rounded text-emerald-400 break-all select-all font-mono text-2xs">
                       {verificationRecord?.value || 'breachguard-site-verification=...'}
                     </div>
                   </div>
@@ -858,15 +858,15 @@ export default function DomainsPage() {
                 </div>
               )}
 
-              <p className="text-[11px] text-zinc-500 leading-normal">
-                Once saved in your DNS zone, click <strong className="text-zinc-400">Verify Record Now</strong>. Note that global DNS propagation can take 1 to 5 minutes depending on your TTL.
+              <p className="text-2xs text-text-faint leading-normal">
+                Once saved in your DNS zone, click <strong className="text-text-muted">Verify Record Now</strong>. Note that global DNS propagation can take 1 to 5 minutes depending on your TTL.
               </p>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-default">
                 <button
                   type="button"
                   onClick={() => setVerifyingDomain(null)}
-                  className="px-3.5 py-1.5 rounded-md text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800/50 transition-colors cursor-pointer text-xs"
+                  className="px-3.5 py-1.5 rounded-md text-text-muted hover:text-text-secondary border border-border-default hover:bg-bg-hover transition-colors cursor-pointer text-xs"
                 >
                   Cancel
                 </button>
@@ -874,7 +874,7 @@ export default function DomainsPage() {
                   type="button"
                   onClick={() => handleVerify(verifyingDomain.id)}
                   disabled={verifyDomainMutation.isPending || verificationLoading}
-                  className="px-3.5 py-1.5 rounded-md bg-zinc-100 hover:bg-white text-zinc-950 font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer text-xs"
+                  className="px-3.5 py-1.5 rounded-md bg-accent hover:bg-accent-hover text-accent-text font-medium transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer text-xs"
                 >
                   {verifyDomainMutation.isPending ? (
                     <>

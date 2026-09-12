@@ -11,7 +11,7 @@ interface SeverityDonutProps {
 export function SeverityDonut({ data }: SeverityDonutProps) {
   if (!data) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-500 text-xs font-roboto">
+      <div className="w-full h-full flex flex-col items-center justify-center text-text-faint text-xs">
         Loading severity distribution...
       </div>
     );
@@ -22,11 +22,11 @@ export function SeverityDonut({ data }: SeverityDonutProps) {
   if (total === 0) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
-        <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2">
+        <div className="w-12 h-12 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center mb-2">
           <ShieldCheck className="w-6 h-6" />
         </div>
-        <span className="text-xs font-semibold text-zinc-300 font-roboto">0 Active Exposures</span>
-        <p className="text-[11px] text-zinc-500 mt-0.5 max-w-[180px] leading-tight">
+        <span className="text-xs font-semibold text-text-secondary">0 Active Exposures</span>
+        <p className="text-2xs text-text-faint mt-0.5 max-w-[180px] leading-tight">
           No critical, high, or medium credential threats detected.
         </p>
       </div>
@@ -37,7 +37,7 @@ export function SeverityDonut({ data }: SeverityDonutProps) {
     { name: 'Critical', value: data.critical, color: '#ef4444' },
     { name: 'High', value: data.high, color: '#f97316' },
     { name: 'Medium', value: data.medium, color: '#eab308' },
-    { name: 'Low', value: data.low, color: '#3b82f6' },
+    { name: 'Low', value: data.low, color: '#22c55e' },
   ].filter(d => d.value > 0);
 
   return (
@@ -49,7 +49,7 @@ export function SeverityDonut({ data }: SeverityDonutProps) {
           cy="50%"
           innerRadius={60}
           outerRadius={80}
-          paddingAngle={5}
+          paddingAngle={4}
           dataKey="value"
           stroke="none"
         >
@@ -58,8 +58,8 @@ export function SeverityDonut({ data }: SeverityDonutProps) {
           ))}
         </Pie>
         <Tooltip 
-          contentStyle={{ backgroundColor: '#121215', borderColor: '#27272a', color: '#e4e4e7', fontSize: '11px', borderRadius: '6px' }}
-          itemStyle={{ color: '#fff' }}
+          contentStyle={{ backgroundColor: '#111113', borderColor: '#27272a', color: '#d4d4d8', fontSize: '10px', borderRadius: '6px' }}
+          itemStyle={{ color: '#fafafa' }}
         />
       </PieChart>
     </ResponsiveContainer>

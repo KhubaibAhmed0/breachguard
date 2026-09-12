@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Roboto } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
@@ -9,10 +9,9 @@ const inter = Inter({
   display: "swap"
 });
 
-const roboto = Roboto({ 
-  weight: ["300", "400", "500", "700", "900"],
+const jetbrainsMono = JetBrains_Mono({ 
   subsets: ["latin"],
-  variable: "--font-roboto",
+  variable: "--font-mono",
   display: "swap"
 });
 
@@ -28,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${roboto.variable} ${roboto.className} bg-gray-950 text-gray-100 min-h-screen antialiased`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} bg-bg-base text-text-secondary min-h-screen antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

@@ -31,14 +31,14 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#09090b] p-4">
-      <div className="w-full max-w-sm p-6 bg-[#121214] border border-zinc-800 rounded-lg shadow-xl">
+      <div className="w-full max-w-sm p-6 bg-bg-surface border border-border-default rounded-lg shadow-xl">
         <div className="flex flex-col items-center mb-5">
-          <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-2.5">
-            <Shield className="w-4 h-4 text-zinc-200" />
+          <div className="w-8 h-8 rounded bg-bg-surface border border-border-default flex items-center justify-center mb-2.5">
+            <Shield className="w-4 h-4 text-text-secondary" />
           </div>
-          <h1 className="text-sm font-semibold text-zinc-100 tracking-tight">Create your workspace</h1>
-          <p className="text-xs text-zinc-400 mt-0.5">Start monitoring your workforce exposure</p>
-          <div className="mt-2.5 px-2 py-1 rounded bg-[#0e0e10] border border-zinc-800 text-zinc-300 text-[10.5px] font-mono flex items-center gap-1.5">
+          <h1 className="text-sm font-semibold text-text-primary tracking-tight">Create your workspace</h1>
+          <p className="text-xs text-text-muted mt-0.5">Start monitoring your workforce exposure</p>
+          <div className="mt-2.5 px-2 py-1 rounded bg-[#0e0e10] border border-border-default text-text-secondary text-2xs font-mono flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             Includes 7-Day Business Trial &bull; No card required
           </div>
@@ -52,34 +52,34 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit} className="space-y-3 text-xs">
           <div>
-            <label className="block text-zinc-400 mb-1 font-medium">Company or workspace name</label>
+            <label className="block text-text-muted mb-1 font-medium">Company or workspace name</label>
             <input 
               type="text" 
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0e0e10] border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs" 
+              className="w-full px-3 py-2 bg-[#0e0e10] border border-border-default rounded-md focus:outline-none focus:border-border-strong text-text-primary font-mono text-xs" 
               placeholder="Acme Corp" 
               required 
             />
           </div>
           <div>
-            <label className="block text-zinc-400 mb-1 font-medium">Work email</label>
+            <label className="block text-text-muted mb-1 font-medium">Work email</label>
             <input 
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0e0e10] border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs" 
+              className="w-full px-3 py-2 bg-[#0e0e10] border border-border-default rounded-md focus:outline-none focus:border-border-strong text-text-primary font-mono text-xs" 
               placeholder="alex@acme.com" 
               required 
             />
           </div>
           <div>
-            <label className="block text-zinc-400 mb-1 font-medium">Password</label>
+            <label className="block text-text-muted mb-1 font-medium">Password</label>
             <input 
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0e0e10] border border-zinc-800 rounded-md focus:outline-none focus:border-zinc-700 text-zinc-100 font-mono text-xs" 
+              className="w-full px-3 py-2 bg-[#0e0e10] border border-border-default rounded-md focus:outline-none focus:border-border-strong text-text-primary font-mono text-xs" 
               placeholder="••••••••••••" 
               required 
             />
@@ -87,28 +87,28 @@ export default function RegisterPage() {
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2 px-3 bg-zinc-100 hover:bg-white text-zinc-950 font-medium rounded-md transition-colors mt-3 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
+            className="w-full py-2 px-3 bg-accent hover:bg-accent-hover text-accent-text font-medium rounded-md transition-colors mt-3 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 text-xs"
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-text" />
                 <span>Starting 7-day trial...</span>
               </>
             ) : (
               'Start 7-Day Free Trial'
             )}
           </button>
-          <p className="text-[10.5px] text-zinc-500 text-center mt-2 font-normal">
+          <p className="text-2xs text-text-faint text-center mt-2 font-normal">
             By signing up, you agree to our{' '}
-            <Link href="/terms" className="text-zinc-400 hover:text-white underline underline-offset-2">Terms</Link>
+            <Link href="/terms" className="text-text-muted hover:text-text-primary underline underline-offset-2">Terms</Link>
             {' '}and{' '}
-            <Link href="/privacy" className="text-zinc-400 hover:text-white underline underline-offset-2">Privacy Policy</Link>.
+            <Link href="/privacy" className="text-text-muted hover:text-text-primary underline underline-offset-2">Privacy Policy</Link>.
           </p>
         </form>
 
-        <div className="mt-5 pt-4 border-t border-zinc-800 text-center text-xs text-zinc-500">
+        <div className="mt-5 pt-4 border-t border-border-default text-center text-xs text-text-faint">
           Already have an account?{' '}
-          <Link href="/login" className="text-zinc-300 hover:text-white underline underline-offset-4">
+          <Link href="/login" className="text-text-secondary hover:text-text-primary underline underline-offset-4">
             Sign in
           </Link>
         </div>

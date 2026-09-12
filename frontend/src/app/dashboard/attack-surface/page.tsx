@@ -99,7 +99,7 @@ export default function AttackSurfacePage() {
   const renderBadge = (severity: string) => {
     if (severity === 'clean' || severity === 'secure') {
       return (
-        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-mono font-medium uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
           SECURE
         </span>
       );
@@ -113,24 +113,24 @@ export default function AttackSurfacePage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-800/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border-default">
           <div>
-            <h1 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight flex items-center gap-2">
-              <Network className="w-5 h-5 text-zinc-400" />
+            <h1 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight flex items-center gap-2">
+              <Network className="w-5 h-5 text-text-muted" />
               External Attack Surface
             </h1>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
+            <p className="text-xs sm:text-sm text-text-muted mt-1">
               Passive discovery of publicly observable subdomains, IP addresses, and listening network services.
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-md text-xs text-zinc-300 font-mono">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-bg-surface border border-border-default rounded-md text-xs text-text-secondary font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-              <span><strong className="text-zinc-100 font-semibold">{assets.length}</strong> Assets</span>
+              <span><strong className="text-text-primary font-semibold">{assets.length}</strong> Assets</span>
             </div>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-900 border border-zinc-800 rounded-md text-xs text-zinc-300 font-mono">
-              <span className={`w-1.5 h-1.5 rounded-full ${allFindings.length > 0 ? 'bg-amber-400' : 'bg-zinc-500'}`} />
-              <span><strong className="text-zinc-100 font-semibold">{allFindings.length}</strong> Findings</span>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-bg-surface border border-border-default rounded-md text-xs text-text-secondary font-mono">
+              <span className={`w-1.5 h-1.5 rounded-full ${allFindings.length > 0 ? 'bg-amber-400' : 'bg-text-faint'}`} />
+              <span><strong className="text-text-primary font-semibold">{allFindings.length}</strong> Findings</span>
             </div>
           </div>
         </div>
@@ -138,21 +138,21 @@ export default function AttackSurfacePage() {
         {/* Search & Filter Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="relative flex-1 min-w-[240px] max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-faint" />
             <input 
               type="text"
               placeholder="Filter by hostname, IP, port, finding..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 transition-colors"
+              className="w-full pl-8 pr-3 py-1.5 bg-bg-base border border-border-default rounded-md text-xs text-text-secondary placeholder-text-faint focus:outline-none focus:border-border-strong transition-colors"
             />
           </div>
           <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-zinc-500" />
+            <Filter className="w-3.5 h-3.5 text-text-faint" />
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className="bg-zinc-950 border border-zinc-800 rounded-md text-xs text-zinc-300 px-3 py-1.5 focus:outline-none focus:border-zinc-700 cursor-pointer"
+              className="bg-bg-base border border-border-default rounded-md text-xs text-text-secondary px-3 py-1.5 focus:outline-none focus:border-border-strong cursor-pointer"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical Only</option>
@@ -164,7 +164,7 @@ export default function AttackSurfacePage() {
             {isFiltered && (
               <button
                 onClick={() => { setSeverityFilter('all'); setSearchTerm(''); }}
-                className="px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-md transition-colors font-mono cursor-pointer"
+                className="px-2.5 py-1 text-xs text-text-muted hover:text-text-secondary bg-border-strong hover:bg-border-strong border border-border-strong rounded-md transition-colors font-mono cursor-pointer"
                 title="Reset all filters"
               >
                 Clear
@@ -174,18 +174,18 @@ export default function AttackSurfacePage() {
         </div>
 
         {/* Discovered Assets Table */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/40 flex items-center justify-between font-mono">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <Globe className="w-3.5 h-3.5 text-zinc-400" />
+        <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border-default bg-bg-base/40 flex items-center justify-between font-mono">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2">
+              <Globe className="w-3.5 h-3.5 text-text-muted" />
               Discovered Hostnames & Network Perimeter ({filteredAssets.length}{filteredAssets.length !== assets.length ? ` of ${assets.length}` : ''})
             </h2>
-            <span className="text-[11px] text-zinc-500">Source: Certificate Transparency & DNS</span>
+            <span className="text-2xs text-text-faint">Source: Certificate Transparency & DNS</span>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-zinc-950/60 text-zinc-400 border-b border-zinc-800 font-mono text-xs">
+              <thead className="bg-bg-surface text-text-muted border-b border-border-default font-mono text-xs">
                 <tr>
                   <th className="py-2.5 px-4">Hostname</th>
                   <th className="py-2.5 px-4">Risk Status</th>
@@ -195,27 +195,27 @@ export default function AttackSurfacePage() {
                   <th className="py-2.5 px-4 text-right">Observation</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/60 text-zinc-300">
+              <tbody className="divide-y divide-border-default/60 text-text-secondary">
                 {assetsLoading && !assets.length ? (
                   Array.from({ length: 4 }).map((_, idx) => (
                     <tr key={idx} className="animate-pulse">
-                      <td className="py-3 px-4"><div className="h-4 w-40 bg-zinc-800/80 rounded" /></td>
-                      <td className="py-3 px-4"><div className="h-4 w-20 bg-zinc-800/60 rounded" /></td>
-                      <td className="py-3 px-4"><div className="h-3.5 w-24 bg-zinc-800/60 rounded" /></td>
-                      <td className="py-3 px-4"><div className="h-4 w-28 bg-zinc-800/50 rounded" /></td>
-                      <td className="py-3 px-4"><div className="h-3.5 w-20 bg-zinc-800/60 rounded" /></td>
-                      <td className="py-3 px-4 text-right"><div className="h-3.5 w-16 bg-zinc-800/50 rounded ml-auto" /></td>
+                      <td className="py-3 px-4"><div className="h-4 w-40 bg-bg-hover rounded" /></td>
+                      <td className="py-3 px-4"><div className="h-4 w-20 bg-bg-hover rounded" /></td>
+                      <td className="py-3 px-4"><div className="h-3.5 w-24 bg-bg-hover rounded" /></td>
+                      <td className="py-3 px-4"><div className="h-4 w-28 bg-bg-hover rounded" /></td>
+                      <td className="py-3 px-4"><div className="h-3.5 w-20 bg-bg-hover rounded" /></td>
+                      <td className="py-3 px-4 text-right"><div className="h-3.5 w-16 bg-bg-hover rounded ml-auto" /></td>
                     </tr>
                   ))
                 ) : filteredAssets.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center">
                       <div className="flex flex-col items-center justify-center space-y-2">
-                        <ShieldAlert className="w-8 h-8 text-zinc-600 mb-1" />
-                        <p className="text-sm font-medium text-zinc-300">
+                        <ShieldAlert className="w-8 h-8 text-text-faint mb-1" />
+                        <p className="text-sm font-medium text-text-secondary">
                           No {severityFilter !== 'all' ? `"${severityFilter.toUpperCase()}" ` : ''}assets found
                         </p>
-                        <p className="text-xs text-zinc-500 max-w-sm">
+                        <p className="text-xs text-text-faint max-w-sm">
                           {severityFilter !== 'all'
                             ? `No discovered perimeter assets currently match the "${severityFilter}" filter.`
                             : 'No perimeter assets match your search criteria.'}
@@ -223,7 +223,7 @@ export default function AttackSurfacePage() {
                         {isFiltered && (
                           <button 
                             onClick={() => { setSeverityFilter('all'); setSearchTerm(''); }}
-                            className="mt-2 px-3 py-1 text-xs font-mono text-zinc-200 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-md transition-colors cursor-pointer"
+                            className="mt-2 px-3 py-1 text-xs font-mono text-text-secondary bg-border-strong hover:bg-border-strong border border-border-strong rounded-md transition-colors cursor-pointer"
                           >
                             Reset Filters
                           </button>
@@ -237,42 +237,42 @@ export default function AttackSurfacePage() {
                     const assetSeverity = getAssetSeverity(asset, assetFindings);
 
                     return (
-                      <tr key={asset.id} className="hover:bg-zinc-850/40 transition-colors">
-                        <td className="py-3 px-4 text-zinc-100 font-mono text-xs">
+                      <tr key={asset.id} className="hover:bg-bg-inset/40 transition-colors">
+                        <td className="py-3 px-4 text-text-primary font-mono text-xs">
                           {asset.hostname}
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">
                             {renderBadge(assetSeverity)}
                             {assetFindings.length > 0 && (
-                              <span className="text-[11px] font-mono text-zinc-400 hidden sm:inline">
+                              <span className="text-2xs font-mono text-text-muted hidden sm:inline">
                                 ({assetFindings.length})
                               </span>
                             )}
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-zinc-300 font-mono text-xs">
-                          {asset.ip_address || <span className="text-zinc-600">Unresolved</span>}
+                        <td className="py-3 px-4 text-text-secondary font-mono text-xs">
+                          {asset.ip_address || <span className="text-text-faint">Unresolved</span>}
                         </td>
                         <td className="py-3 px-4">
                           {asset.open_ports && asset.open_ports.length > 0 ? (
                             <div className="flex flex-wrap gap-1.5">
                               {asset.open_ports.map((p: number) => (
-                                <span key={p} className="px-1.5 py-0.5 bg-zinc-950 border border-zinc-800 text-zinc-300 rounded text-[10.5px] font-mono">
+                                <span key={p} className="px-1.5 py-0.5 bg-bg-base border border-border-default text-text-secondary rounded text-2xs font-mono">
                                   {p}
                                 </span>
                               ))}
                             </div>
                           ) : (
-                            <span className="text-zinc-500 text-xs font-mono">None</span>
+                            <span className="text-text-faint text-xs font-mono">None</span>
                           )}
                         </td>
-                        <td className="py-3 px-4 text-zinc-400 text-xs">
-                          <span className="px-1.5 py-0.5 bg-zinc-950 border border-zinc-800 rounded text-[10.5px] font-mono text-zinc-400">
+                        <td className="py-3 px-4 text-text-muted text-xs">
+                          <span className="px-1.5 py-0.5 bg-bg-base border border-border-default rounded text-2xs font-mono text-text-muted">
                             {asset.source}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right text-zinc-400 text-xs font-mono">
+                        <td className="py-3 px-4 text-right text-text-muted text-xs font-mono">
                           {asset.last_seen_at ? new Date(asset.last_seen_at).toLocaleDateString() : 'Active'}
                         </td>
                       </tr>
@@ -285,26 +285,26 @@ export default function AttackSurfacePage() {
         </div>
 
         {/* Perimeter Findings List */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/40 flex items-center justify-between font-mono">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <ShieldAlert className="w-3.5 h-3.5 text-zinc-400" />
+        <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+          <div className="px-4 py-3 border-b border-border-default bg-bg-base/40 flex items-center justify-between font-mono">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2">
+              <ShieldAlert className="w-3.5 h-3.5 text-text-muted" />
               Perimeter Security Findings ({filteredFindings.length}{filteredFindings.length !== allFindings.length ? ` of ${allFindings.length}` : ''})
             </h2>
-            <span className="text-[11px] text-zinc-500">Prioritized Technical Observations</span>
+            <span className="text-2xs text-text-faint">Prioritized Technical Observations</span>
           </div>
 
-          <div className="divide-y divide-zinc-800/60">
+          <div className="divide-y divide-border-default/60">
             {findingsLoading && !allFindings.length ? (
               <FindingListSkeleton count={4} />
             ) : filteredFindings.length === 0 ? (
               <div className="py-12 text-center">
                 <div className="flex flex-col items-center justify-center space-y-2">
-                  <CheckCircle2 className="w-8 h-8 text-zinc-600 mb-1" />
-                  <p className="text-sm font-medium text-zinc-300">
+                  <CheckCircle2 className="w-8 h-8 text-text-faint mb-1" />
+                  <p className="text-sm font-medium text-text-secondary">
                     No {severityFilter !== 'all' ? `"${severityFilter.toUpperCase()}" ` : ''}findings detected
                   </p>
-                  <p className="text-xs text-zinc-500 max-w-sm">
+                  <p className="text-xs text-text-faint max-w-sm">
                     {severityFilter !== 'all'
                       ? `No attack surface findings with "${severityFilter}" severity are currently affecting your perimeter.`
                       : 'Zero attack surface security findings detected across monitored perimeter.'}
@@ -312,7 +312,7 @@ export default function AttackSurfacePage() {
                   {isFiltered && (
                     <button 
                       onClick={() => { setSeverityFilter('all'); setSearchTerm(''); }}
-                      className="mt-2 px-3 py-1 text-xs font-mono text-zinc-200 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-md transition-colors cursor-pointer"
+                      className="mt-2 px-3 py-1 text-xs font-mono text-text-secondary bg-border-strong hover:bg-border-strong border border-border-strong rounded-md transition-colors cursor-pointer"
                     >
                       Reset Filters
                     </button>
@@ -321,35 +321,35 @@ export default function AttackSurfacePage() {
               </div>
             ) : (
               filteredFindings.map((finding: any) => (
-                <div key={finding.id} className="p-4 hover:bg-zinc-850/40 transition-colors space-y-2">
+                <div key={finding.id} className="p-4 hover:bg-bg-inset/40 transition-colors space-y-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                     <div className="flex items-center gap-2 flex-wrap">
                       {renderBadge(finding.severity)}
-                      <span className="text-sm font-medium text-zinc-100 tracking-tight">
+                      <span className="text-sm font-medium text-text-primary tracking-tight">
                         {finding.title}
                       </span>
-                      <span className="text-[11px] font-mono text-zinc-500">
+                      <span className="text-2xs font-mono text-text-faint">
                         [{finding.finding_id}]
                       </span>
                     </div>
-                    <span className="text-xs font-mono text-zinc-400">
-                      Asset: <strong className="text-zinc-200">{finding.asset}</strong>
+                    <span className="text-xs font-mono text-text-muted">
+                      Asset: <strong className="text-text-secondary">{finding.asset}</strong>
                     </span>
                   </div>
 
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-text-muted leading-relaxed">
                     {finding.description}
                   </p>
 
-                  <div className="p-2.5 bg-zinc-950/60 border border-zinc-800 rounded-md text-xs space-y-1 font-mono text-[11px]">
+                  <div className="p-2.5 bg-bg-surface border border-border-default rounded-md text-xs space-y-1 font-mono text-2xs">
                     <div>
-                      <span className="text-zinc-400 font-medium">Observed Telemetry Evidence:</span>{' '}
-                      <span className="text-zinc-300">{finding.evidence}</span>
+                      <span className="text-text-muted font-medium">Observed Telemetry Evidence:</span>{' '}
+                      <span className="text-text-secondary">{finding.evidence}</span>
                     </div>
                     {finding.recommended_remediation && (
                       <div>
-                        <span className="text-zinc-400 font-medium">Recommended Remediation:</span>{' '}
-                        <span className="text-zinc-300">{finding.recommended_remediation}</span>
+                        <span className="text-text-muted font-medium">Recommended Remediation:</span>{' '}
+                        <span className="text-text-secondary">{finding.recommended_remediation}</span>
                       </div>
                     )}
                   </div>

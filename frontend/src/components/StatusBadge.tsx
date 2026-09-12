@@ -4,21 +4,21 @@ export function StatusBadge({ status }: { status: string }) {
   const getStatusStyle = (s: string) => {
     switch(s?.toLowerCase()) {
       case 'open': 
-        return 'bg-rose-500/10 text-rose-400 border-rose-500/25';
+        return 'bg-red-500/8 text-red-300 border-red-500/20';
       case 'acknowledged': 
       case 'investigating':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/25';
+        return 'bg-yellow-500/8 text-yellow-300 border-yellow-500/20';
       case 'remediated': 
       case 'resolved':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25';
+        return 'bg-green-500/8 text-green-300 border-green-500/20';
       default: 
-        return 'bg-zinc-850 text-zinc-400 border-zinc-800';
+        return 'bg-bg-inset text-text-muted border-border-default';
     }
   };
 
   return (
     <span className={cn(
-      "inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium uppercase tracking-normal border",
+      "inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-mono font-medium uppercase tracking-wide border",
       getStatusStyle(status)
     )}>
       {status}

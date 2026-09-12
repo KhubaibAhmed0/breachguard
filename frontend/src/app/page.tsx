@@ -25,37 +25,37 @@ export default function LandingPage() {
     'bg-emerald-500/10 border-emerald-500/20 text-emerald-400';
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col selection:bg-zinc-800 selection:text-zinc-100">
+    <div className="min-h-screen bg-[#09090b] text-text-primary flex flex-col selection:bg-border-strong selection:text-text-primary">
       
       {/* Navigation */}
-      <nav className="border-b border-zinc-800 bg-[#09090b]/90 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-border-default bg-[#09090b]/90 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center">
-              <Shield className="w-3.5 h-3.5 text-zinc-200" />
+            <div className="w-7 h-7 rounded bg-bg-surface border border-border-default flex items-center justify-center">
+              <Shield className="w-3.5 h-3.5 text-text-secondary" />
             </div>
-            <span className="font-semibold text-xs tracking-tight text-zinc-100 uppercase font-mono">
+            <span className="font-semibold text-xs tracking-tight text-text-primary uppercase font-mono">
               BreachGuard
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-6 text-xs text-zinc-400">
-            <a href="#features" className="hover:text-zinc-200 transition-colors">Pillars</a>
-            <a href="#compliance" className="hover:text-zinc-200 transition-colors">Architecture</a>
-            <a href="#pricing" className="hover:text-zinc-200 transition-colors">Pricing</a>
+          <div className="hidden md:flex items-center gap-6 text-xs text-text-muted">
+            <a href="#features" className="hover:text-text-secondary transition-colors">Pillars</a>
+            <a href="#compliance" className="hover:text-text-secondary transition-colors">Architecture</a>
+            <a href="#pricing" className="hover:text-text-secondary transition-colors">Pricing</a>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/login" className="text-xs font-medium text-zinc-400 hover:text-white px-2.5 sm:px-3 py-1.5 transition-colors">
+            <Link href="/login" className="text-xs font-medium text-text-muted hover:text-text-primary px-2.5 sm:px-3 py-1.5 transition-colors">
               Log in
             </Link>
-            <Link href="/register" className="text-xs font-medium px-3 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 rounded-md transition-colors">
+            <Link href="/register" className="text-xs font-medium px-3 py-1.5 bg-accent hover:bg-accent-hover text-accent-text rounded-md transition-colors">
               Get started
             </Link>
             <button
               type="button"
               onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-              className="md:hidden p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-900 transition-colors"
+              className="md:hidden p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors"
               aria-label="Toggle mobile menu"
             >
               {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -65,25 +65,25 @@ export default function LandingPage() {
 
         {/* Mobile Dropdown Navigation */}
         {isMobileNavOpen && (
-          <div className="md:hidden px-4 py-3 bg-[#121214] border-b border-zinc-800 flex flex-col gap-2 text-xs text-zinc-300">
+          <div className="md:hidden px-4 py-3 bg-bg-surface border-b border-border-default flex flex-col gap-2 text-xs text-text-secondary">
             <a 
               href="#features" 
               onClick={() => setIsMobileNavOpen(false)}
-              className="py-1.5 px-2 rounded hover:bg-zinc-800 text-zinc-300 transition-colors"
+              className="py-1.5 px-2 rounded hover:bg-border-strong text-text-secondary transition-colors"
             >
               Pillars
             </a>
             <a 
               href="#compliance" 
               onClick={() => setIsMobileNavOpen(false)}
-              className="py-1.5 px-2 rounded hover:bg-zinc-800 text-zinc-300 transition-colors"
+              className="py-1.5 px-2 rounded hover:bg-border-strong text-text-secondary transition-colors"
             >
               Architecture
             </a>
             <a 
               href="#pricing" 
               onClick={() => setIsMobileNavOpen(false)}
-              className="py-1.5 px-2 rounded hover:bg-zinc-800 text-zinc-300 transition-colors"
+              className="py-1.5 px-2 rounded hover:bg-border-strong text-text-secondary transition-colors"
             >
               Pricing
             </a>
@@ -94,22 +94,22 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="pt-16 sm:pt-20 pb-12 sm:pb-16 px-4 text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-zinc-800 bg-[#121214] text-zinc-400 text-xs mb-6 sm:mb-8 font-mono">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-border-default bg-bg-surface text-text-muted text-xs mb-6 sm:mb-8 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             <span>External Cyber Risk &bull; Zero-Agent Perimeter Audit</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-5xl font-semibold tracking-tight text-zinc-100 leading-tight mb-4 sm:mb-5">
+          <h1 className="text-3xl sm:text-5xl md:text-5xl font-semibold tracking-tight text-text-primary leading-tight mb-4 sm:mb-5">
             External cyber risk &amp; perimeter monitoring for modern enterprises.
           </h1>
 
-          <p className="text-xs sm:text-sm text-zinc-400 max-w-2xl mx-auto mb-8 sm:mb-9 leading-relaxed font-normal">
+          <p className="text-xs sm:text-sm text-text-muted max-w-2xl mx-auto mb-8 sm:mb-9 leading-relaxed font-normal">
             Discover exposed assets, identify email security weaknesses, monitor public threat intelligence, and track credential exposure from a single unified platform.
           </p>
 
           <ScanInput onScanComplete={(data) => setScanResult(data)} />
 
-          <p className="mt-4 text-[11px] text-zinc-500">
+          <p className="mt-4 text-2xs text-text-faint">
             Non-intrusive external reconnaissance. Zero configuration required &bull; 7-day free trial.
           </p>
         </section>
@@ -117,76 +117,76 @@ export default function LandingPage() {
         {/* Scan Results Panel — External Risk Snapshot */}
         {scanResult && (
           <section className="py-8 px-4 max-w-4xl mx-auto">
-            <div className="bg-[#121214] border border-zinc-800 rounded-lg p-5 sm:p-6 space-y-5">
+            <div className="bg-bg-surface border border-border-default rounded-lg p-5 sm:p-6 space-y-5">
               
-              <div className="border-b border-zinc-800 pb-5 space-y-4">
+              <div className="border-b border-border-default pb-5 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <div className="text-[11px] text-zinc-500 uppercase tracking-wider font-mono mb-0.5">
+                    <div className="text-2xs text-text-faint uppercase tracking-wider font-mono mb-0.5">
                       External Cyber Risk Snapshot
                     </div>
-                    <h2 className="text-xl font-semibold text-zinc-100 tracking-tight font-mono">
+                    <h2 className="text-xl font-semibold text-text-primary tracking-tight font-mono">
                       {scanResult.domain}
                     </h2>
                   </div>
                 </div>
 
-                <div className="p-4 bg-[#0e0e10] border border-zinc-800 rounded-lg">
+                <div className="p-4 bg-[#0e0e10] border border-border-default rounded-lg">
                   <RiskScoreGauge score={overallScore} size="md" showSpectrumBar={true} showExplanation={true} />
                 </div>
               </div>
 
               {/* 4 Pillars Snapshot Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 bg-[#0e0e10] border border-zinc-800 rounded-lg space-y-1">
-                  <div className="text-xs text-zinc-400 flex items-center gap-1.5">
-                    <Network className="w-3.5 h-3.5 text-zinc-500" />
+                <div className="p-3 bg-[#0e0e10] border border-border-default rounded-lg space-y-1">
+                  <div className="text-xs text-text-muted flex items-center gap-1.5">
+                    <Network className="w-3.5 h-3.5 text-text-faint" />
                     Attack Surface
                   </div>
-                  <div className="text-lg font-semibold text-zinc-100 font-mono">{scanResult.discovered_assets_count ?? 1}</div>
-                  <div className="text-[10.5px] text-zinc-500">Discovered subdomains</div>
+                  <div className="text-lg font-semibold text-text-primary font-mono">{scanResult.discovered_assets_count ?? 1}</div>
+                  <div className="text-2xs text-text-faint">Discovered subdomains</div>
                 </div>
 
-                <div className="p-3 bg-[#0e0e10] border border-zinc-800 rounded-lg space-y-1">
-                  <div className="text-xs text-zinc-400 flex items-center gap-1.5">
-                    <MailCheck className="w-3.5 h-3.5 text-zinc-500" />
+                <div className="p-3 bg-[#0e0e10] border border-border-default rounded-lg space-y-1">
+                  <div className="text-xs text-text-muted flex items-center gap-1.5">
+                    <MailCheck className="w-3.5 h-3.5 text-text-faint" />
                     Email Security
                   </div>
-                  <div className="text-lg font-semibold text-zinc-100 font-mono">{scanResult.email_security_score ?? 60}/100</div>
-                  <div className="text-[10.5px] text-zinc-500">SPF &amp; DMARC audit</div>
+                  <div className="text-lg font-semibold text-text-primary font-mono">{scanResult.email_security_score ?? 60}/100</div>
+                  <div className="text-2xs text-text-faint">SPF &amp; DMARC audit</div>
                 </div>
 
-                <div className="p-3 bg-[#0e0e10] border border-zinc-800 rounded-lg space-y-1">
-                  <div className="text-xs text-zinc-400 flex items-center gap-1.5">
-                    <Radar className="w-3.5 h-3.5 text-zinc-500" />
+                <div className="p-3 bg-[#0e0e10] border border-border-default rounded-lg space-y-1">
+                  <div className="text-xs text-text-muted flex items-center gap-1.5">
+                    <Radar className="w-3.5 h-3.5 text-text-faint" />
                     Threat Intel
                   </div>
-                  <div className="text-lg font-semibold text-zinc-100 font-mono">{scanResult.breach_count}</div>
-                  <div className="text-[10.5px] text-zinc-500">Public breach archives</div>
+                  <div className="text-lg font-semibold text-text-primary font-mono">{scanResult.breach_count}</div>
+                  <div className="text-2xs text-text-faint">Public breach archives</div>
                 </div>
 
-                <div className="p-3 bg-[#0e0e10] border border-zinc-800 rounded-lg space-y-1">
-                  <div className="text-xs text-zinc-400 flex items-center gap-1.5">
-                    <KeyRound className="w-3.5 h-3.5 text-zinc-500" />
+                <div className="p-3 bg-[#0e0e10] border border-border-default rounded-lg space-y-1">
+                  <div className="text-xs text-text-muted flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-text-faint" />
                     Identities
                   </div>
-                  <div className="text-lg font-semibold text-zinc-100 font-mono">{scanResult.total_exposures}</div>
-                  <div className="text-[10.5px] text-zinc-500">Exposures monitored</div>
+                  <div className="text-lg font-semibold text-text-primary font-mono">{scanResult.total_exposures}</div>
+                  <div className="text-2xs text-text-faint">Exposures monitored</div>
                 </div>
               </div>
 
               {/* Sample Observed Findings */}
               {scanResult.sample_findings && scanResult.sample_findings.length > 0 && (
                 <div className="space-y-2.5">
-                  <div className="text-xs font-medium text-zinc-400">Sample Observed Findings:</div>
+                  <div className="text-xs font-medium text-text-muted">Sample Observed Findings:</div>
                   <div className="space-y-1.5">
                     {scanResult.sample_findings.map((finding, idx) => (
-                      <div key={idx} className="p-2.5 bg-[#0e0e10] border border-zinc-800 rounded flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2 text-zinc-300">
+                      <div key={idx} className="p-2.5 bg-[#0e0e10] border border-border-default rounded flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2 text-text-secondary">
                           <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                           <span>{finding.title}</span>
                         </div>
-                        <span className="text-zinc-500 font-mono text-[11px]">{finding.evidence}</span>
+                        <span className="text-text-faint font-mono text-2xs">{finding.evidence}</span>
                       </div>
                     ))}
                   </div>
@@ -195,47 +195,47 @@ export default function LandingPage() {
 
               {/* Clean Confirmation Banner when no exposures found */}
               {scanResult.total_exposures === 0 && (!scanResult.sample_findings || scanResult.sample_findings.length === 0) && (
-                <div className="p-3.5 rounded-lg bg-[#0e0e10] border border-zinc-800 flex items-center gap-3">
+                <div className="p-3.5 rounded-lg bg-[#0e0e10] border border-border-default flex items-center gap-3">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                   <div>
-                    <div className="text-xs font-semibold text-zinc-200">Scan completed — no exposure detected</div>
-                    <div className="text-xs text-zinc-400 mt-0.5">No exposed corporate accounts, open administrative services, or security weaknesses were detected for this target.</div>
+                    <div className="text-xs font-semibold text-text-secondary">Scan completed — no exposure detected</div>
+                    <div className="text-xs text-text-muted mt-0.5">No exposed corporate accounts, open administrative services, or security weaknesses were detected for this target.</div>
                   </div>
                 </div>
               )}
 
               {/* Conversion Box */}
-              <div className="p-4 bg-[#141416] border border-zinc-800 rounded-lg space-y-3">
+              <div className="p-4 bg-[#141416] border border-border-default rounded-lg space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-xs font-semibold text-zinc-200">
+                    <h3 className="text-xs font-semibold text-text-secondary">
                       {scanResult.conversion_title || 'Get the complete security assessment & remediation report'}
                     </h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">
+                    <p className="text-xs text-text-muted mt-0.5">
                       The paid product provides continuous perimeter auditing, change detection, and 10–15 page audit-ready PDF reports.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Link 
                       href="/login" 
-                      className="px-3 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-medium transition-colors"
+                      className="px-3 py-1.5 rounded-md bg-bg-surface hover:bg-border-strong text-text-secondary border border-border-default text-xs font-medium transition-colors"
                     >
                       Log in
                     </Link>
                     <Link 
                       href="/register" 
-                      className="px-3 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-medium rounded-md transition-colors flex items-center gap-1"
+                      className="px-3 py-1.5 bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium rounded-md transition-colors flex items-center gap-1"
                     >
                       Start 7-day trial <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-zinc-400 pt-2 border-t border-zinc-800/80">
-                  <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-zinc-400" /> Continuous attack surface &amp; port monitoring</div>
-                  <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-zinc-400" /> Actionable DMARC/SPF technical guidance</div>
-                  <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-zinc-400" /> 10–15 page executive &amp; compliance PDF reports</div>
-                  <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-zinc-400" /> Automated alerts for newly exposed services</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-muted pt-2 border-t border-border-default">
+                  <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-text-muted" /> Continuous attack surface &amp; port monitoring</div>
+                  <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-text-muted" /> Actionable DMARC/SPF technical guidance</div>
+                  <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-text-muted" /> 10–15 page executive &amp; compliance PDF reports</div>
+                  <div className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-text-muted" /> Automated alerts for newly exposed services</div>
                 </div>
               </div>
 
@@ -244,16 +244,16 @@ export default function LandingPage() {
         )}
 
         {/* Security Architecture Alignment */}
-        <section id="compliance" className="py-12 border-y border-zinc-800 bg-[#0c0c0e]">
+        <section id="compliance" className="py-12 border-y border-border-default bg-[#0c0c0e]">
           <div className="max-w-5xl mx-auto px-4 text-center">
-            <p className="text-[11px] font-mono font-medium uppercase tracking-wider text-zinc-500 mb-4">
+            <p className="text-2xs font-mono font-medium uppercase tracking-wider text-text-faint mb-4">
               Security architecture aligned with industry standards
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-xs text-zinc-400 font-mono">
-              <span className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-zinc-500" /> SOC 2 Aligned Controls</span>
-              <span className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-zinc-500" /> ISO 27001 Control Mapping</span>
-              <span className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-zinc-500" /> Cyber Insurance Due-Diligence Ready</span>
-              <span className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-zinc-500" /> NIST CSF Aligned</span>
+            <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-xs text-text-muted font-mono">
+              <span className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-text-faint" /> SOC 2 Aligned Controls</span>
+              <span className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-text-faint" /> ISO 27001 Control Mapping</span>
+              <span className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-text-faint" /> Cyber Insurance Due-Diligence Ready</span>
+              <span className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-text-faint" /> NIST CSF Aligned</span>
             </div>
           </div>
         </section>
@@ -261,84 +261,84 @@ export default function LandingPage() {
         {/* Platform Capabilities (4 Pillars) */}
         <section id="features" className="py-20 px-4 max-w-5xl mx-auto">
           <div className="mb-12">
-            <h2 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight mb-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight mb-2">
               One coherent cybersecurity platform, not unrelated scanners.
             </h2>
-            <p className="text-xs sm:text-sm text-zinc-400 max-w-xl">
+            <p className="text-xs sm:text-sm text-text-muted max-w-xl">
               Evaluate your external perimeter from all four critical angles to eliminate blind spots.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4 mb-4">
             {/* Pillar 1 */}
-            <div className="p-5 bg-[#121214] border border-zinc-800 rounded-lg space-y-2.5">
-              <div className="w-8 h-8 rounded bg-zinc-800/60 border border-zinc-700/60 flex items-center justify-center text-zinc-300">
+            <div className="p-5 bg-bg-surface border border-border-default rounded-lg space-y-2.5">
+              <div className="w-8 h-8 rounded bg-bg-hover border border-border-strong/60 flex items-center justify-center text-text-secondary">
                 <Network className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-semibold text-zinc-200">External Attack Surface</h3>
-              <p className="text-zinc-400 text-xs leading-relaxed">
+              <h3 className="text-sm font-semibold text-text-secondary">External Attack Surface</h3>
+              <p className="text-text-muted text-xs leading-relaxed">
                 Discover publicly observable subdomains, resolved IP addresses, and listening network services via Certificate Transparency and passive Shodan InternetDB intelligence without invasive network scanning.
               </p>
             </div>
 
             {/* Pillar 2 */}
-            <div className="p-5 bg-[#121214] border border-zinc-800 rounded-lg space-y-2.5">
-              <div className="w-8 h-8 rounded bg-zinc-800/60 border border-zinc-700/60 flex items-center justify-center text-zinc-300">
+            <div className="p-5 bg-bg-surface border border-border-default rounded-lg space-y-2.5">
+              <div className="w-8 h-8 rounded bg-bg-hover border border-border-strong/60 flex items-center justify-center text-text-secondary">
                 <MailCheck className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-semibold text-zinc-200">Email Security &amp; Anti-Spoofing</h3>
-              <p className="text-zinc-400 text-xs leading-relaxed">
+              <h3 className="text-sm font-semibold text-text-secondary">Email Security &amp; Anti-Spoofing</h3>
+              <p className="text-text-muted text-xs leading-relaxed">
                 Assess SPF records, DMARC enforcement policies (p=reject / p=quarantine), discoverable DKIM keys, and transport encryption controls to prevent executive impersonation and wire fraud.
               </p>
             </div>
 
             {/* Pillar 3 */}
-            <div className="p-5 bg-[#121214] border border-zinc-800 rounded-lg space-y-2.5">
-              <div className="w-8 h-8 rounded bg-zinc-800/60 border border-zinc-700/60 flex items-center justify-center text-zinc-300">
+            <div className="p-5 bg-bg-surface border border-border-default rounded-lg space-y-2.5">
+              <div className="w-8 h-8 rounded bg-bg-hover border border-border-strong/60 flex items-center justify-center text-text-secondary">
                 <Radar className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-semibold text-zinc-200">Public Threat Intelligence</h3>
-              <p className="text-zinc-400 text-xs leading-relaxed">
+              <h3 className="text-sm font-semibold text-text-secondary">Public Threat Intelligence</h3>
+              <p className="text-text-muted text-xs leading-relaxed">
                 Monitor public breach disclosures and security vendor reputation flags. Every finding provides verifiable source provenance and confidence ratings.
               </p>
             </div>
 
             {/* Pillar 4 */}
-            <div className="p-5 bg-[#121214] border border-zinc-800 rounded-lg space-y-2.5">
-              <div className="w-8 h-8 rounded bg-zinc-800/60 border border-zinc-700/60 flex items-center justify-center text-zinc-300">
+            <div className="p-5 bg-bg-surface border border-border-default rounded-lg space-y-2.5">
+              <div className="w-8 h-8 rounded bg-bg-hover border border-border-strong/60 flex items-center justify-center text-text-secondary">
                 <KeyRound className="w-4 h-4" />
               </div>
-              <h3 className="text-sm font-semibold text-zinc-200">Credential Exposure Monitoring</h3>
-              <p className="text-zinc-400 text-xs leading-relaxed">
+              <h3 className="text-sm font-semibold text-text-secondary">Credential Exposure Monitoring</h3>
+              <p className="text-text-muted text-xs leading-relaxed">
                 Track compromised corporate identity exposures across leak indexes and infostealer malware logs while preserving zero-credential persistence to protect user privacy.
               </p>
             </div>
           </div>
 
           {/* Feature 5: Reports */}
-          <div className="p-5 bg-[#121214] border border-zinc-800 rounded-lg flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="p-5 bg-bg-surface border border-border-default rounded-lg flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-zinc-400" />
-                <h3 className="text-sm font-semibold text-zinc-200">10–15 Page Executive &amp; Compliance Assessments</h3>
+                <FileText className="w-4 h-4 text-text-muted" />
+                <h3 className="text-sm font-semibold text-text-secondary">10–15 Page Executive &amp; Compliance Assessments</h3>
               </div>
-              <p className="text-xs text-zinc-400 max-w-xl leading-relaxed">
+              <p className="text-xs text-text-muted max-w-xl leading-relaxed">
                 Generate structured, publication-grade PDF reports complete with prioritized 0-24h remediation roadmaps, methodology disclosures, and technical verification steps.
               </p>
             </div>
-            <Link href="/register" className="px-3.5 py-1.5 bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0">
+            <Link href="/register" className="px-3.5 py-1.5 bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0">
               Generate Sample Report &rarr;
             </Link>
           </div>
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="py-20 px-4 max-w-5xl mx-auto border-t border-zinc-800">
+        <section id="pricing" className="py-20 px-4 max-w-5xl mx-auto border-t border-border-default">
           <div className="text-center mb-14">
-            <h2 className="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight mb-2">
+            <h2 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight mb-2">
               Straightforward subscription pricing
             </h2>
-            <p className="text-xs text-zinc-400">Predictable monthly billing with no annual lock-in.</p>
+            <p className="text-xs text-text-muted">Predictable monthly billing with no annual lock-in.</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-16">
@@ -403,21 +403,21 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800 bg-[#09090b] py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-zinc-500">
+      <footer className="border-t border-border-default bg-[#09090b] py-10 px-4">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-text-faint">
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-zinc-400" />
-            <span className="text-zinc-300 font-semibold font-mono">BreachGuard</span>
+            <Shield className="w-4 h-4 text-text-muted" />
+            <span className="text-text-secondary font-semibold font-mono">BreachGuard</span>
             <span>&bull; External Cyber Risk Platform</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-5 sm:gap-6">
-            <a href="#features" className="hover:text-zinc-300 transition-colors">Pillars</a>
-            <a href="#compliance" className="hover:text-zinc-300 transition-colors">Architecture</a>
-            <a href="#pricing" className="hover:text-zinc-300 transition-colors">Pricing</a>
-            <Link href="/terms" className="hover:text-zinc-300 transition-colors">Terms of Service</Link>
-            <Link href="/privacy" className="hover:text-zinc-300 transition-colors">Privacy Policy</Link>
-            <Link href="/login" className="hover:text-zinc-300 transition-colors">Console</Link>
+            <a href="#features" className="hover:text-text-secondary transition-colors">Pillars</a>
+            <a href="#compliance" className="hover:text-text-secondary transition-colors">Architecture</a>
+            <a href="#pricing" className="hover:text-text-secondary transition-colors">Pricing</a>
+            <Link href="/terms" className="hover:text-text-secondary transition-colors">Terms of Service</Link>
+            <Link href="/privacy" className="hover:text-text-secondary transition-colors">Privacy Policy</Link>
+            <Link href="/login" className="hover:text-text-secondary transition-colors">Console</Link>
           </div>
 
           <div>

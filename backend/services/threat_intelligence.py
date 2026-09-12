@@ -6,6 +6,7 @@ import httpx
 import time
 from typing import Dict, Any, List, Tuple
 from services.hibp_service import check_domain_breaches
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ async def query_virustotal_domain(domain: str, timeout: float = 3.5) -> Dict[str
     """
     Queries VirusTotal v3 domain report if VIRUSTOTAL_API_KEY is configured.
     """
-    api_key = os.environ.get("VIRUSTOTAL_API_KEY")
+    api_key = settings.VIRUSTOTAL_API_KEY or os.environ.get("VIRUSTOTAL_API_KEY")
     if not api_key:
         return {}
 

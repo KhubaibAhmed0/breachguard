@@ -42,6 +42,28 @@ async def send_email(to_email: str, subject: str, html_body: str, text_body: Opt
                 if res.status_code in (200, 201):
                     logger.info(f"[EMAIL:RESEND] Dispatched successfully to {clean_to}")
                     return True
+                elif res.status_code == 403 and "not verified" in res.text:
+                    # Automatic fallback to Resend verified sandbox address if custom domain is pending DNS verification
+                    logger.info(f"[EMAIL:RESEND] {clean_from} not yet verified on Resend; retrying with onboarding@resend.dev sandbox")
+                    retry_res = await client.post(
+                        "https://api.resend.com/emails",
+                        headers={
+                            "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "from": "BreachGuard Security <onboarding@resend.dev>",
+                            "to": [clean_to],
+                            "subject": subject,
+                            "html": html_body,
+                            "text": plain_text
+                        }
+                    )
+                    if retry_res.status_code in (200, 201):
+                        logger.info(f"[EMAIL:RESEND] Dispatched successfully via sandbox to {clean_to}")
+                        return True
+                    else:
+                        logger.warning(f"[EMAIL:RESEND] Sandbox retry failed HTTP {retry_res.status_code}: {retry_res.text}")
                 else:
                     logger.warning(f"[EMAIL:RESEND] Failed HTTP {res.status_code}: {res.text}")
         except Exception as e:

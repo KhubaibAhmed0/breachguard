@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
     RESEND_API_KEY: Optional[str] = None
     FROM_EMAIL: str = "security@breachguard.io"
+    VIRUSTOTAL_API_KEY: Optional[str] = None
     FRONTEND_URL: str = "http://localhost:3000"
     CRON_SECRET: Optional[str] = None
     

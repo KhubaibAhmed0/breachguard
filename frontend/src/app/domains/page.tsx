@@ -36,6 +36,7 @@ export default function DomainsPage() {
   const [newDomainFrequency, setNewDomainFrequency] = useState<'continuous' | 'daily' | 'weekly'>('continuous');
   const [activeScanId, setActiveScanId] = useState<string | null>(null);
   const [scanNotice, setScanNotice] = useState<string | null>(null);
+  const [scanResults, setScanResults] = useState<Record<string, { found: number } | null>>({});
   const [addError, setAddError] = useState<string | null>(null);
 
   // DNS Verification Modal State
@@ -120,6 +121,10 @@ export default function DomainsPage() {
       const res = await scanDomainMutation.mutateAsync(domainId);
       const newFound = res?.new_exposures_found ?? 0;
       setScanNotice(`Scan completed for ${domainName}! Found ${newFound} new exposures.`);
+      setScanResults(prev => ({ ...prev, [domainId]: { found: newFound } }));
+      setTimeout(() => {
+        setScanResults(prev => ({ ...prev, [domainId]: null }));
+      }, 4000);
     } catch {
       setScanNotice(`Scan completed for ${domainName}. Telemetry updated.`);
     } finally {
@@ -406,14 +411,35 @@ export default function DomainsPage() {
                     </div>
 
                     <div className="pt-2.5 border-t border-border-default space-y-2">
-                      <button 
-                        onClick={() => handleScan(domain.id, domain.name)}
-                        disabled={isScanning}
-                        className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-border-strong hover:bg-border-strong text-text-secondary rounded-md text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
-                      >
-                        <RefreshCw className={`w-3 h-3 ${isScanning ? 'animate-spin' : ''}`} />
-                        {isScanning ? 'Scanning live sources...' : 'Scan perimeter'}
-                      </button>
+                      {scanResults[domain.id] ? (
+                        <div className={cn(
+                          "w-full flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium border transition-all duration-300",
+                          scanResults[domain.id]!.found > 0 
+                            ? "bg-bg-surface text-orange-500 border-orange-500/30 shadow-sm shadow-orange-500/10"
+                            : "bg-bg-surface text-emerald-500 border-emerald-500/30 shadow-sm shadow-emerald-500/10"
+                        )}>
+                          {scanResults[domain.id]!.found > 0 ? (
+                            <>
+                              <AlertCircle className="w-3.5 h-3.5" />
+                              Threats Found: {scanResults[domain.id]!.found}
+                            </>
+                          ) : (
+                            <>
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              Pass: No Exposures
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => handleScan(domain.id, domain.name)}
+                          disabled={isScanning}
+                          className="w-full flex items-center justify-center gap-1.5 py-1.5 bg-border-strong hover:bg-border-strong text-text-secondary rounded-md text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${isScanning ? 'animate-spin' : ''}`} />
+                          {isScanning ? 'Scanning live sources...' : 'Scan perimeter'}
+                        </button>
+                      )}
 
                       {domain.status !== 'verified' && (
                         <button 

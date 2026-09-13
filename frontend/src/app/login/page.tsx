@@ -35,10 +35,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#09090b] p-4">
-      <div className="w-full max-w-sm p-6 bg-bg-surface border border-border-default rounded-lg shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-bg-base p-4">
+      <div className="w-full max-w-sm p-6 bg-bg-surface border border-border-default rounded-sm shadow-xl">
         <div className="flex flex-col items-center mb-5">
-          <div className="w-8 h-8 rounded bg-bg-surface border border-border-default flex items-center justify-center mb-2.5">
+          <div className="w-8 h-8 rounded-sm bg-bg-surface border border-border-default flex items-center justify-center mb-2.5">
             <Shield className="w-4 h-4 text-text-secondary" />
           </div>
           <h1 className="text-sm font-semibold text-text-primary tracking-tight">Sign in to BreachGuard</h1>
@@ -46,7 +46,7 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="p-2.5 mb-3.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
+          <div className="p-2.5 mb-3.5 rounded-sm bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs">
             {error}
           </div>
         )}
@@ -58,7 +58,7 @@ export default function LoginPage() {
               type="email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0e0e10] border border-border-default rounded-md focus:outline-none focus:border-border-strong text-text-primary font-mono text-xs"
+              className="w-full px-3 py-2 bg-bg-base border border-border-default rounded-sm focus:outline-none focus:border-border-strong text-text-primary font-mono text-xs"
               placeholder="you@company.com"
               required
             />
@@ -72,7 +72,7 @@ export default function LoginPage() {
               type="password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0e0e10] border border-border-default rounded-md focus:outline-none focus:border-border-strong text-text-primary font-mono text-xs"
+              className="w-full px-3 py-2 bg-bg-base border border-border-default rounded-sm focus:outline-none focus:border-border-strong text-text-primary font-mono text-xs"
               placeholder="••••••••"
               required
             />

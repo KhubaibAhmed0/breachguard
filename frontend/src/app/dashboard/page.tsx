@@ -199,7 +199,7 @@ export default function DashboardPage() {
         <div className="py-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border-default">
             <div>
-              <span className="text-2xs font-mono font-medium text-text-muted uppercase tracking-wider">Platform Telemetry Index</span>
+              
               <h2 className="text-base font-semibold text-text-primary tracking-tight">
                 External Cyber Risk Assessment
               </h2>
@@ -218,6 +218,7 @@ export default function DashboardPage() {
           <RiskScoreGauge 
             score={overallScore} 
             isZeroDomain={isZeroDomain} 
+            isLoading={isInitialLoading}
             size="lg" 
             showSpectrumBar={true} 
             showExplanation={true} 
@@ -227,10 +228,10 @@ export default function DashboardPage() {
         {/* Defense Posture Pillars */}
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted font-mono">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-text-muted font-sans">
               Defense Posture Pillars
             </h3>
-            <span className="text-2xs text-text-faint font-mono">
+            <span className="text-2xs text-text-faint font-sans">
               Higher score is better (0 = Vulnerable &bull; 100 = Optimal Defenses)
             </span>
           </div>
@@ -246,12 +247,12 @@ export default function DashboardPage() {
                   </Link>
                   <div className="text-right">
                     <span className="text-sm font-semibold font-mono text-text-secondary">
-                      {categories.attack_surface}<span className="text-text-faint text-xs font-normal">/100</span>
+                      {isInitialLoading ? <span className="text-text-faint animate-pulse">--</span> : categories.attack_surface}<span className="text-text-faint text-xs font-normal">/100</span>
                     </span>
                     <div className="text-2xs text-text-muted font-mono">Posture</div>
                   </div>
                 </div>
-                <p className="text-xs text-text-muted font-mono leading-relaxed">
+                <p className="text-xs text-text-muted font-sans leading-relaxed">
                   {summary.discovered_assets} asset(s) discovered in certificate registries and DNS.
                 </p>
               </div>
@@ -281,12 +282,12 @@ export default function DashboardPage() {
                   </Link>
                   <div className="text-right">
                     <span className="text-sm font-semibold font-mono text-text-secondary">
-                      {categories.email_security}<span className="text-text-faint text-xs font-normal">/100</span>
+                      {isInitialLoading ? <span className="text-text-faint animate-pulse">--</span> : categories.email_security}<span className="text-text-faint text-xs font-normal">/100</span>
                     </span>
                     <div className="text-2xs text-text-muted font-mono">Posture</div>
                   </div>
                 </div>
-                <p className="text-xs text-text-muted font-mono leading-relaxed">
+                <p className="text-xs text-text-muted font-sans leading-relaxed">
                   DMARC, SPF, and transport encryption posture.
                 </p>
               </div>
@@ -312,16 +313,16 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between">
                   <Link href="/dashboard/threat-intelligence" className="text-sm font-medium text-text-secondary group-hover:text-text-primary flex items-center gap-2 transition-colors">
                     <Radar className="w-4 h-4 text-text-muted" />
-                    Threat Intel
+                    Threat Intelligence
                   </Link>
                   <div className="text-right">
                     <span className="text-sm font-semibold font-mono text-text-secondary">
-                      {categories.threat_intelligence}<span className="text-text-faint text-xs font-normal">/100</span>
+                      {isInitialLoading ? <span className="text-text-faint animate-pulse">--</span> : categories.threat_intelligence}<span className="text-text-faint text-xs font-normal">/100</span>
                     </span>
                     <div className="text-2xs text-text-muted font-mono">Posture</div>
                   </div>
                 </div>
-                <p className="text-xs text-text-muted font-mono leading-relaxed">
+                <p className="text-xs text-text-muted font-sans leading-relaxed">
                   Public breach index correlation &amp; reputation flags.
                 </p>
               </div>
@@ -351,12 +352,12 @@ export default function DashboardPage() {
                   </Link>
                   <div className="text-right">
                     <span className="text-sm font-semibold font-mono text-text-secondary">
-                      {categories.credential_exposure}<span className="text-text-faint text-xs font-normal">/100</span>
+                      {isInitialLoading ? <span className="text-text-faint animate-pulse">--</span> : categories.credential_exposure}<span className="text-text-faint text-xs font-normal">/100</span>
                     </span>
                     <div className="text-2xs text-text-muted font-mono">Posture</div>
                   </div>
                 </div>
-                <p className="text-xs text-text-muted font-mono leading-relaxed">
+                <p className="text-xs text-text-muted font-sans leading-relaxed">
                   {summary.exposed_identities} identity exposure(s) under active monitoring.
                 </p>
               </div>
@@ -381,31 +382,41 @@ export default function DashboardPage() {
         {/* Summary Metric Counters */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
           <div className="py-4 border-t border-border-default">
-            <span className="text-xs text-text-muted font-medium">Discovered Assets</span>
-            <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">{summary.discovered_assets}</div>
+            <span className="text-xs text-text-muted font-medium font-sans">Discovered Assets</span>
+            <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">
+              {isInitialLoading ? <span className="text-text-faint animate-pulse">--</span> : summary.discovered_assets}
+            </div>
           </div>
           <div className="py-4 border-t border-border-default">
-            <span className="text-xs text-text-muted font-medium">Open Findings</span>
-            <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">{summary.open_findings}</div>
+            <span className="text-xs text-text-muted font-medium font-sans">Open Findings</span>
+            <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">
+              {findingsLoading ? <span className="text-text-faint animate-pulse">--</span> : summary.open_findings}
+            </div>
           </div>
           <div className="py-4 border-t border-border-default">
-            <span className="text-xs text-text-muted font-medium">High / Critical</span>
-            <div className="text-xl sm:text-2xl font-semibold font-mono text-amber-400 mt-1">{summary.critical_findings + summary.high_findings}</div>
+            <span className="text-xs text-text-muted font-medium font-sans">High / Critical</span>
+            <div className="text-xl sm:text-2xl font-semibold font-mono text-amber-400 mt-1">
+              {isInitialLoading ? <span className="text-text-faint animate-pulse">--</span> : summary.critical_findings + summary.high_findings}
+            </div>
           </div>
           <div className="py-4 border-t border-border-default">
-            <span className="text-xs text-text-muted font-medium">Monitored Domains</span>
-            <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">{domains?.length ?? 0}</div>
+            <span className="text-xs text-text-muted font-medium font-sans">Monitored Domains</span>
+            <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">
+              {domainsLoading ? <span className="text-text-faint animate-pulse">--</span> : (domains?.length ?? 0)}
+            </div>
           </div>
           <div className="py-4 border-t border-border-default">
-            <span className="text-xs text-text-muted font-medium">Email Score</span>
-            <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">{summary.email_score}<span className="text-xs text-text-faint font-normal font-sans">/100</span></div>
+            <span className="text-xs text-text-muted font-medium font-sans">Email Score</span>
+            <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">
+              {isInitialLoading ? <span className="text-text-faint animate-pulse">--</span> : <>{summary.email_score}<span className="text-xs text-text-faint font-normal font-sans">/100</span></>}
+            </div>
           </div>
         </div>
 
         {/* Prioritized Security Findings */}
         <div className="py-8 border-t border-border-default overflow-hidden">
           <div className="pb-4 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2 font-mono">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2 font-sans">
               <ShieldAlert className="w-3.5 h-3.5 text-text-muted" />
               Prioritized Security Findings ({findings.length})
             </h2>
@@ -455,21 +466,21 @@ export default function DashboardPage() {
         {/* Credential Exposure & Activity Chart */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 py-8 border-t border-border-default">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4 flex items-center justify-between font-mono">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4 flex items-center justify-between font-sans">
               <span>Historical Threat Exposure Ingestion</span>
               <span className="text-xs font-normal text-text-faint">Chronological telemetry</span>
             </h2>
             <div className="h-64 sm:h-72 w-full">
-              <ExposureChart />
+              <ExposureChart isLoading={isInitialLoading} isEmpty={!isInitialLoading && summary.discovered_assets === 0} />
             </div>
           </div>
 
           <div className="py-8 border-t border-border-default">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4 font-mono">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4 font-sans">
               Severity Distribution
             </h2>
             <div className="h-64 sm:h-72 w-full flex items-center justify-center">
-              <SeverityDonut data={stats} />
+              <SeverityDonut data={stats} isLoading={isInitialLoading} isEmpty={!isInitialLoading && summary.open_findings === 0} />
             </div>
           </div>
         </div>

@@ -5,21 +5,23 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { ShieldCheck } from 'lucide-react';
 
 interface SeverityDonutProps {
+  isLoading?: boolean;
+  isEmpty?: boolean;
   data?: ExposureStats;
 }
 
-export function SeverityDonut({ data }: SeverityDonutProps) {
-  if (!data) {
+export function SeverityDonut({ data, isLoading, isEmpty }: SeverityDonutProps) {
+  if (isLoading || !data) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-text-faint text-xs">
-        Loading severity distribution...
+        Analyzing findings...
       </div>
     );
   }
 
   const total = (data.critical || 0) + (data.high || 0) + (data.medium || 0) + (data.low || 0);
 
-  if (total === 0) {
+  if (isEmpty || total === 0) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
         <div className="w-12 h-12 rounded-full bg-green-500/10 text-green-400 flex items-center justify-center mb-2">

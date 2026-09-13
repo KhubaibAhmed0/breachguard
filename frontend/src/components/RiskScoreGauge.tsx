@@ -77,6 +77,7 @@ export function getRiskTier(score: number, isZeroDomain: boolean = false): RiskT
 interface RiskScoreGaugeProps {
   score: number;
   isZeroDomain?: boolean;
+  isLoading?: boolean;
   size?: 'sm' | 'md' | 'lg';
   showSpectrumBar?: boolean;
   showExplanation?: boolean;
@@ -86,6 +87,7 @@ interface RiskScoreGaugeProps {
 export function RiskScoreGauge({
   score,
   isZeroDomain = false,
+  isLoading = false,
   size = 'md',
   showSpectrumBar = true,
   showExplanation = true,
@@ -96,37 +98,43 @@ export function RiskScoreGauge({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Top Value & Badge Row */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div>
+            {/* Top Value & Badge Row */}
+      <div className="flex flex-col items-start gap-1">
+        <div className="flex items-center gap-3">
           <div className="flex items-baseline gap-2">
-            <span className={cn(
-              "font-bold font-mono tracking-tight",
-              tier.textClass,
-              size === 'lg' ? "text-3xl sm:text-4xl" : size === 'md' ? "text-2xl sm:text-3xl" : "text-xl"
-            )}>
-              {isZeroDomain ? 0 : clampedScore}
+            {isLoading ? (
+              <span className={cn("font-bold font-sans tracking-tight text-text-muted animate-pulse", size === 'lg' ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl")}>
+                Analyzing...
+              </span>
+            ) : isZeroDomain ? (
+              <span className={cn("font-bold font-sans tracking-tight text-text-muted", size === 'lg' ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl")}>
+                Not Assessed
+              </span>
+            ) : (
+              <>
+                <span className={cn("font-bold font-mono tracking-tight", tier.textClass, size === 'lg' ? "text-3xl sm:text-4xl" : size === 'md' ? "text-2xl sm:text-3xl" : "text-xl")}>
+                  {clampedScore}
+                </span>
+                <span className="text-sm text-text-muted font-mono">/ 100</span>
+              </>
+            )}
+          </div>
+          {(!isLoading && !isZeroDomain) && (
+            <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wide border", tier.badgeClass)}>
+              {tier.level}
             </span>
-            <span className="text-xs text-text-muted font-mono">/ 100 Risk Index</span>
-          </div>
-          <div className="text-2xs text-text-muted flex items-center gap-1 mt-1">
-            <span className="text-text-secondary font-medium">Lower score is safer</span>
-            <span className="text-text-faint">&bull; 0 = Pristine &bull; 100 = Critical Exposure</span>
-          </div>
+          )}
         </div>
-
-        <div className="flex flex-col items-end gap-1">
-          <span className={cn("inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-mono font-medium uppercase tracking-wide border", tier.badgeClass)}>
-            {tier.level}
-          </span>
-          <span className="text-2xs text-text-faint">
+        
+        {(!isLoading && !isZeroDomain) && (
+          <div className="text-sm text-text-secondary mt-1">
             {tier.description}
-          </span>
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Segmented Risk Spectrum Bar */}
-      {showSpectrumBar && !isZeroDomain && (
+{/* Segmented Risk Spectrum Bar */}
+      {showSpectrumBar && !isZeroDomain && !isLoading && (
         <div className="space-y-1.5 pt-1">
           {/* Bar track with 4 colored zones */}
           <div className="relative h-2 w-full bg-bg-base rounded-sm overflow-visible border border-border-default">
@@ -161,7 +169,7 @@ export function RiskScoreGauge({
       )}
 
       {/* Plain-English Recommendation Text */}
-      {showExplanation && !isZeroDomain && (
+      {showExplanation && !isZeroDomain && !isLoading && (
         <div className="text-xs text-text-muted leading-relaxed pt-2 border-t border-border-default">
           <span className="text-text-secondary font-medium">Verdict: </span>
           <span>{tier.recommendation}</span>

@@ -4,14 +4,26 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { useExposureTimeline } from '@/hooks/useApi';
 import { Loader2 } from 'lucide-react';
 
-export function ExposureChart() {
-  const { data: timeline, isLoading } = useExposureTimeline();
+export function ExposureChart({ isLoading: parentLoading, isEmpty: parentEmpty }: { isLoading?: boolean; isEmpty?: boolean }) {
+  const { data: timeline, isLoading: apiLoading } = useExposureTimeline();
+  const isLoading = parentLoading || apiLoading;
 
   if (isLoading) {
     return (
       <div className="w-full h-full flex items-center justify-center text-text-faint text-xs">
         <Loader2 className="w-5 h-5 animate-spin mr-2" />
-        Loading exposure timeline...
+        Analyzing telemetry...
+      </div>
+    );
+  }
+
+  if (parentEmpty || (timeline && timeline.length === 0)) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
+        <span className="text-xs font-semibold text-text-secondary font-sans">No Historical Telemetry</span>
+        <p className="text-2xs text-text-faint mt-1 max-w-[200px] leading-tight font-sans">
+          Historical exposure data will appear here once monitoring evaluates external assets.
+        </p>
       </div>
     );
   }

@@ -2,22 +2,22 @@
 
 @theme {
   /* Backgrounds */
-  --color-bg-base: #020617;
-  --color-bg-surface: #0F172A;
-  --color-bg-inset: #1E293B;
-  --color-bg-hover: #1E293B;
-  --color-bg-overlay: rgba(2, 6, 23, 0.85);
+  --color-bg-base: #0e0d0c;
+  --color-bg-surface: #171514;
+  --color-bg-inset: #201d1c;
+  --color-bg-hover: #201d1c;
+  --color-bg-overlay: rgba(14, 13, 12, 0.85);
 
   /* Borders */
-  --color-border-default: #1E293B;
-  --color-border-subtle: #0F172A;
-  --color-border-strong: #334155;
+  --color-border-default: #2a2726;
+  --color-border-subtle: #201d1c;
+  --color-border-strong: #3d3938;
 
   /* Text */
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #CBD5E1;
-  --color-text-muted: #94A3B8;
-  --color-text-faint: #475569;
+  --color-text-primary: #f0efee;
+  --color-text-secondary: #d1cac5;
+  --color-text-muted: #9e9894;
+  --color-text-faint: #736d6a;
 
   /* Semantic - Severity */
   --color-severity-critical: #EF4444;
@@ -71,7 +71,7 @@ pre {
 }
 
 *:focus-visible {
-  outline: 2px solid #334155;
+  outline: 2px solid #3d3938;
   outline-offset: 2px;
 }
 
@@ -85,3 +85,4 @@ pre {
     scroll-behavior: auto !important;
   }
 }
+

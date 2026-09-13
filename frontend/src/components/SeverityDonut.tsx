@@ -67,3 +67,4 @@ export function SeverityDonut({ data, isLoading, isEmpty }: SeverityDonutProps) 
     </ResponsiveContainer>
   );
 }
+

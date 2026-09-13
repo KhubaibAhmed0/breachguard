@@ -61,3 +61,4 @@ export function ExposureChart({ isLoading: parentLoading, isEmpty: parentEmpty }
     </ResponsiveContainer>
   );
 }
+

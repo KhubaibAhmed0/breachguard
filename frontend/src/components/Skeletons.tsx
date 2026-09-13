@@ -9,7 +9,7 @@ export function CardSkeleton({ count = 1, className = "" }: { count?: number; cl
       {Array.from({ length: count }).map((_, idx) => (
         <div 
           key={idx} 
-          className={`p-4 rounded-lg bg-bg-surface border border-border-default animate-pulse space-y-3 ${className}`}
+          className={`py-4 border-b border-border-default animate-pulse space-y-3 ${className}`}
         >
           <div className="flex items-center justify-between">
             <div className="h-3.5 w-24 bg-border-strong rounded" />
@@ -28,7 +28,7 @@ export function CardSkeleton({ count = 1, className = "" }: { count?: number; cl
  */
 export function HeroCardSkeleton() {
   return (
-    <div className="p-5 rounded-lg bg-bg-surface border border-border-default animate-pulse space-y-4">
+    <div className="py-4 border-b border-border-default animate-pulse space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-2">
           <div className="h-3.5 w-36 bg-border-strong rounded" />
@@ -96,7 +96,7 @@ export function DomainGridSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
       {Array.from({ length: count }).map((_, idx) => (
-        <div key={idx} className="bg-bg-surface border border-border-default rounded-lg p-4 space-y-4 flex flex-col justify-between">
+        <div key={idx} className="py-4 space-y-4 border-b border-border-default flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2.5">
@@ -127,7 +127,7 @@ export function ReportGridSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
       {Array.from({ length: count }).map((_, idx) => (
-        <div key={idx} className="bg-bg-surface border border-border-default rounded-lg p-5 space-y-5 flex flex-col justify-between">
+        <div key={idx} className="py-4 space-y-5 border-b border-border-default flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <div className="w-7 h-7 bg-border-strong rounded shrink-0" />
@@ -153,7 +153,7 @@ export function ReportGridSkeleton({ count = 3 }: { count?: number }) {
  */
 export function ChartSkeleton({ height = "h-56", className = "" }: { height?: string; className?: string }) {
   return (
-    <div className={`w-full ${height} bg-bg-surface border border-border-default rounded-lg animate-pulse flex flex-col justify-between p-4 ${className}`}>
+    <div className={`w-full ${height} py-4 border-t border-border-default animate-pulse flex flex-col justify-between ${className}`}>
       <div className="flex items-center justify-between">
         <div className="h-3.5 w-32 bg-border-strong rounded" />
         <div className="h-3 w-20 bg-bg-inset rounded" />

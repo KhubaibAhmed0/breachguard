@@ -340,7 +340,7 @@ export default function SettingsPage() {
                   </span>
                 </div>
 
-                <div className="p-4 rounded-lg border border-border-default bg-bg-surface flex flex-col sm:flex-row items-center gap-4">
+                <div className="py-4 border-b border-border-default flex flex-col sm:flex-row items-center gap-4">
                   {logoPreview ? (
                     <div className="relative group w-28 h-20 bg-[#0e0e10] border border-border-default rounded-md overflow-hidden flex items-center justify-center p-2">
                       <img 
@@ -471,7 +471,7 @@ export default function SettingsPage() {
               )}
 
               {/* Members Table */}
-              <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+              <div className="border-y border-border-default">
                 {isTeamLoading ? (
                   <div className="p-8 flex items-center justify-center text-text-muted gap-2">
                     <Loader2 className="w-4 h-4 animate-spin text-text-secondary" />
@@ -631,7 +631,7 @@ export default function SettingsPage() {
           {/* 4. Subscription & Billing Tab */}
           {activeTab === 'billing' && (
             <div className="space-y-6 text-xs max-w-2xl">
-              <div className="p-4 border border-border-default bg-bg-surface rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="py-4 border-b border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-text-primary text-sm capitalize">
@@ -657,7 +657,7 @@ export default function SettingsPage() {
 
               {/* Plan Options */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 border border-border-default bg-bg-surface rounded-lg flex flex-col justify-between space-y-4">
+                <div className="py-4 border-b border-border-default flex flex-col justify-between space-y-4">
                   <div>
                     <div className="text-text-secondary font-semibold text-xs">Business Security</div>
                     <div className="text-xl font-semibold text-text-primary mt-2 font-mono">$239<span className="text-xs text-text-faint font-normal"> / mo</span></div>

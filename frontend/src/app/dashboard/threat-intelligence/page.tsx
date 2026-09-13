@@ -48,7 +48,7 @@ export default function ThreatIntelligencePage() {
         </div>
 
         {/* Threat Intelligence Findings */}
-        <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+        <div className="border-y border-border-default">
           <div className="px-4 py-3 border-b border-border-default bg-bg-base/40 flex items-center justify-between font-mono">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2">
               <ShieldAlert className="w-3.5 h-3.5 text-text-muted" />
@@ -105,7 +105,7 @@ export default function ThreatIntelligencePage() {
         </div>
 
         {/* Masked Monitored Identities Table */}
-        <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+        <div className="border-y border-border-default">
           <div className="px-4 py-3 border-b border-border-default bg-bg-base/40 flex items-center justify-between font-mono">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2">
               <Lock className="w-3.5 h-3.5 text-text-muted" />

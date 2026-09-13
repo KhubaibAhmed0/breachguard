@@ -113,7 +113,7 @@ export default function ExposuresPage() {
         </div>
       )}
 
-      <div className="bg-bg-surface border border-border-default rounded-lg p-3 sm:p-4">
+      <div className="py-4 border-y border-border-default">
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
         ) : (

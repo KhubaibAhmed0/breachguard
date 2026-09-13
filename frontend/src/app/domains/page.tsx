@@ -343,11 +343,11 @@ export default function DomainsPage() {
           {isDomainsLoading ? (
             <DomainGridSkeleton count={3} />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {domains?.map(domain => {
                 const isScanning = activeScanId === domain.id;
                 return (
-                  <div key={domain.id} className="bg-bg-surface border border-border-default rounded-lg p-4 flex flex-col justify-between">
+                  <div key={domain.id} className="py-4 border-b border-border-default flex flex-col justify-between">
                     <div>
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2.5">
@@ -480,7 +480,7 @@ export default function DomainsPage() {
       {activeTab === 'identities' && (
         <div className="space-y-4">
           {/* Quota Bar Card */}
-          <div className="bg-bg-surface border border-border-default rounded-lg p-4">
+          <div className="py-4 border-b border-border-default">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -515,7 +515,7 @@ export default function DomainsPage() {
           </div>
 
           {/* Tracked Identities Table */}
-          <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
+          <div className="border-y border-border-default">
             <div className="p-3.5 sm:px-4 border-b border-border-default flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-text-primary">Tracked High-Value Accounts</h3>

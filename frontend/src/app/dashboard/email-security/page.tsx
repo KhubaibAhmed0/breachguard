@@ -155,7 +155,7 @@ export default function EmailSecurityPage() {
             })()}
 
             {/* Core Control Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* 1. SPF */}
               <div className="p-4 rounded-lg bg-bg-surface border border-border-default space-y-2.5 transition-colors">
                 <div className="flex items-center justify-between">

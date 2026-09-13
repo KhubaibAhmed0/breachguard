@@ -35,7 +35,7 @@ export default function DomainsPage() {
   const [newDomainInput, setNewDomainInput] = useState('');
   const [newDomainFrequency, setNewDomainFrequency] = useState<'continuous' | 'daily' | 'weekly'>('continuous');
   const [activeScanId, setActiveScanId] = useState<string | null>(null);
-  const [scanNotice, setScanNotice] = useState<string | null>(null);
+  const [scanNotice, setScanNotice] = useState<{message: string, type: "info" | "success" | "warning"} | null>(null);
   const [scanResults, setScanResults] = useState<Record<string, { found: number } | null>>({});
   const [addError, setAddError] = useState<string | null>(null);
 
@@ -95,7 +95,7 @@ export default function DomainsPage() {
       const freqLabel = newDomainFrequency === 'continuous' ? 'Continuous (Hourly)' : newDomainFrequency === 'daily' ? 'Daily' : 'Weekly';
       setNewDomainInput('');
       setIsAddDomainOpen(false);
-      setScanNotice(`Added ${added} with ${freqLabel} monitoring cadence.`);
+      setScanNotice({ message: `Added ${added} with ${freqLabel} monitoring cadence.`, type: 'info' });
       setTimeout(() => setScanNotice(null), 5000);
     } catch (err: any) {
       setAddError(err?.response?.data?.detail || 'Failed to add domain. Please verify network or login.');
@@ -106,27 +106,30 @@ export default function DomainsPage() {
     try {
       await updateFrequencyMutation.mutateAsync({ domainId, scanFrequency: frequency });
       const label = frequency === 'continuous' ? 'Continuous (Hourly)' : frequency === 'daily' ? 'Daily' : 'Weekly';
-      setScanNotice(`Updated ${domainName} monitoring cadence to ${label}.`);
+      setScanNotice({ message: `Updated ${domainName} monitoring cadence to ${label}.`, type: 'info' });
       setTimeout(() => setScanNotice(null), 4000);
     } catch (err: any) {
-      setScanNotice(`Failed to update frequency: ${err?.response?.data?.detail || 'Network error'}`);
+      setScanNotice({ message: `Failed to update frequency: ${err?.response?.data?.detail || 'Network error'}`, type: 'warning' });
       setTimeout(() => setScanNotice(null), 4000);
     }
   };
 
   const handleScan = async (domainId: string, domainName: string) => {
     setActiveScanId(domainId);
-    setScanNotice(`Scanning perimeter for ${domainName}... checking dark web breaches and leak feeds.`);
+    setScanNotice({ message: `Scanning perimeter for ${domainName}... checking dark web breaches and leak feeds.`, type: 'info' });
     try {
       const res = await scanDomainMutation.mutateAsync(domainId);
       const newFound = res?.new_exposures_found ?? 0;
-      setScanNotice(`Scan completed for ${domainName}! Found ${newFound} new exposures.`);
+      setScanNotice({
+        message: `Scan completed for ${domainName}! Found ${newFound} new exposures.`, 
+        type: newFound > 0 ? 'warning' : 'success'
+      });
       setScanResults(prev => ({ ...prev, [domainId]: { found: newFound } }));
       setTimeout(() => {
         setScanResults(prev => ({ ...prev, [domainId]: null }));
       }, 4000);
     } catch {
-      setScanNotice(`Scan completed for ${domainName}. Telemetry updated.`);
+      setScanNotice({ message: `Scan completed for ${domainName}. Telemetry updated.`, type: 'info' });
     } finally {
       setActiveScanId(null);
       setTimeout(() => setScanNotice(null), 6000);
@@ -138,7 +141,7 @@ export default function DomainsPage() {
       setVerificationError(null);
       await verifyDomainMutation.mutateAsync(domainId);
       setVerifyingDomain(null);
-      setScanNotice('Domain DNS TXT record successfully verified.');
+      setScanNotice({ message: 'Domain DNS TXT record successfully verified.', type: 'success' });
       setTimeout(() => setScanNotice(null), 5000);
     } catch (err: any) {
       setVerificationError(
@@ -156,7 +159,7 @@ export default function DomainsPage() {
       try {
         setDeletingDomainId(id);
         await deleteDomainMutation.mutateAsync(id);
-        setScanNotice(`Domain ${name} successfully deleted.`);
+        setScanNotice({ message: `Domain ${name} successfully deleted.`, type: 'info' });
         setTimeout(() => setScanNotice(null), 5000);
       } catch (err: any) {
         alert(err?.response?.data?.detail || `Failed to delete domain ${name}.`);
@@ -184,7 +187,7 @@ export default function DomainsPage() {
       const savedEmail = identityEmail.trim();
       setIdentityEmail('');
       setIsAddIdentityOpen(false);
-      setScanNotice(`Privileged identity ${savedEmail} registered for active continuous dark web surveillance.`);
+      setScanNotice({ message: `Privileged identity ${savedEmail} registered for active continuous dark web surveillance.`, type: 'info' });
       setTimeout(() => setScanNotice(null), 5000);
     } catch (err: any) {
       setIdentityError(err?.response?.data?.detail || 'Failed to register identity.');
@@ -196,7 +199,7 @@ export default function DomainsPage() {
       try {
         setDeletingIdentityId(id);
         await deleteIdentityMutation.mutateAsync(id);
-        setScanNotice(`Identity ${email} removed from privileged watchlist.`);
+        setScanNotice({ message: `Identity ${email} removed from privileged watchlist.`, type: 'info' });
         setTimeout(() => setScanNotice(null), 5000);
       } catch {
         alert('Failed to remove identity.');
@@ -298,12 +301,22 @@ export default function DomainsPage() {
       </div>
 
       {scanNotice && (
-        <div className="mb-5 p-3 rounded-md bg-bg-surface border border-border-default text-text-secondary text-xs flex items-center justify-between">
+        <div className={cn(
+          "mb-5 p-3 rounded-md text-xs flex items-center justify-between border",
+          scanNotice.type === 'success' ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+          scanNotice.type === 'warning' ? "bg-orange-500/10 border-orange-500/30 text-orange-400" :
+          "bg-bg-surface border-border-default text-text-secondary"
+        )}>
           <div className="flex items-center gap-2">
-            <RefreshCw className="w-3.5 h-3.5 text-text-muted animate-spin" />
-            <span>{scanNotice}</span>
+            {scanNotice.type === 'info' && <RefreshCw className="w-3.5 h-3.5 text-text-muted animate-spin" />}
+            {scanNotice.type === 'success' && <ShieldCheck className="w-3.5 h-3.5" />}
+            {scanNotice.type === 'warning' && <AlertCircle className="w-3.5 h-3.5" />}
+            <span>{scanNotice.message}</span>
           </div>
-          <button onClick={() => setScanNotice(null)} className="text-text-faint hover:text-text-secondary cursor-pointer">
+          <button onClick={() => setScanNotice(null)} className={cn(
+            "cursor-pointer hover:opacity-80 transition-opacity",
+            scanNotice.type === 'info' ? "text-text-faint hover:text-text-secondary" : "opacity-70"
+          )}>
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -345,11 +358,11 @@ export default function DomainsPage() {
                             <h3 className="text-sm font-semibold text-text-primary font-mono">{domain.name}</h3>
                             {domain.status === 'verified' ? (
                               <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-2xs font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 mt-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Verified DNS
+                                Verified DNS
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 rounded text-2xs font-mono font-medium bg-amber-500/10 text-amber-400 border border-amber-500/25 mt-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" /> Pending validation
+                                Pending validation
                               </span>
                             )}
                           </div>

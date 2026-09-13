@@ -63,8 +63,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-bg-base p-3.5 sm:p-6 md:p-8">
-          <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+        <main className="flex-1 overflow-y-auto bg-bg-base p-4 sm:p-8 md:p-10">
+          <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
             {isTrial && !bannerDismissed && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 px-4 py-2.5 bg-bg-surface border border-border-default rounded-lg">
                 <div className="flex items-start sm:items-center gap-3">

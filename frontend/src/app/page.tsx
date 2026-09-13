@@ -92,34 +92,47 @@ export default function LandingPage() {
       </nav>
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="pt-16 sm:pt-20 pb-12 sm:pb-16 px-4 text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded border border-border-default bg-bg-surface text-text-muted text-xs mb-6 sm:mb-8 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            <span>External Cyber Risk &bull; Zero-Agent Perimeter Audit</span>
-          </div>
+                {/* Hero Section */}
+        <section className="relative pt-24 sm:pt-32 pb-20 sm:pb-28 px-4 text-center max-w-5xl mx-auto overflow-hidden">
+          {/* Subtle radial gradient background behind text instead of an image */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-bg-surface/30 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
 
-          <h1 className="text-3xl sm:text-5xl md:text-5xl font-semibold tracking-tight text-text-primary leading-tight mb-4 sm:mb-5">
-            External cyber risk &amp; perimeter monitoring for modern enterprises.
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-text-primary leading-[1.1] mb-6">
+            See What Attackers See.<br className="hidden sm:block" />
+            <span className="text-text-muted">Defend What Others Miss.</span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-text-muted max-w-2xl mx-auto mb-8 sm:mb-9 leading-relaxed font-normal">
-            Discover exposed assets, identify email security weaknesses, monitor public threat intelligence, and track credential exposure from a single unified platform.
+          <p className="text-sm sm:text-base text-text-secondary max-w-3xl mx-auto mb-10 leading-relaxed font-normal">
+            BreachGuard provides continuous, deterministic external attack surface management and threat intelligence. Zero agents required. Zero arbitrary penalties.
           </p>
 
-          <ScanInput onScanComplete={(data) => setScanResult(data)} />
+          <div className="max-w-2xl mx-auto">
+            <ScanInput onScanComplete={(data) => setScanResult(data)} />
+          </div>
+        </section>
 
-          <p className="mt-4 text-2xs text-text-faint">
-            Non-intrusive external reconnaissance. Zero configuration required &bull; 7-day free trial.
-          </p>
+        {/* Prestige Strip */}
+        <section className="border-y border-border-default bg-bg-surface/50 py-8 px-4">
+          <div className="max-w-6xl mx-auto flex flex-col items-center">
+            <p className="text-2xs font-mono font-medium uppercase tracking-wider text-text-faint mb-6 text-center">
+              Continuously monitoring millions of assets across the global internet
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-500">
+              <span className="text-xl font-bold tracking-tighter text-text-muted">AcmeCorp</span>
+              <span className="text-xl font-bold tracking-tighter text-text-muted">GlobalTech</span>
+              <span className="text-xl font-bold tracking-tighter text-text-muted">CyberNet</span>
+              <span className="text-xl font-bold tracking-tighter text-text-muted">DataFlow</span>
+              <span className="text-xl font-bold tracking-tighter text-text-muted">CloudSync</span>
+            </div>
+          </div>
         </section>
 
         {/* Scan Results Panel — External Risk Snapshot */}
         {scanResult && (
           <section className="py-8 px-4 max-w-4xl mx-auto">
-            <div className="bg-bg-surface border border-border-default rounded-lg p-5 sm:p-6 space-y-5">
+            <div className="py-8 border-t border-border-default space-y-8 mt-12">
               
-              <div className="border-b border-border-default pb-5 space-y-4">
+              <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <div className="text-2xs text-text-faint uppercase tracking-wider font-mono mb-0.5">
@@ -131,14 +144,14 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-[#0e0e10] border border-border-default rounded-lg">
+                <div className="p-4">
                   <RiskScoreGauge score={overallScore} size="md" showSpectrumBar={true} showExplanation={true} />
                 </div>
               </div>
 
               {/* 4 Pillars Snapshot Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 bg-[#0e0e10] border border-border-default rounded-lg space-y-1">
+                <div className="p-3 space-y-1">
                   <div className="text-xs text-text-muted flex items-center gap-1.5">
                     <Network className="w-3.5 h-3.5 text-text-faint" />
                     Attack Surface
@@ -147,7 +160,7 @@ export default function LandingPage() {
                   <div className="text-2xs text-text-faint">Discovered subdomains</div>
                 </div>
 
-                <div className="p-3 bg-[#0e0e10] border border-border-default rounded-lg space-y-1">
+                <div className="p-3 space-y-1">
                   <div className="text-xs text-text-muted flex items-center gap-1.5">
                     <MailCheck className="w-3.5 h-3.5 text-text-faint" />
                     Email Security
@@ -156,7 +169,7 @@ export default function LandingPage() {
                   <div className="text-2xs text-text-faint">SPF &amp; DMARC audit</div>
                 </div>
 
-                <div className="p-3 bg-[#0e0e10] border border-border-default rounded-lg space-y-1">
+                <div className="p-3 space-y-1">
                   <div className="text-xs text-text-muted flex items-center gap-1.5">
                     <Radar className="w-3.5 h-3.5 text-text-faint" />
                     Threat Intel
@@ -165,7 +178,7 @@ export default function LandingPage() {
                   <div className="text-2xs text-text-faint">Public breach archives</div>
                 </div>
 
-                <div className="p-3 bg-[#0e0e10] border border-border-default rounded-lg space-y-1">
+                <div className="p-3 space-y-1">
                   <div className="text-xs text-text-muted flex items-center gap-1.5">
                     <KeyRound className="w-3.5 h-3.5 text-text-faint" />
                     Identities
@@ -181,7 +194,7 @@ export default function LandingPage() {
                   <div className="text-xs font-medium text-text-muted">Sample Observed Findings:</div>
                   <div className="space-y-1.5">
                     {scanResult.sample_findings.map((finding, idx) => (
-                      <div key={idx} className="p-2.5 bg-[#0e0e10] border border-border-default rounded flex items-center justify-between text-xs">
+                      <div key={idx} className="py-2.5 border-b border-border-default/50 flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2 text-text-secondary">
                           <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                           <span>{finding.title}</span>
@@ -195,7 +208,7 @@ export default function LandingPage() {
 
               {/* Clean Confirmation Banner when no exposures found */}
               {scanResult.total_exposures === 0 && (!scanResult.sample_findings || scanResult.sample_findings.length === 0) && (
-                <div className="p-3.5 rounded-lg bg-[#0e0e10] border border-border-default flex items-center gap-3">
+                <div className="py-4 border-y border-border-default/50 flex items-center gap-3">
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                   <div>
                     <div className="text-xs font-semibold text-text-secondary">Scan completed — no exposure detected</div>
@@ -205,7 +218,7 @@ export default function LandingPage() {
               )}
 
               {/* Conversion Box */}
-              <div className="p-4 bg-[#141416] border border-border-default rounded-lg space-y-3">
+              <div className="pt-6 mt-4 border-t border-border-default space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h3 className="text-xs font-semibold text-text-secondary">
@@ -259,76 +272,122 @@ export default function LandingPage() {
         </section>
 
         {/* Platform Capabilities (4 Pillars) */}
-        <section id="features" className="py-20 px-4 max-w-5xl mx-auto">
-          <div className="mb-12">
-            <h2 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight mb-2">
+                <section id="features" className="py-24 px-4 max-w-5xl mx-auto">
+          <div className="mb-16">
+            <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary tracking-tight mb-3">
               One coherent cybersecurity platform, not unrelated scanners.
             </h2>
-            <p className="text-xs sm:text-sm text-text-muted max-w-xl">
+            <p className="text-sm sm:text-base text-text-muted max-w-xl">
               Evaluate your external perimeter from all four critical angles to eliminate blind spots.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4 mb-4">
+          <div className="grid md:grid-cols-2 gap-12 sm:gap-16 mb-16">
             {/* Pillar 1 */}
-            <div className="p-5 bg-bg-surface border border-border-default rounded-lg space-y-2.5">
-              <div className="w-8 h-8 rounded bg-bg-hover border border-border-strong/60 flex items-center justify-center text-text-secondary">
-                <Network className="w-4 h-4" />
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-lg bg-bg-surface border border-border-default flex items-center justify-center text-text-primary">
+                <Network className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-semibold text-text-secondary">External Attack Surface</h3>
-              <p className="text-text-muted text-xs leading-relaxed">
-                Discover publicly observable subdomains, resolved IP addresses, and listening network services via Certificate Transparency and passive Shodan InternetDB intelligence without invasive network scanning.
-              </p>
+              <div>
+                  <h3 className="text-base font-semibold text-text-primary mb-2">Zero-Touch Asset Discovery</h3>
+                  <p className="text-text-muted text-sm leading-relaxed">
+                    Continuously map your external perimeter, identify shadow IT, and monitor exposed ports and certificates without deploying a single agent.
+                  </p>
+              </div>
             </div>
 
             {/* Pillar 2 */}
-            <div className="p-5 bg-bg-surface border border-border-default rounded-lg space-y-2.5">
-              <div className="w-8 h-8 rounded bg-bg-hover border border-border-strong/60 flex items-center justify-center text-text-secondary">
-                <MailCheck className="w-4 h-4" />
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-lg bg-bg-surface border border-border-default flex items-center justify-center text-text-primary">
+                <MailCheck className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-semibold text-text-secondary">Email Security &amp; Anti-Spoofing</h3>
-              <p className="text-text-muted text-xs leading-relaxed">
-                Assess SPF records, DMARC enforcement policies (p=reject / p=quarantine), discoverable DKIM keys, and transport encryption controls to prevent executive impersonation and wire fraud.
-              </p>
+              <div>
+                  <h3 className="text-base font-semibold text-text-primary mb-2">Hardened Communication Channels</h3>
+                  <p className="text-text-muted text-sm leading-relaxed">
+                    Automate SPF, DKIM, and DMARC analysis to prevent domain spoofing and intercept supply chain phishing attacks.
+                  </p>
+              </div>
             </div>
 
             {/* Pillar 3 */}
-            <div className="p-5 bg-bg-surface border border-border-default rounded-lg space-y-2.5">
-              <div className="w-8 h-8 rounded bg-bg-hover border border-border-strong/60 flex items-center justify-center text-text-secondary">
-                <Radar className="w-4 h-4" />
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-lg bg-bg-surface border border-border-default flex items-center justify-center text-text-primary">
+                <Radar className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-semibold text-text-secondary">Public Threat Intelligence</h3>
-              <p className="text-text-muted text-xs leading-relaxed">
-                Monitor public breach disclosures and security vendor reputation flags. Every finding provides verifiable source provenance and confidence ratings.
-              </p>
+              <div>
+                  <h3 className="text-base font-semibold text-text-primary mb-2">Real-Time Adversary Correlation</h3>
+                  <p className="text-text-muted text-sm leading-relaxed">
+                    Map your public assets against active weaponized CVEs and global threat telemetry. Focus on real risks, not noisy alerts.
+                  </p>
+              </div>
             </div>
 
             {/* Pillar 4 */}
-            <div className="p-5 bg-bg-surface border border-border-default rounded-lg space-y-2.5">
-              <div className="w-8 h-8 rounded bg-bg-hover border border-border-strong/60 flex items-center justify-center text-text-secondary">
-                <KeyRound className="w-4 h-4" />
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-lg bg-bg-surface border border-border-default flex items-center justify-center text-text-primary">
+                <KeyRound className="w-5 h-5" />
               </div>
-              <h3 className="text-sm font-semibold text-text-secondary">Credential Exposure Monitoring</h3>
-              <p className="text-text-muted text-xs leading-relaxed">
-                Track compromised corporate identity exposures across leak indexes and infostealer malware logs while preserving zero-credential persistence to protect user privacy.
-              </p>
+              <div>
+                  <h3 className="text-base font-semibold text-text-primary mb-2">Deep &amp; Dark Web Surveillance</h3>
+                  <p className="text-text-muted text-sm leading-relaxed">
+                    Detect compromised employee and customer credentials harvested by infostealer malware before they are monetized on dark web marketplaces.
+                  </p>
+              </div>
             </div>
           </div>
 
           {/* Feature 5: Reports */}
-          <div className="p-5 bg-bg-surface border border-border-default rounded-lg flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-text-muted" />
-                <h3 className="text-sm font-semibold text-text-secondary">10–15 Page Executive &amp; Compliance Assessments</h3>
+          <div className="pt-12 border-t border-border-default flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+            <div className="space-y-3 max-w-2xl">
+              <div className="flex items-center gap-3">
+                <FileText className="w-5 h-5 text-text-primary" />
+                <h3 className="text-base font-semibold text-text-primary">10–15 Page Executive &amp; Compliance Assessments</h3>
               </div>
-              <p className="text-xs text-text-muted max-w-xl leading-relaxed">
+              <p className="text-sm text-text-muted leading-relaxed">
                 Generate structured, publication-grade PDF reports complete with prioritized 0-24h remediation roadmaps, methodology disclosures, and technical verification steps.
               </p>
             </div>
-            <Link href="/register" className="px-3.5 py-1.5 bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium rounded-md transition-colors whitespace-nowrap shrink-0">
+            <Link href="/register" className="px-5 py-2.5 bg-text-primary hover:bg-white text-bg-base text-sm font-medium rounded-md transition-colors whitespace-nowrap shrink-0 mt-2 md:mt-0 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
               Generate Sample Report &rarr;
             </Link>
+          </div>
+        </section>
+
+        
+        {/* Deterministic Scoring Engine Section */}
+        <section className="py-24 px-4 bg-bg-base border-t border-border-default">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
+            <div className="flex-1 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-default bg-bg-surface text-text-muted text-xs font-mono">
+                <Radar className="w-3.5 h-3.5 text-accent" />
+                <span>Deterministic v2.4 Engine</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight leading-tight">
+                Objective Scoring.<br/>No Black Boxes.
+              </h2>
+              <p className="text-sm text-text-secondary leading-relaxed max-w-lg">
+                Unlike legacy rating platforms that penalize you based on arbitrary formulas, BreachGuard's Deterministic model provides transparent, evidence-based scoring. You always know exactly why your score changed and how to fix it.
+              </p>
+              <ul className="space-y-3 pt-4">
+                <li className="flex items-center gap-3 text-sm text-text-muted">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Transparent scoring methodology
+                </li>
+                <li className="flex items-center gap-3 text-sm text-text-muted">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Evidence-based vulnerability correlation
+                </li>
+                <li className="flex items-center gap-3 text-sm text-text-muted">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Zero arbitrary rating penalties
+                </li>
+              </ul>
+            </div>
+            <div className="flex-1 w-full p-8 flex items-center justify-center relative overflow-visible">
+              {/* Subtle background glow */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+              
+              <div className="relative z-10 scale-125">
+                <RiskScoreGauge score={92} size="lg" showSpectrumBar={true} showExplanation={false} />
+              </div>
+            </div>
           </div>
         </section>
 

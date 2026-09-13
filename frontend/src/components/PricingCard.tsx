@@ -29,11 +29,11 @@ export function PricingCard({
 }: PricingCardProps) {
   return (
     <div className={cn(
-      "relative p-6 rounded-lg bg-bg-surface border flex flex-col transition-colors",
-      isPopular ? "border-border-strong bg-bg-surface" : "border-border-default"
+      "relative flex flex-col pt-6 border-t",
+      isPopular ? "border-accent border-t-2" : "border-border-default"
     )}>
       {isPopular && (
-        <span className="absolute -top-2.5 left-6 px-2 py-0.5 bg-accent text-accent-text text-2xs font-mono font-semibold uppercase tracking-normal rounded">
+        <span className="absolute -top-2.5 left-0 px-2 py-0.5 bg-accent text-accent-text text-2xs font-mono font-semibold uppercase tracking-normal rounded">
           {badge}
         </span>
       )}

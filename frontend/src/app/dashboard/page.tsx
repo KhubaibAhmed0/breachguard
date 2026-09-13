@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8 sm:space-y-10">
         {/* Score Breakdown / Why this score? Modal */}
         <ScoreBreakdownModal
           isOpen={isBreakdownOpen}
@@ -122,7 +122,7 @@ export default function DashboardPage() {
 
         {/* MSP Active Scope Banner if on client tenant */}
         {activeTenant.type === 'client' && (
-          <div className="p-3 rounded-lg bg-bg-surface border border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="py-3 border-b border-border-default flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2.5 text-text-secondary">
               <div className="p-1.5 rounded-md bg-border-strong text-text-secondary border border-border-strong/60">
                 <Building2 className="w-4 h-4" />
@@ -146,7 +146,7 @@ export default function DashboardPage() {
         )}
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border-default">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-border-default">
           <div>
             <h1 className="text-xl sm:text-2xl font-semibold text-text-primary tracking-tight">External Cyber Risk Platform</h1>
             <p className="text-xs sm:text-sm text-text-muted mt-1">
@@ -173,8 +173,8 @@ export default function DashboardPage() {
 
         {/* Zero-State Monitored Domains Banner */}
         {isZeroDomain && (
-          <div className="p-4 sm:p-5 rounded-lg bg-bg-surface border border-border-default flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3 sm:gap-4 text-left">
+          <div className="py-6 border-b border-border-default flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+            <div className="flex items-center gap-3 sm:gap-6 text-left">
               <div className="p-2.5 rounded-md bg-border-strong border border-border-strong text-text-secondary shrink-0 hidden sm:flex">
                 <Globe className="w-5 h-5" />
               </div>
@@ -196,8 +196,8 @@ export default function DashboardPage() {
         )}
 
         {/* Risk Score Assessment Panel */}
-        <div className="p-4 sm:p-5 bg-bg-surface border border-border-default rounded-lg space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-default">
+        <div className="py-8 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-border-default">
             <div>
               <span className="text-2xs font-mono font-medium text-text-muted uppercase tracking-wider">Platform Telemetry Index</span>
               <h2 className="text-base font-semibold text-text-primary tracking-tight">
@@ -235,9 +235,9 @@ export default function DashboardPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {/* 1. Attack Surface */}
-            <div className="p-3.5 bg-bg-surface hover:bg-bg-inset/50 border border-border-default rounded-lg space-y-3 transition-colors flex flex-col justify-between group">
+            <div className="py-4 border-t border-border-default space-y-3 transition-colors flex flex-col justify-between group">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Link href="/dashboard/attack-surface" className="text-sm font-medium text-text-secondary group-hover:text-text-primary flex items-center gap-2 transition-colors">
@@ -272,7 +272,7 @@ export default function DashboardPage() {
             </div>
 
             {/* 2. Email Security */}
-            <div className="p-3.5 bg-bg-surface hover:bg-bg-inset/50 border border-border-default rounded-lg space-y-3 transition-colors flex flex-col justify-between group">
+            <div className="py-4 border-t border-border-default space-y-3 transition-colors flex flex-col justify-between group">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Link href="/dashboard/email-security" className="text-sm font-medium text-text-secondary group-hover:text-text-primary flex items-center gap-2 transition-colors">
@@ -307,7 +307,7 @@ export default function DashboardPage() {
             </div>
 
             {/* 3. Threat Intelligence */}
-            <div className="p-3.5 bg-bg-surface hover:bg-bg-inset/50 border border-border-default rounded-lg space-y-3 transition-colors flex flex-col justify-between group">
+            <div className="py-4 border-t border-border-default space-y-3 transition-colors flex flex-col justify-between group">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Link href="/dashboard/threat-intelligence" className="text-sm font-medium text-text-secondary group-hover:text-text-primary flex items-center gap-2 transition-colors">
@@ -342,7 +342,7 @@ export default function DashboardPage() {
             </div>
 
             {/* 4. Credential Exposure */}
-            <div className="p-3.5 bg-bg-surface hover:bg-bg-inset/50 border border-border-default rounded-lg space-y-3 transition-colors flex flex-col justify-between group">
+            <div className="py-4 border-t border-border-default space-y-3 transition-colors flex flex-col justify-between group">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Link href="/exposures" className="text-sm font-medium text-text-secondary group-hover:text-text-primary flex items-center gap-2 transition-colors">
@@ -379,32 +379,32 @@ export default function DashboardPage() {
         </div>
 
         {/* Summary Metric Counters */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          <div className="p-3.5 bg-bg-surface border border-border-default rounded-lg">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
+          <div className="py-4 border-t border-border-default">
             <span className="text-xs text-text-muted font-medium">Discovered Assets</span>
             <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">{summary.discovered_assets}</div>
           </div>
-          <div className="p-3.5 bg-bg-surface border border-border-default rounded-lg">
+          <div className="py-4 border-t border-border-default">
             <span className="text-xs text-text-muted font-medium">Open Findings</span>
             <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">{summary.open_findings}</div>
           </div>
-          <div className="p-3.5 bg-bg-surface border border-border-default rounded-lg">
+          <div className="py-4 border-t border-border-default">
             <span className="text-xs text-text-muted font-medium">High / Critical</span>
             <div className="text-xl sm:text-2xl font-semibold font-mono text-amber-400 mt-1">{summary.critical_findings + summary.high_findings}</div>
           </div>
-          <div className="p-3.5 bg-bg-surface border border-border-default rounded-lg">
+          <div className="py-4 border-t border-border-default">
             <span className="text-xs text-text-muted font-medium">Monitored Domains</span>
             <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">{domains?.length ?? 0}</div>
           </div>
-          <div className="p-3.5 bg-bg-surface border border-border-default rounded-lg">
+          <div className="py-4 border-t border-border-default">
             <span className="text-xs text-text-muted font-medium">Email Score</span>
             <div className="text-xl sm:text-2xl font-semibold font-mono text-text-primary mt-1">{summary.email_score}<span className="text-xs text-text-faint font-normal font-sans">/100</span></div>
           </div>
         </div>
 
         {/* Prioritized Security Findings */}
-        <div className="bg-bg-surface border border-border-default rounded-lg overflow-hidden">
-          <div className="px-4 py-3 border-b border-border-default bg-bg-base/40 flex items-center justify-between">
+        <div className="py-8 border-t border-border-default overflow-hidden">
+          <div className="pb-4 flex items-center justify-between">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2 font-mono">
               <ShieldAlert className="w-3.5 h-3.5 text-text-muted" />
               Prioritized Security Findings ({findings.length})
@@ -424,7 +424,7 @@ export default function DashboardPage() {
             ) : (
               findings.slice(0, 5).map((f: any) => {
                 return (
-                  <div key={f.id} className="p-3.5 sm:px-4 sm:py-3 hover:bg-bg-inset/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div key={f.id} className="py-4 border-b border-border-default/50 hover:bg-bg-inset/40 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <SeverityBadge severity={f.severity} />
@@ -453,8 +453,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Credential Exposure & Activity Chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-bg-surface border border-border-default rounded-lg p-4 sm:p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 py-8 border-t border-border-default">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4 flex items-center justify-between font-mono">
               <span>Historical Threat Exposure Ingestion</span>
               <span className="text-xs font-normal text-text-faint">Chronological telemetry</span>
@@ -464,7 +464,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="bg-bg-surface border border-border-default rounded-lg p-4 sm:p-5">
+          <div className="py-8 border-t border-border-default">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4 font-mono">
               Severity Distribution
             </h2>

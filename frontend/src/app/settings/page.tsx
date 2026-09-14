@@ -645,7 +645,7 @@ export default function SettingsPage() {
                   </div>
                   <p className="text-text-muted text-xs mt-1">
                     {userMe?.plan === 'enterprise'
-                      ? '$899 / month • 15 domains, continuous scanning, unlimited identities'
+                      ? '$799 / month • 15 domains, continuous scanning, unlimited identities'
                       : '$239 / month • 3 domains, 25 privileged identities • Billed monthly'}
                   </p>
                 </div>
@@ -695,13 +695,13 @@ export default function SettingsPage() {
                   </button>
                 </div>
 
-                <div className="p-4 border border-border-strong bg-[#151518] rounded-lg flex flex-col justify-between space-y-4 relative">
+                <div className="p-4 border border-border-strong bg-bg-surface rounded-lg flex flex-col justify-between space-y-4 relative">
                   <div className="absolute top-3 right-3 px-1.5 py-0.5 rounded text-2xs font-mono bg-border-strong text-text-secondary border border-border-strong uppercase tracking-wider">
                     Recommended
                   </div>
                   <div>
                     <div className="text-text-primary font-semibold text-xs">Enterprise / MSP</div>
-                    <div className="text-xl font-semibold text-text-primary mt-2 font-mono">$899<span className="text-xs text-text-faint font-normal"> / mo</span></div>
+                    <div className="text-xl font-semibold text-text-primary mt-2 font-mono">$799<span className="text-xs text-text-faint font-normal"> / mo</span></div>
                     <ul className="mt-3 space-y-2 text-2xs text-text-muted">
                       <li className="flex items-center gap-1.5 text-text-secondary"><Check className="w-3.5 h-3.5 text-emerald-400" /> Up to 15 Monitored Domains</li>
                       <li className="flex items-center gap-1.5 text-text-secondary"><Check className="w-3.5 h-3.5 text-emerald-400" /> Multi-Tenant Client Portals</li>

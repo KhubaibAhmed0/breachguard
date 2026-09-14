@@ -268,7 +268,7 @@ async def request_invoice(
     if plan_name == "business":
         price_str = "$2,438 / year (15% Annual Savings)" if cycle_name == "annual" else "$239 / month"
     else:
-        price_str = "$9,170 / year (15% Annual Savings)" if cycle_name == "annual" else "$899 / month"
+        price_str = "$8,150 / year (15% Annual Savings)" if cycle_name == "annual" else "$799 / month"
 
     html_content = render_invoice_request_email(
         company_name=invoice_in.company_name,

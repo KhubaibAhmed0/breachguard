@@ -55,8 +55,8 @@ export function InvoiceRequestModal({
       monthly: { total: '$239', perMonth: '$239', badge: 'Billed Monthly' }
     },
     enterprise: {
-      annual: { total: '$9,170', perMonth: '$764', badge: 'Save 15% (Recommended)' },
-      monthly: { total: '$899', perMonth: '$899', badge: 'Billed Monthly' }
+      annual: { total: '$8,150', perMonth: '$679', badge: 'Save 15% (Recommended)' },
+      monthly: { total: '$799', perMonth: '$799', badge: 'Billed Monthly' }
     }
   };
 
@@ -210,7 +210,7 @@ export function InvoiceRequestModal({
                     <span className="text-2xs px-1.5 py-0.5 bg-border-strong text-text-secondary rounded border border-border-strong font-mono">POPULAR</span>
                   </div>
                   <div className="text-2xs text-text-muted mt-0.5">Unlimited Assets &bull; Continuous ASM</div>
-                  <div className="text-xs font-semibold text-text-primary mt-1 font-mono">$899<span className="text-2xs font-normal text-text-faint">/mo</span></div>
+                  <div className="text-xs font-semibold text-text-primary mt-1 font-mono">$799<span className="text-2xs font-normal text-text-faint">/mo</span></div>
                 </button>
               </div>
             </div>

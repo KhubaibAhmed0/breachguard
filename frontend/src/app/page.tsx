@@ -439,7 +439,7 @@ export default function LandingPage() {
             />
             <PricingCard 
               title="Enterprise / MSP" 
-              price="$899" 
+              price="$799" 
               description="Multi-tenant external risk management for service providers and enterprises."
               features={[
                 'Unlimited monitored domains',

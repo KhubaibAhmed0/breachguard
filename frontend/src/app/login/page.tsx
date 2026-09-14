@@ -9,7 +9,7 @@ import { useState } from 'react';
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('admin@acme.com');
+  const [email, setEmail] = useState('demo@breachguard.io');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

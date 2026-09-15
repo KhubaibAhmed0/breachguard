@@ -79,7 +79,8 @@ async def init_models():
                     from sqlalchemy import text
                     for stmt in statements:
                         try:
-                            connection.execute(text(stmt))
+                            with connection.begin_nested():
+                                connection.execute(text(stmt))
                         except Exception as pge:
                             logger.debug(f"PG column sync ({stmt}): {pge}")
             except Exception as e:

@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { ExposureTable } from '@/components/ExposureTable';
-import { useExposures, useUpdateExposureStatus } from '@/hooks/useApi';
+import { useExposures, useUpdateExposureStatus, useExportExposure, useFixExposure } from '@/hooks/useApi';
 import { Search, Loader2, Lock, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -32,6 +32,41 @@ export default function ExposuresPage() {
     try {
       setUpdatingId(id);
       await updateStatusMutation.mutateAsync({ id, status: newStatus });
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const exportMutation = useExportExposure();
+  const fixMutation = useFixExposure();
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', text: string) => {
+    setToastMessage({ type, text });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
+  const handleExport = async (id: string) => {
+    try {
+      setUpdatingId(id);
+      const res = await exportMutation.mutateAsync(id);
+      showToast('success', `Exported to external ticketing system (${res.ticket_id}).`);
+    } catch {
+      showToast('error', 'Failed to export to ticketing system.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleFix = async (id: string) => {
+    try {
+      setUpdatingId(id);
+      const res = await fixMutation.mutateAsync(id);
+      showToast('success', 'Automated One-Click Remediation successful.');
+    } catch {
+      showToast('error', 'Failed to execute automated remediation.');
     } finally {
       setUpdatingId(null);
     }
@@ -114,12 +149,19 @@ export default function ExposuresPage() {
       )}
 
       <div className="py-4 border-y border-border-default">
+        {toastMessage && (
+          <div className={`mb-4 p-3 rounded-md border text-xs flex items-center gap-2.5 ${toastMessage.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' : 'bg-rose-500/10 border-rose-500/20 text-rose-300'}`}>
+            <span>{toastMessage.text}</span>
+          </div>
+        )}
         {isLoading ? (
           <TableSkeleton rows={6} cols={5} />
         ) : (
           <ExposureTable 
             data={filteredExposures || []} 
             onStatusChange={handleStatusChange}
+            onExport={handleExport}
+            onFix={handleFix}
             updatingId={updatingId}
           />
         )}

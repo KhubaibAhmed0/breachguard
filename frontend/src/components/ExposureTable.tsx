@@ -4,16 +4,18 @@ import { Exposure } from '@/types';
 import { formatDate } from '@/lib/utils';
 import { SeverityBadge } from './SeverityBadge';
 import { StatusBadge } from './StatusBadge';
-import { Lock, ArrowUpRight, Loader2, ShieldCheck } from 'lucide-react';
+import { Lock, ArrowUpRight, Loader2, ShieldCheck, Ticket, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 interface ExposureTableProps {
   data: Exposure[];
   onStatusChange?: (id: string, newStatus: 'open' | 'acknowledged' | 'remediated') => void;
+  onExport?: (id: string) => void;
+  onFix?: (id: string) => void;
   updatingId?: string | null;
 }
 
-export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTableProps) {
+export function ExposureTable({ data, onStatusChange, onExport, onFix, updatingId }: ExposureTableProps) {
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
       <table className="w-full text-left border-collapse min-w-[650px]">
@@ -88,31 +90,38 @@ export function ExposureTable({ data, onStatusChange, updatingId }: ExposureTabl
                 {onStatusChange && (
                   <td className="py-3.5 px-4 text-right">
                     {updatingId === exposure.id ? (
-                      <span className="inline-flex items-center text-xs text-text-muted gap-1 font-medium">
-                        <Loader2 className="w-3 h-3 animate-spin text-text-secondary" />
-                        Updating...
+                      <span className="inline-flex items-center text-xs text-text-muted gap-1 font-medium justify-end w-full">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-text-secondary" />
+                        Processing...
                       </span>
                     ) : exposure.status === 'open' ? (
-                      <button
-                        onClick={() => onStatusChange(exposure.id, 'remediated')}
-                        className="text-xs font-medium text-text-faint hover:text-text-secondary transition-colors cursor-pointer"
-                      >
-                        Mark Remediated
-                      </button>
-                    ) : exposure.status === 'remediated' ? (
-                      <button
-                        onClick={() => onStatusChange(exposure.id, 'open')}
-                        className="text-xs font-medium text-text-faint hover:text-text-secondary transition-colors cursor-pointer"
-                      >
-                        Reopen
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => onExport && onExport(exposure.id)}
+                          className="px-2 py-1 bg-bg-surface border border-border-default hover:border-border-strong text-text-secondary hover:text-text-primary rounded text-2xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                          title="Export to Ticketing System"
+                        >
+                          <Ticket className="w-3 h-3" />
+                          Export
+                        </button>
+                        <button
+                          onClick={() => onFix && onFix(exposure.id)}
+                          className="px-2 py-1 bg-accent hover:bg-accent-hover text-accent-text rounded text-2xs font-medium transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                          title="Automated One-Click Remediation"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          Auto-Fix
+                        </button>
+                      </div>
                     ) : (
-                      <button
-                        onClick={() => onStatusChange(exposure.id, 'remediated')}
-                        className="text-xs font-medium text-text-faint hover:text-text-secondary transition-colors cursor-pointer"
-                      >
-                        Resolve
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => onStatusChange(exposure.id, 'open')}
+                          className="text-xs font-medium text-text-faint hover:text-text-secondary transition-colors cursor-pointer"
+                        >
+                          Reopen
+                        </button>
+                      </div>
                     )}
                   </td>
                 )}

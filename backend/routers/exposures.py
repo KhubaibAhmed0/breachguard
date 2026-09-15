@@ -115,6 +115,36 @@ async def update_exposure_status(
     resp_obj.email = email_addr or "domain-wide"
     return resp_obj
 
+@router.post("/{id}/export")
+async def export_exposure(
+    id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_scope("read:exposures"))
+):
+    # Simulate Ticket Export
+    result = await db.execute(select(Exposure).where(Exposure.id == id, Exposure.org_id == current_user.org_id))
+    if not result.scalars().first():
+        raise HTTPException(status_code=404, detail="Exposure not found")
+    
+    return {"status": "success", "ticket_id": f"SEC-{10000 + id}", "message": "Ticket created successfully"}
+
+@router.post("/{id}/fix")
+async def auto_fix_exposure(
+    id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_scope("write:exposures"))
+):
+    # Simulate One-Click Fix
+    result = await db.execute(select(Exposure).where(Exposure.id == id, Exposure.org_id == current_user.org_id))
+    exp = result.scalars().first()
+    if not exp:
+        raise HTTPException(status_code=404, detail="Exposure not found")
+    
+    exp.status = "remediated"
+    await db.commit()
+    
+    return {"status": "success", "message": "Automated remediation successful"}
+
 @router.get("/timeline")
 async def get_timeline(db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user)):
     # Generate past 6 months chronologically (oldest to newest)

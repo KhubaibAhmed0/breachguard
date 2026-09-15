@@ -40,6 +40,8 @@ async def init_models():
                         ("slack_webhook_url", "VARCHAR"),
                         ("siem_webhook_url", "VARCHAR"),
                         ("webhook_secret", "VARCHAR"),
+                        ("accent_color", "VARCHAR DEFAULT '#10b981'"),
+                        ("show_prepared_by", "BOOLEAN DEFAULT 1"),
                         ("is_trial", "BOOLEAN DEFAULT 0"),
                         ("trial_ends_at", "DATETIME"),
                     ]
@@ -67,6 +69,8 @@ async def init_models():
                         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS slack_webhook_url VARCHAR",
                         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS siem_webhook_url VARCHAR",
                         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS webhook_secret VARCHAR",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS accent_color VARCHAR DEFAULT '#10b981'",
+                        "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS show_prepared_by BOOLEAN DEFAULT TRUE",
                         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS is_trial BOOLEAN DEFAULT FALSE",
                         "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMP",
                         "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_changed_at TIMESTAMP",

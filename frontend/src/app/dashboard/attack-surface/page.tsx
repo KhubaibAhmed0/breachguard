@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Network, Search, ShieldAlert, CheckCircle2, Server, Globe, ExternalLink, Filter } from 'lucide-react';
-import { useAttackSurfaceAssets, useAttackSurfaceFindings } from '@/hooks/useApi';
+import { useAttackSurfaceAssets, useAttackSurfaceFindings, useExportFinding, useFixFinding } from '@/hooks/useApi';
 import { TableSkeleton, FindingListSkeleton } from '@/components/Skeletons';
 import { SeverityBadge } from '@/components/SeverityBadge';
 
@@ -13,6 +13,41 @@ export default function AttackSurfacePage() {
 
   const { data: assets = [], isLoading: assetsLoading } = useAttackSurfaceAssets();
   const { data: allFindings = [], isLoading: findingsLoading } = useAttackSurfaceFindings();
+  const exportMutation = useExportFinding();
+  const fixMutation = useFixFinding();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', text: string) => {
+    setToastMessage({ type, text });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
+  const handleExport = async (id: string) => {
+    try {
+      setUpdatingId(id);
+      const res = await exportMutation.mutateAsync(id);
+      showToast('success', `Exported finding to Jira/ServiceNow (${res.ticket_id}).`);
+    } catch {
+      showToast('error', 'Failed to export finding.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleFix = async (id: string) => {
+    try {
+      setUpdatingId(id);
+      const res = await fixMutation.mutateAsync(id);
+      showToast('success', 'Automated One-Click Remediation applied successfully.');
+    } catch {
+      showToast('error', 'Failed to apply automated remediation.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const loading = assetsLoading || findingsLoading;
 
@@ -286,6 +321,11 @@ export default function AttackSurfacePage() {
 
         {/* Perimeter Findings List */}
         <div className="border-y border-border-default">
+          {toastMessage && (
+            <div className={`m-4 p-3 rounded-md border text-xs flex items-center gap-2.5 ${toastMessage.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300' : 'bg-rose-500/10 border-rose-500/20 text-rose-300'}`}>
+              <span>{toastMessage.text}</span>
+            </div>
+          )}
           <div className="px-4 py-3 border-b border-border-default bg-bg-base/40 flex items-center justify-between font-mono">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2">
               <ShieldAlert className="w-3.5 h-3.5 text-text-muted" />
@@ -353,6 +393,34 @@ export default function AttackSurfacePage() {
                       </div>
                     )}
                   </div>
+                  
+                  {finding.status !== 'remediated' && (
+                    <div className="pt-2 flex items-center justify-end gap-2">
+                      {updatingId === finding.id ? (
+                        <span className="inline-flex items-center text-xs text-text-muted gap-1 font-medium">
+                          <div className="w-3.5 h-3.5 animate-spin rounded-full border-2 border-text-muted border-t-transparent"></div>
+                          Processing...
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleExport(finding.id)}
+                            className="px-2 py-1 bg-bg-base border border-border-default hover:border-border-strong text-text-secondary hover:text-text-primary rounded text-2xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            Export Ticket
+                          </button>
+                          <button
+                            onClick={() => handleFix(finding.id)}
+                            className="px-2 py-1 bg-accent hover:bg-accent-hover text-accent-text rounded text-2xs font-medium transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                            Auto-Remediate
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))
             )}

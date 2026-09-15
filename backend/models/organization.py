@@ -13,6 +13,8 @@ class Organization(Base):
     logo_path = Column(String, nullable=True)
     slack_webhook_url = Column(String, nullable=True)
     siem_webhook_url = Column(String, nullable=True)
+    accent_color = Column(String, default="#10b981")
+    show_prepared_by = Column(Boolean, default=True)
     stripe_customer_id = Column(String, nullable=True)
     is_trial = Column(Boolean, default=False)
     trial_ends_at = Column(DateTime, nullable=True)

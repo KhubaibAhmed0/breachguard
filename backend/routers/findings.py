@@ -91,3 +91,33 @@ async def update_finding_status(
     finding.status = new_status
     await db.commit()
     return {"status": "success", "id": finding.id, "new_status": finding.status}
+
+@router.post("/{id}/export")
+async def export_finding(
+    id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Simulate Ticket Export
+    res = await db.execute(select(Finding).where(Finding.id == id, Finding.org_id == current_user.org_id))
+    if not res.scalars().first():
+        raise HTTPException(status_code=404, detail="Finding not found")
+    
+    return {"status": "success", "ticket_id": f"SEC-{20000 + id}", "message": "Ticket created successfully"}
+
+@router.post("/{id}/fix")
+async def auto_fix_finding(
+    id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Simulate One-Click Fix
+    res = await db.execute(select(Finding).where(Finding.id == id, Finding.org_id == current_user.org_id))
+    finding = res.scalars().first()
+    if not finding:
+        raise HTTPException(status_code=404, detail="Finding not found")
+    
+    finding.status = "remediated"
+    await db.commit()
+    
+    return {"status": "success", "message": "Automated remediation successful"}

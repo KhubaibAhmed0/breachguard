@@ -33,6 +33,8 @@ export default function SettingsPage() {
 
   // Logo upload state
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [accentColor, setAccentColor] = useState('#10b981');
+  const [showPreparedBy, setShowPreparedBy] = useState(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Team Management state
@@ -85,6 +87,8 @@ export default function SettingsPage() {
       if (integrationsData.slack_webhook_url) setSlackWebhook(integrationsData.slack_webhook_url);
       if (integrationsData.siem_webhook_url) setSiemWebhook(integrationsData.siem_webhook_url);
       if (integrationsData.logo_url) setLogoPreview(integrationsData.logo_url);
+      if (integrationsData.accent_color) setAccentColor(integrationsData.accent_color);
+      if (integrationsData.show_prepared_by !== undefined) setShowPreparedBy(integrationsData.show_prepared_by);
     }
   }, [integrationsData]);
 
@@ -152,8 +156,12 @@ export default function SettingsPage() {
     setIsSavingProfile(true);
     try {
       await api.patch('/settings/organization', { name: orgName.trim() });
+      await updateIntegrationsMutation.mutateAsync({
+        accent_color: accentColor,
+        show_prepared_by: showPreparedBy
+      });
       setProfileSuccessNotice(true);
-      showToast('success', 'Organization profile updated successfully.');
+      showToast('success', 'Organization and white-labeling preferences updated.');
       setTimeout(() => setProfileSuccessNotice(false), 4000);
     } catch (err: any) {
       showToast('error', err?.response?.data?.detail || 'Failed to update organization profile.');
@@ -296,42 +304,42 @@ export default function SettingsPage() {
         <div>
           {/* 1. Profile / Organization Tab */}
           {activeTab === 'profile' && (
-            <div className="space-y-6 max-w-xl text-xs">
-              <div className="space-y-1.5">
-                <label className="block text-text-secondary font-medium">Organization Name</label>
-                <input 
-                  type="text" 
-                  value={orgName} 
-                  onChange={(e) => setOrgName(e.target.value)}
-                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-md text-xs text-text-secondary focus:outline-none focus:border-border-strong" 
-                />
-                <p className="text-2xs text-text-faint">
-                  Displayed on executive security audit reports and team notifications.
-                </p>
+            <div className="space-y-6 max-w-4xl text-xs">
+              <div className="max-w-xl space-y-6">
+                <div className="space-y-1.5">
+                  <label className="block text-text-secondary font-medium">Organization Name</label>
+                  <input 
+                    type="text" 
+                    value={orgName} 
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-md text-xs text-text-secondary focus:outline-none focus:border-border-strong" 
+                  />
+                  <p className="text-2xs text-text-faint">
+                    Displayed on executive security audit reports and team notifications.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-text-secondary font-medium">Admin Contact Email</label>
+                  <input 
+                    type="email" 
+                    value={adminEmail} 
+                    disabled
+                    className="w-full px-3 py-2 bg-bg-inset border border-border-default rounded-md text-xs font-mono text-text-muted cursor-not-allowed" 
+                  />
+                  <p className="text-2xs text-text-faint">
+                    Primary security operations contact receiving critical breach alerts.
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="block text-text-secondary font-medium">Admin Contact Email</label>
-                <input 
-                  type="email" 
-                  value={adminEmail} 
-                  disabled
-                  className="w-full px-3 py-2 bg-bg-inset border border-border-default rounded-md text-xs font-mono text-text-muted cursor-not-allowed" 
-                />
-                <p className="text-2xs text-text-faint">
-                  Primary security operations contact receiving critical breach alerts.
-                </p>
-              </div>
-
-              {/* Co-Branded Report Logo */}
-              <div className="space-y-2 pt-4 border-t border-border-default">
-                <div className="flex items-center justify-between">
+              {/* Partner White-Labeling Panel */}
+              <div className="pt-6 border-t border-border-default">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <label className="block text-text-secondary font-medium text-xs">
-                      Executive Report Logo
-                    </label>
-                    <p className="text-2xs text-text-faint">
-                      Upload PNG or JPG image for branded executive PDF audit reports.
+                    <h3 className="text-sm font-semibold text-text-primary">Partner White-Labeling</h3>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      Customize executive reports with your agency branding, accent colors, and attribution.
                     </p>
                   </div>
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-2xs font-mono uppercase bg-bg-hover text-text-secondary border border-border-strong/60">
@@ -340,60 +348,151 @@ export default function SettingsPage() {
                   </span>
                 </div>
 
-                <div className="py-4 border-b border-border-default flex flex-col sm:flex-row items-center gap-4">
-                  {logoPreview ? (
-                    <div className="relative group w-28 h-20 bg-[#0e0e10] border border-border-default rounded-md overflow-hidden flex items-center justify-center p-2">
-                      <img 
-                        src={logoPreview} 
-                        alt="Company Logo Preview" 
-                        className="max-h-full max-w-full object-contain"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleRemoveLogo}
-                        title="Remove logo"
-                        className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center text-red-400 transition-opacity cursor-pointer"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                <div className="flex flex-col md:flex-row gap-8 items-start">
+                  {/* Left: Controls */}
+                  <div className="flex-1 w-full space-y-6">
+                    {/* Logo Upload */}
+                    <div className="space-y-2">
+                      <label className="block text-text-secondary font-medium text-xs">Agency Logo</label>
+                      <div className="flex items-center gap-4">
+                        {logoPreview ? (
+                          <div className="relative group w-28 h-20 bg-white border border-border-default rounded-md overflow-hidden flex items-center justify-center p-2">
+                            <img 
+                              src={logoPreview} 
+                              alt="Agency Logo" 
+                              className="max-h-full max-w-full object-contain"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRemoveLogo}
+                              title="Remove logo"
+                              className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center text-red-400 transition-opacity cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-28 h-20 bg-[#0e0e10] border border-dashed border-border-default rounded-md flex flex-col items-center justify-center text-text-faint gap-1">
+                            <ImageIcon className="w-5 h-5 text-text-faint" />
+                            <span className="text-2xs font-mono">No Logo</span>
+                          </div>
+                        )}
+                        <div className="flex-1 space-y-2">
+                          <input 
+                            type="file" 
+                            ref={fileInputRef}
+                            onChange={handleLogoChange}
+                            accept="image/png, image/jpeg, image/jpg" 
+                            className="hidden" 
+                          />
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="px-3 py-1.5 bg-border-strong hover:bg-border-strong text-text-secondary text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Upload className="w-3 h-3 text-text-muted" />
+                              {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                            </button>
+                            {logoPreview && (
+                              <button
+                                type="button"
+                                onClick={handleRemoveLogo}
+                                className="px-2.5 py-1.5 text-text-faint hover:text-red-400 text-xs transition-colors cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          <p className="text-2xs text-text-faint">
+                            Recommended: High-resolution PNG/JPG, min 400x120px.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="w-28 h-20 bg-[#0e0e10] border border-dashed border-border-default rounded-md flex flex-col items-center justify-center text-text-faint gap-1">
-                      <ImageIcon className="w-5 h-5 text-text-faint" />
-                      <span className="text-2xs font-mono">No Logo</span>
-                    </div>
-                  )}
 
-                  <div className="flex-1 space-y-2">
-                    <input 
-                      type="file" 
-                      ref={fileInputRef}
-                      onChange={handleLogoChange}
-                      accept="image/png, image/jpeg, image/jpg" 
-                      className="hidden" 
-                    />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-3 py-1.5 bg-border-strong hover:bg-border-strong text-text-secondary text-xs font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Upload className="w-3 h-3 text-text-muted" />
-                        {logoPreview ? 'Change Logo' : 'Upload Logo (PNG/JPG)'}
-                      </button>
-                      {logoPreview && (
-                        <button
-                          type="button"
-                          onClick={handleRemoveLogo}
-                          className="px-2.5 py-1.5 text-text-faint hover:text-red-400 text-xs transition-colors cursor-pointer"
-                        >
-                          Remove
-                        </button>
-                      )}
+                    {/* Accent Color */}
+                    <div className="space-y-2">
+                      <label className="block text-text-secondary font-medium text-xs">Report Accent Color</label>
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <input
+                            type="color"
+                            value={accentColor}
+                            onChange={(e) => setAccentColor(e.target.value)}
+                            className="w-8 h-8 rounded cursor-pointer border-0 p-0 overflow-hidden bg-transparent shrink-0"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value={accentColor}
+                          onChange={(e) => setAccentColor(e.target.value)}
+                          className="w-28 px-3 py-1.5 bg-bg-surface border border-border-default rounded-md text-xs font-mono text-text-secondary focus:outline-none focus:border-border-strong uppercase"
+                          placeholder="#10B981"
+                        />
+                      </div>
+                      <p className="text-2xs text-text-faint">Used for charts, borders, and section headers in the PDF.</p>
                     </div>
-                    <p className="text-2xs text-text-faint">
-                      Recommended: High-resolution transparent PNG, minimum 400x120px.
-                    </p>
+
+                    {/* Prepared By Toggle */}
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <div className="relative">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={showPreparedBy}
+                            onChange={(e) => setShowPreparedBy(e.target.checked)}
+                          />
+                          <div className={cn("block w-9 h-5 rounded-full transition-colors", showPreparedBy ? "bg-accent" : "bg-border-strong")}></div>
+                          <div className={cn("dot absolute left-1 top-1 bg-white w-3 h-3 rounded-full transition-transform", showPreparedBy ? "transform translate-x-4" : "")}></div>
+                        </div>
+                        <span className="text-text-secondary font-medium text-xs">
+                          Show "Prepared by {orgName || 'Acme'}"
+                        </span>
+                      </label>
+                      <p className="text-2xs text-text-faint ml-12">
+                        Includes a branded attribution footer on the cover page.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: PDF Live Preview */}
+                  <div className="flex-1 w-full bg-[#1e1e24] p-4 rounded-xl border border-border-strong flex items-center justify-center relative overflow-hidden">
+                    {/* Mock PDF Document */}
+                    <div className="w-full max-w-[280px] bg-white aspect-[1/1.414] rounded shadow-2xl relative flex flex-col p-6 font-sans select-none overflow-hidden transform transition-all duration-500 hover:scale-105">
+                      {/* PDF Top Color Bar */}
+                      <div className="absolute top-0 left-0 w-full h-2 transition-colors duration-300" style={{ backgroundColor: accentColor }}></div>
+                      
+                      {/* PDF Header / Logo */}
+                      <div className="mt-8 mb-12 flex justify-start h-8">
+                        {logoPreview ? (
+                          <img src={logoPreview} alt="Logo" className="max-h-full max-w-[120px] object-contain opacity-90 filter grayscale contrast-125" />
+                        ) : (
+                          <div className="h-full w-24 bg-gray-200 rounded animate-pulse"></div>
+                        )}
+                      </div>
+                      
+                      {/* PDF Title */}
+                      <div className="flex-1">
+                        <h2 className="text-gray-900 text-lg font-bold leading-tight mb-2">External Risk<br />Assessment</h2>
+                        <p className="text-gray-500 text-[10px]">Target: example.com</p>
+                        
+                        {/* Mock chart placeholder */}
+                        <div className="mt-6 border-l-2 pl-3 py-1 transition-colors duration-300" style={{ borderColor: accentColor }}>
+                          <div className="text-gray-800 text-[9px] font-semibold mb-1">Overall Posture</div>
+                          <div className="w-3/4 h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full transition-colors duration-300 w-[72%]" style={{ backgroundColor: accentColor }}></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* PDF Footer Attribution */}
+                      <div className={cn("text-[8px] text-gray-400 flex items-center gap-1.5 transition-opacity duration-300", showPreparedBy ? "opacity-100" : "opacity-0")}>
+                        <Shield className="w-2.5 h-2.5 text-gray-400" />
+                        Prepared by {orgName || 'Acme CyberCorp'}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

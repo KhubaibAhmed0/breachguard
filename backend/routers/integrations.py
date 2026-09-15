@@ -89,6 +89,8 @@ async def get_integrations(
         "siem_webhook_url": org.siem_webhook_url or "",
         "logo_path": org.logo_path or "",
         "logo_url": logo_url or "",
+        "accent_color": org.accent_color or "#10b981",
+        "show_prepared_by": org.show_prepared_by if org.show_prepared_by is not None else True,
         "is_msp": bool(org.is_msp),
         "plan": org.plan or "essential"
     }
@@ -116,6 +118,10 @@ async def update_integrations(
     if req.siem_webhook_url is not None:
         url = req.siem_webhook_url.strip()
         org.siem_webhook_url = validate_url_for_ssrf(url, resolve_dns=False) if url else None
+    if req.accent_color is not None:
+        org.accent_color = req.accent_color.strip()
+    if req.show_prepared_by is not None:
+        org.show_prepared_by = req.show_prepared_by
 
     await db.commit()
     await db.refresh(org)
@@ -124,6 +130,8 @@ async def update_integrations(
         "status": "success",
         "slack_webhook_url": org.slack_webhook_url,
         "siem_webhook_url": org.siem_webhook_url,
+        "accent_color": org.accent_color,
+        "show_prepared_by": org.show_prepared_by,
         "message": "Integrations updated successfully"
     }
 

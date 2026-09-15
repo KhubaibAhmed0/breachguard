@@ -300,6 +300,8 @@ export function useIntegrationsSettings() {
           slack_webhook_url: '',
           siem_webhook_url: '',
           logo_url: '',
+          accent_color: '#10b981',
+          show_prepared_by: true,
         };
       }
     },
@@ -318,7 +320,7 @@ export function useTestSlackWebhook() {
 export function useUpdateIntegrations() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: { slack_webhook_url?: string; siem_webhook_url?: string }) => {
+    mutationFn: async (payload: { slack_webhook_url?: string; siem_webhook_url?: string; accent_color?: string; show_prepared_by?: boolean }) => {
       const res = await api.patch('/settings/integrations', payload);
       return res.data;
     },
@@ -397,6 +399,53 @@ export function useEmailSecurityOverview(domainId?: number) {
       return res.data;
     },
     staleTime: 1000 * 60 * 3,
+  });
+}
+
+export function useExportExposure() {
+  return useMutation({
+    mutationFn: async (id: string | number) => {
+      const res = await api.post(`/exposures/${id}/export`);
+      return res.data;
+    },
+  });
+}
+
+export function useFixExposure() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string | number) => {
+      const res = await api.post(`/exposures/${id}/fix`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['exposures'] });
+      queryClient.invalidateQueries({ queryKey: ['exposureStats'] });
+    },
+  });
+}
+
+export function useExportFinding() {
+  return useMutation({
+    mutationFn: async (id: string | number) => {
+      const res = await api.post(`/findings/${id}/export`);
+      return res.data;
+    },
+  });
+}
+
+export function useFixFinding() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string | number) => {
+      const res = await api.post(`/findings/${id}/fix`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['findings'] });
+      queryClient.invalidateQueries({ queryKey: ['attackSurfaceFindings'] });
+      queryClient.invalidateQueries({ queryKey: ['riskOverview'] });
+    },
   });
 }
 

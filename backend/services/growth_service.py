@@ -1,5 +1,8 @@
 import re
+import io
+import csv
 import json
+import httpx
 import asyncio
 import logging
 from datetime import datetime, timedelta
@@ -537,3 +540,141 @@ Feel free to bookmark this cheat sheet!""",
         "target_subreddit": "r/cybersecurity"
     }
 ]
+
+
+# ==============================================================================
+# GOOGLE SHEETS LIVE RECONNAISSANCE SYNC ENGINE
+# ==============================================================================
+
+def extract_google_sheet_export_url(url_or_id: str) -> str:
+    """
+    Extracts or normalizes a Google Sheets URL into its direct CSV export stream endpoint.
+    Handles:
+    - https://docs.google.com/spreadsheets/d/{ID}/edit...
+    - https://docs.google.com/spreadsheets/d/{ID}/export?format=csv
+    - https://docs.google.com/spreadsheets/d/e/{ID}/pubhtml / pub?output=csv
+    - Raw sheet ID
+    """
+    cleaned = url_or_id.strip()
+    if "/d/e/" in cleaned:
+        if "pub" in cleaned and "output=csv" not in cleaned:
+            return re.sub(r"/pub.*$", "/pub?output=csv", cleaned)
+        elif not cleaned.endswith("output=csv"):
+            separator = "&" if "?" in cleaned else "?"
+            return f"{cleaned}{separator}output=csv"
+        return cleaned
+
+    match = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", cleaned)
+    if match:
+        sheet_id = match.group(1)
+        # Also check for gid (specific sheet tab)
+        gid_match = re.search(r"[#&?]gid=([0-9]+)", cleaned)
+        gid_param = f"&gid={gid_match.group(1)}" if gid_match else ""
+        return f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv{gid_param}"
+
+    # If raw ID
+    if len(cleaned) > 20 and "/" not in cleaned and " " not in cleaned:
+        return f"https://docs.google.com/spreadsheets/d/{cleaned}/export?format=csv"
+
+    return cleaned
+
+
+async def fetch_google_sheet_rows(sheet_url: str) -> List[Dict[str, str]]:
+    """
+    Fetches rows directly from a Google Sheet share link or published CSV.
+    Uses smart column header recognition to map:
+    - company_name
+    - domain
+    - contact_email
+    - contact_name
+    """
+    export_url = extract_google_sheet_export_url(sheet_url)
+    logger.info(f"Fetching Google Sheet CSV stream from: {export_url}")
+
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) BreachGuard-Outreach-Engine/2.0"
+        }
+        try:
+            res = await client.get(export_url, headers=headers)
+        except Exception as net_err:
+            raise ValueError(f"Could not connect to Google Sheets URL: {str(net_err)}")
+
+        if res.status_code != 200:
+            raise ValueError(
+                f"Google Sheets returned HTTP {res.status_code}. Please ensure the sheet's General Access is set to 'Anyone with the link can view'."
+            )
+        
+        content_type = res.headers.get("content-type", "").lower()
+        if "html" in content_type and ("<html" in res.text.lower() or "accounts.google.com" in res.text.lower()):
+            raise ValueError(
+                "Received Google login page instead of CSV data. Please verify the Google Sheet sharing setting is set to 'Anyone with the link can view'."
+            )
+        
+        csv_text = res.text
+
+    # Parse CSV content
+    f = io.StringIO(csv_text.strip())
+    reader = csv.reader(f)
+    try:
+        header_row = next(reader)
+    except StopIteration:
+        return []
+
+    # Map column positions dynamically
+    col_map = {"company_name": -1, "domain": -1, "contact_email": -1, "contact_name": -1}
+
+    for idx, col in enumerate(header_row):
+        c_clean = col.lower().strip()
+        if col_map["company_name"] == -1 and any(k in c_clean for k in ["company", "org", "business", "client", "firm", "account"]):
+            col_map["company_name"] = idx
+        elif col_map["domain"] == -1 and any(k in c_clean for k in ["domain", "website", "url", "web", "host"]):
+            col_map["domain"] = idx
+        elif col_map["contact_email"] == -1 and any(k in c_clean for k in ["email", "mail"]):
+            col_map["contact_email"] = idx
+        elif col_map["contact_name"] == -1 and any(k in c_clean for k in ["contact name", "contact", "founder", "lead", "person", "ceo", "first name", "name"]):
+            col_map["contact_name"] = idx
+
+    # If domain or email wasn't found by explicit name, fallback to positional if at least 3 columns
+    if col_map["domain"] == -1 and len(header_row) >= 2:
+        col_map["domain"] = 1
+    if col_map["company_name"] == -1 and len(header_row) >= 1:
+        col_map["company_name"] = 0
+    if col_map["contact_email"] == -1 and len(header_row) >= 3:
+        col_map["contact_email"] = 2
+    if col_map["contact_name"] == -1 and len(header_row) >= 4:
+        col_map["contact_name"] = 3
+
+    parsed_rows = []
+    for row in reader:
+        if not row or not any(field.strip() for field in row):
+            continue
+
+        raw_company = row[col_map["company_name"]].strip() if col_map["company_name"] >= 0 and len(row) > col_map["company_name"] else ""
+        raw_domain = row[col_map["domain"]].strip() if col_map["domain"] >= 0 and len(row) > col_map["domain"] else ""
+        raw_email = row[col_map["contact_email"]].strip() if col_map["contact_email"] >= 0 and len(row) > col_map["contact_email"] else ""
+        raw_name = row[col_map["contact_name"]].strip() if col_map["contact_name"] >= 0 and len(row) > col_map["contact_name"] else ""
+
+        # Normalize domain
+        clean_domain = raw_domain.lower()
+        clean_domain = re.sub(r"^https?://", "", clean_domain).split("/")[0].split(":")[0].strip()
+        if clean_domain.startswith("www."):
+            clean_domain = clean_domain[4:]
+
+        # Validate domain and email
+        if not clean_domain or "." not in clean_domain or len(clean_domain) < 3:
+            continue
+        if not raw_email or "@" not in raw_email or "." not in raw_email:
+            continue
+
+        if not raw_company:
+            raw_company = clean_domain.split(".")[0].capitalize()
+
+        parsed_rows.append({
+            "company_name": raw_company,
+            "domain": clean_domain,
+            "contact_email": raw_email.lower(),
+            "contact_name": raw_name or None
+        })
+
+    return parsed_rows

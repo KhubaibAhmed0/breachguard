@@ -146,3 +146,19 @@ export interface GrowthStats {
   total_social_posts: number;
   published_social_posts: number;
 }
+
+export interface GoogleSheetConfig {
+  sheet_url: string;
+  auto_scan?: boolean;
+  last_synced_at?: string | null;
+}
+
+export interface GoogleSheetSyncResult {
+  status: string;
+  message: string;
+  total_rows_found: number;
+  new_leads_added: number;
+  duplicates_skipped: number;
+  scanned_count: number;
+  last_synced_at?: string | null;
+}

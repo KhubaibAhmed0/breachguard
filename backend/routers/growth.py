@@ -14,14 +14,15 @@ from core.database import get_db, Base, engine
 from core.config import settings
 from routers.deps import get_current_user
 from models.user import User
-from models.growth import OutreachLead, SocialPost
+from models.growth import OutreachLead, SocialPost, GrowthSetting
 from services.growth_service import (
     run_passive_reconnaissance,
     generate_cold_email_copy,
     render_outreach_html,
     enforce_rate_throttle,
     RateThrottleException,
-    DEFAULT_SOCIAL_POSTS
+    DEFAULT_SOCIAL_POSTS,
+    fetch_google_sheet_rows
 )
 from services.email_service import send_email
 
@@ -89,6 +90,14 @@ class SocialPostUpdate(BaseModel):
     target_subreddit: Optional[str] = None
     status: Optional[str] = None
     scheduled_for: Optional[datetime] = None
+
+class GoogleSheetConfig(BaseModel):
+    sheet_url: str
+    auto_scan: Optional[bool] = True
+
+class GoogleSheetSyncRequest(BaseModel):
+    sheet_url: Optional[str] = None
+    auto_scan: Optional[bool] = None
 
 # Ensure tables exist
 async def ensure_growth_tables():
@@ -789,3 +798,202 @@ async def delete_social_post(
     await db.delete(post)
     await db.commit()
     return {"status": "success", "message": "Social post deleted"}
+
+
+# ==============================================================================
+# Google Sheets Live Reconnaissance Sync Endpoints
+# ==============================================================================
+
+@router.get("/sheets/config")
+async def get_google_sheet_config(
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    await ensure_growth_tables()
+    res = await db.execute(select(GrowthSetting).where(GrowthSetting.key == "google_sheet_config"))
+    setting = res.scalars().first()
+    if setting and setting.value:
+        try:
+            return json.loads(setting.value)
+        except Exception:
+            pass
+    return {
+        "sheet_url": "",
+        "auto_scan": True,
+        "last_synced_at": None
+    }
+
+
+@router.post("/sheets/config")
+async def save_google_sheet_config(
+    config_in: GoogleSheetConfig,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    await ensure_growth_tables()
+    res = await db.execute(select(GrowthSetting).where(GrowthSetting.key == "google_sheet_config"))
+    setting = res.scalars().first()
+    
+    config_data = {
+        "sheet_url": config_in.sheet_url.strip(),
+        "auto_scan": bool(config_in.auto_scan),
+        "last_synced_at": None
+    }
+    if setting and setting.value:
+        try:
+            existing = json.loads(setting.value)
+            config_data["last_synced_at"] = existing.get("last_synced_at")
+        except Exception:
+            pass
+
+    if not setting:
+        setting = GrowthSetting(key="google_sheet_config", value=json.dumps(config_data))
+        db.add(setting)
+    else:
+        setting.value = json.dumps(config_data)
+
+    await db.commit()
+    return {"status": "success", "config": config_data}
+
+
+@router.post("/sheets/sync")
+async def sync_google_sheet(
+    payload: Optional[GoogleSheetSyncRequest] = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    1-Click Google Sheets Sync:
+    1. Fetches CSV stream from the Google Sheet
+    2. Smart column auto-detection
+    3. Deduplicates against existing OutreachLeads
+    4. Auto-runs passive perimeter reconnaissance & copy generation on new leads
+    """
+    await ensure_growth_tables()
+
+    # Determine sheet_url and auto_scan preference
+    sheet_url = payload.sheet_url if payload and payload.sheet_url else None
+    auto_scan = payload.auto_scan if payload and payload.auto_scan is not None else None
+
+    # Load stored config if missing
+    res_cfg = await db.execute(select(GrowthSetting).where(GrowthSetting.key == "google_sheet_config"))
+    setting = res_cfg.scalars().first()
+    stored_data = {}
+    if setting and setting.value:
+        try:
+            stored_data = json.loads(setting.value)
+        except Exception:
+            pass
+
+    if not sheet_url:
+        sheet_url = stored_data.get("sheet_url")
+    if auto_scan is None:
+        auto_scan = stored_data.get("auto_scan", True)
+
+    if not sheet_url or not sheet_url.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="No Google Sheet URL provided or configured. Please enter your Google Sheet share link."
+        )
+
+    # Fetch rows from Google Sheet
+    try:
+        rows = await fetch_google_sheet_rows(sheet_url)
+    except ValueError as val_err:
+        raise HTTPException(status_code=400, detail=str(val_err))
+    except Exception as e:
+        logger.error(f"Error fetching Google Sheet: {e}")
+        raise HTTPException(status_code=502, detail=f"Failed to fetch rows from Google Sheet: {str(e)}")
+
+    if not rows:
+        return {
+            "status": "success",
+            "message": "Google Sheet accessed, but no valid prospect rows with email/domain were found.",
+            "total_rows_found": 0,
+            "new_leads_added": 0,
+            "duplicates_skipped": 0,
+            "scanned_count": 0
+        }
+
+    # Fetch existing domains in DB for deduplication
+    existing_res = await db.execute(select(OutreachLead.domain))
+    existing_domains = set(d.lower() for d in existing_res.scalars().all())
+
+    new_leads = []
+    duplicates_count = 0
+
+    for item in rows:
+        dom = item["domain"]
+        if dom in existing_domains:
+            duplicates_count += 1
+            continue
+
+        lead = OutreachLead(
+            company_name=item["company_name"],
+            domain=dom,
+            contact_email=item["contact_email"],
+            contact_name=item.get("contact_name"),
+            email_angle="dmarc_spoofing",
+            status="pending_scan"
+        )
+        db.add(lead)
+        new_leads.append(lead)
+        existing_domains.add(dom)
+
+    await db.commit()
+
+    scanned_count = 0
+    if auto_scan and new_leads:
+        for lead in new_leads:
+            try:
+                await db.refresh(lead)
+                recon = await run_passive_reconnaissance(lead.domain)
+                lead.risk_score = recon["risk_score"]
+                lead.risk_level = recon["risk_level"]
+                lead.dmarc_status = recon["dmarc_status"]
+                lead.dmarc_record = recon["dmarc_record"]
+                lead.exposed_ports = json.dumps(recon["exposed_ports"])
+                lead.subdomains_count = recon["subdomains_count"]
+                lead.breach_count = recon["breach_count"]
+                lead.breach_sources = json.dumps(recon["breach_sources"])
+                lead.top_findings = json.dumps(recon["top_findings"])
+
+                lead_dict = {
+                    "company_name": lead.company_name,
+                    "domain": lead.domain,
+                    "contact_name": lead.contact_name,
+                    "dmarc_status": lead.dmarc_status,
+                    "exposed_ports": recon["exposed_ports"],
+                    "breach_count": lead.breach_count,
+                    "subdomains_count": lead.subdomains_count,
+                    "risk_score": lead.risk_score
+                }
+                subject, body = generate_cold_email_copy(lead_dict, angle=lead.email_angle)
+                lead.email_subject = subject
+                lead.email_body = body
+                lead.status = "ready"
+                scanned_count += 1
+                await db.commit()
+            except Exception as scan_err:
+                logger.warning(f"Passive scan failed on synced domain {lead.domain}: {scan_err}")
+
+    # Update last_synced_at in settings
+    stored_data["sheet_url"] = sheet_url
+    stored_data["auto_scan"] = auto_scan
+    stored_data["last_synced_at"] = datetime.utcnow().isoformat()
+    if not setting:
+        setting = GrowthSetting(key="google_sheet_config", value=json.dumps(stored_data))
+        db.add(setting)
+    else:
+        setting.value = json.dumps(stored_data)
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Synced {len(new_leads)} new leads from Google Sheet ({duplicates_count} duplicates skipped).",
+        "total_rows_found": len(rows),
+        "new_leads_added": len(new_leads),
+        "duplicates_skipped": duplicates_count,
+        "scanned_count": scanned_count,
+        "last_synced_at": stored_data["last_synced_at"]
+    }

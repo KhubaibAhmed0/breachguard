@@ -24,7 +24,7 @@ from core.database import AsyncSessionLocal
 
 client = TestClient(app)
 
-async def test_growth_api():
+def test_growth_api():
     print("================================================================================")
     print("[*] TESTING FOUNDER GROWTH HUB API ENDPOINTS & ACCESS CONTROL")
     print("================================================================================")
@@ -111,12 +111,29 @@ async def test_growth_api():
     assert res_del.status_code == 200, f"Expected 200, got {res_del.status_code}"
     print("  [PASS] Test lead deleted")
 
+    # Test 8: Google Sheets Config Save & Retrieve
+    print("\n[TEST 8] Testing Google Sheets configuration endpoints...")
+    cfg_payload = {
+        "sheet_url": "https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+        "auto_scan": True
+    }
+    res_save_cfg = client.post("/api/admin/growth/sheets/config", json=cfg_payload)
+    assert res_save_cfg.status_code == 200, f"Expected 200, got {res_save_cfg.status_code}: {res_save_cfg.text}"
+    print("  [PASS] Google Sheet configuration saved")
+
+    res_get_cfg = client.get("/api/admin/growth/sheets/config")
+    assert res_get_cfg.status_code == 200, f"Expected 200, got {res_get_cfg.status_code}: {res_get_cfg.text}"
+    loaded_cfg = res_get_cfg.json()
+    assert loaded_cfg["sheet_url"] == cfg_payload["sheet_url"]
+    assert loaded_cfg["auto_scan"] is True
+    print(f"  [PASS] Google Sheet configuration verified: {loaded_cfg['sheet_url']}")
+
     # Clean up overrides
     app.dependency_overrides.clear()
 
     print("\n================================================================================")
-    print("[SUCCESS] ALL FOUNDER GROWTH HUB API VERIFICATION GATES PASSED (7/7)!")
+    print("[SUCCESS] ALL FOUNDER GROWTH HUB API VERIFICATION GATES PASSED (8/8)!")
     print("================================================================================")
 
 if __name__ == "__main__":
-    asyncio.run(test_growth_api())
+    test_growth_api()

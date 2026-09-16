@@ -8,4 +8,4 @@ from models.scan_job import ScanJob
 from models.api_key import ApiKey
 from models.finding import Finding
 from models.asset import DiscoveredAsset, EmailSecurityAssessment, RiskAssessment
-from models.growth import OutreachLead, SocialPost
+from models.growth import OutreachLead, SocialPost, GrowthSetting

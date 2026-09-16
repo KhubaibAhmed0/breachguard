@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { API_BASE_URL } from '@/lib/api';
-import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity, OutreachLead, SocialPost, GrowthStats } from '@/types';
+import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity, OutreachLead, SocialPost, GrowthStats, GoogleSheetConfig, GoogleSheetSyncResult } from '@/types';
 
 export function useDomains() {
   return useQuery<Domain[]>({
@@ -659,6 +659,44 @@ export function useSeedSocialPosts() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['growthSocial'] });
       queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useGoogleSheetConfig() {
+  return useQuery<GoogleSheetConfig>({
+    queryKey: ['googleSheetConfig'],
+    queryFn: async () => {
+      const res = await api.get('/admin/growth/sheets/config');
+      return res.data;
+    },
+  });
+}
+
+export function useSaveGoogleSheetConfig() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: GoogleSheetConfig) => {
+      const res = await api.post('/admin/growth/sheets/config', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['googleSheetConfig'] });
+    },
+  });
+}
+
+export function useSyncGoogleSheet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data?: { sheet_url?: string; auto_scan?: boolean }) => {
+      const res = await api.post('/admin/growth/sheets/sync', data || {});
+      return res.data as GoogleSheetSyncResult;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+      queryClient.invalidateQueries({ queryKey: ['googleSheetConfig'] });
     },
   });
 }

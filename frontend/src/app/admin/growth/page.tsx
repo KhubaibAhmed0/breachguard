@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,7 +19,10 @@ import {
   useCreateSocialPost, 
   useUpdateSocialPost, 
   useDeleteSocialPost,
-  useSeedSocialPosts
+  useSeedSocialPosts,
+  useGoogleSheetConfig,
+  useSaveGoogleSheetConfig,
+  useSyncGoogleSheet
 } from '@/hooks/useApi';
 import { OutreachLead, SocialPost } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
@@ -28,7 +31,8 @@ import {
   Trash2, CheckCircle2, AlertTriangle, ShieldAlert, Globe, 
   ExternalLink, Sparkles, Copy, MessageSquare, 
   Clock, Check, Loader2, X, ChevronRight, BarChart3, 
-  Flame, ShieldCheck, FileText, ArrowUpRight, Filter
+  Flame, ShieldCheck, FileText, ArrowUpRight, Filter,
+  FileSpreadsheet
 } from 'lucide-react';
 
 function XTwitterIcon({ className }: { className?: string }) {
@@ -50,9 +54,14 @@ export default function GrowthAdminPage() {
   // Modals state
   const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [isGoogleSheetModalOpen, setIsGoogleSheetModalOpen] = useState(false);
   const [isEmailEditorOpen, setIsEmailEditorOpen] = useState(false);
   const [isAddSocialPostOpen, setIsAddSocialPostOpen] = useState(false);
   const [activeLead, setActiveLead] = useState<OutreachLead | null>(null);
+
+  // Google Sheets state
+  const [sheetUrlInput, setSheetUrlInput] = useState('');
+  const [sheetAutoScan, setSheetAutoScan] = useState(true);
 
   // Form states - Single Lead
   const [companyName, setCompanyName] = useState('');
@@ -107,6 +116,19 @@ export default function GrowthAdminPage() {
   const updateSocialMutation = useUpdateSocialPost();
   const deleteSocialMutation = useDeleteSocialPost();
   const seedSocialMutation = useSeedSocialPosts();
+
+  const { data: sheetConfig } = useGoogleSheetConfig();
+  const saveGoogleSheetMutation = useSaveGoogleSheetConfig();
+  const syncGoogleSheetMutation = useSyncGoogleSheet();
+
+  useEffect(() => {
+    if (sheetConfig?.sheet_url) {
+      setSheetUrlInput(sheetConfig.sheet_url);
+    }
+    if (sheetConfig?.auto_scan !== undefined) {
+      setSheetAutoScan(sheetConfig.auto_scan);
+    }
+  }, [sheetConfig]);
 
   // Handlers
   const handleCreateLead = async (e: React.FormEvent) => {
@@ -170,6 +192,47 @@ export default function GrowthAdminPage() {
       setIsBulkImportOpen(false);
     } catch (err: any) {
       showToast(err?.response?.data?.detail || 'Failed to import bulk CSV', 'error');
+    }
+  };
+
+  const handleSaveAndSyncSheet = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sheetUrlInput.trim()) return;
+    try {
+      await saveGoogleSheetMutation.mutateAsync({
+        sheet_url: sheetUrlInput.trim(),
+        auto_scan: sheetAutoScan,
+      });
+      const res = await syncGoogleSheetMutation.mutateAsync({
+        sheet_url: sheetUrlInput.trim(),
+        auto_scan: sheetAutoScan,
+      });
+      showToast(
+        `Google Sheet Synced! Added ${res.new_leads_added} new leads (${res.duplicates_skipped} existing, ${res.scanned_count} scanned).`,
+        'success'
+      );
+      setIsGoogleSheetModalOpen(false);
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || err?.message || 'Failed to sync Google Sheet', 'error');
+    }
+  };
+
+  const handleQuickSync = async () => {
+    if (!sheetConfig?.sheet_url) {
+      setIsGoogleSheetModalOpen(true);
+      return;
+    }
+    try {
+      const res = await syncGoogleSheetMutation.mutateAsync({
+        sheet_url: sheetConfig.sheet_url,
+        auto_scan: sheetConfig.auto_scan,
+      });
+      showToast(
+        `Sheet Synced: ${res.new_leads_added} added, ${res.duplicates_skipped} existing, ${res.scanned_count} scanned.`,
+        'success'
+      );
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || err?.message || 'Failed to sync Google Sheet', 'error');
     }
   };
 
@@ -346,6 +409,18 @@ export default function GrowthAdminPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              onClick={() => setIsGoogleSheetModalOpen(true)}
+              className="px-3.5 py-2 rounded-lg bg-bg-surface border border-emerald-500/30 hover:border-emerald-500/60 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+              title="Connect a live Google Sheet for automated lead intake"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Google Sheet Sync</span>
+              {sheetConfig?.sheet_url && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              )}
+            </button>
+            <button
+              type="button"
               onClick={() => setIsBulkImportOpen(true)}
               className="px-3.5 py-2 rounded-lg bg-bg-surface border border-border-default hover:border-border-strong text-xs font-medium text-text-secondary hover:text-text-primary transition-colors flex items-center gap-2 cursor-pointer"
             >
@@ -494,6 +569,18 @@ export default function GrowthAdminPage() {
               </div>
 
               <div className="flex items-center gap-2">
+                {sheetConfig?.sheet_url && (
+                  <button
+                    type="button"
+                    onClick={handleQuickSync}
+                    disabled={syncGoogleSheetMutation.isPending}
+                    className="px-3 py-1.5 rounded-md bg-emerald-950/40 border border-emerald-500/40 hover:border-emerald-500 text-xs text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    title="Pull latest rows from connected Google Sheet"
+                  >
+                    <FileSpreadsheet className={cn("w-3.5 h-3.5", syncGoogleSheetMutation.isPending && "animate-spin")} />
+                    <span>{syncGoogleSheetMutation.isPending ? 'Syncing...' : 'Sync Sheet'}</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => scanAllMutation.mutate()}
@@ -1122,6 +1209,110 @@ export default function GrowthAdminPage() {
                     </>
                   ) : (
                     'Import Leads'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Google Sheets Sync */}
+      {isGoogleSheetModalOpen && (
+        <div className="fixed inset-0 z-50 bg-bg-overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-bg-base border border-border-default rounded-xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Google Sheets Intake &amp; Sync</h3>
+                  <p className="text-[11px] text-text-faint">Direct live spreadsheet sync — zero API credentials required</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsGoogleSheetModalOpen(false)} 
+                className="text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Quick Setup Instructions */}
+            <div className="mt-4 p-3 rounded-lg bg-bg-surface border border-border-default text-xs space-y-2">
+              <div className="text-text-secondary font-medium flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span>How to link your Google Sheet:</span>
+              </div>
+              <ol className="list-decimal list-inside space-y-1 text-text-muted text-[11px] leading-relaxed">
+                <li>Open your Google Sheet and click the green <strong className="text-text-primary font-medium">Share</strong> button.</li>
+                <li>Under General access, select <strong className="text-text-primary font-medium">"Anyone with the link"</strong> (Viewer).</li>
+                <li>Copy the link and paste it into the field below.</li>
+              </ol>
+              <div className="pt-1 text-[10px] text-text-faint font-mono">
+                Detected columns: Company Name, Domain, Contact Email, Contact Name
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveAndSyncSheet} className="mt-4 space-y-3.5 text-xs">
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">
+                  Google Sheet Shareable URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5.../edit?usp=sharing"
+                  value={sheetUrlInput}
+                  onChange={(e) => setSheetUrlInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary font-mono text-xs focus:outline-none focus:border-border-strong"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="sheet_auto_scan"
+                  checked={sheetAutoScan}
+                  onChange={(e) => setSheetAutoScan(e.target.checked)}
+                  className="rounded border-border-default text-accent focus:ring-accent cursor-pointer"
+                />
+                <label htmlFor="sheet_auto_scan" className="text-text-secondary cursor-pointer">
+                  Auto-run passive vulnerability audit on newly synced leads
+                </label>
+              </div>
+
+              {sheetConfig?.last_synced_at && (
+                <div className="text-[11px] text-text-muted flex items-center gap-1.5 pt-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>Last synced: {formatDate(sheetConfig.last_synced_at)}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-default">
+                <button
+                  type="button"
+                  onClick={() => setIsGoogleSheetModalOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={syncGoogleSheetMutation.isPending || saveGoogleSheetMutation.isPending}
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {syncGoogleSheetMutation.isPending || saveGoogleSheetMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Syncing Leads...</span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Save &amp; Sync Now</span>
+                    </>
                   )}
                 </button>
               </div>

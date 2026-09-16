@@ -70,7 +70,7 @@ def test_growth_api():
     lead_payload = {
         "company_name": "Inaequo Solutions",
         "domain": "inaequosolutions.com",
-        "contact_email": "founder@inaequosolutions.com",
+        "contact_email": "khubbiahmed@gmail.com",
         "contact_name": "Founder",
         "email_angle": "dmarc_spoofing",
         "auto_scan": False

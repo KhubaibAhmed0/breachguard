@@ -32,7 +32,7 @@ from services.intent_radar_service import (
     export_signals_to_csv,
     push_signal_to_google_sheet_webhook
 )
-from services.email_service import send_email
+from services.email_service import send_email, send_email_with_details
 
 logger = logging.getLogger("breachguard.growth.router")
 
@@ -611,25 +611,33 @@ async def send_lead_email(
     html_content = render_outreach_html(lead_dict, lead.email_subject, lead.email_body)
 
     # 3. Dispatch via Resend / SMTP
-    success = await send_email(
+    dispatch = await send_email_with_details(
         to_email=lead.contact_email,
         subject=lead.email_subject,
         html_body=html_content,
         text_body=lead.email_body
     )
 
-    if success:
+    if dispatch["success"]:
         lead.status = "sent"
         lead.sent_at = datetime.utcnow()
         lead.delivery_status = "delivered"
-        lead.error_message = None
+        lead.error_message = f"Delivered via {dispatch['provider']} (ID: {dispatch.get('message_id')})"
         await db.commit()
-        return {"status": "success", "message": f"Email successfully dispatched to {lead.contact_email}"}
+        return {
+            "status": "success",
+            "message": f"Email successfully dispatched to {lead.contact_email}",
+            "provider": dispatch["provider"],
+            "message_id": dispatch.get("message_id")
+        }
     else:
         lead.delivery_status = "failed"
-        lead.error_message = "Resend / SMTP dispatch encountered an error."
+        lead.error_message = dispatch["error"] or "Resend / SMTP dispatch encountered an error."
         await db.commit()
-        raise HTTPException(status_code=502, detail="Failed to dispatch email via Resend integration.")
+        raise HTTPException(
+            status_code=400,
+            detail=dispatch["error"] or "Failed to dispatch email via Resend integration."
+        )
 
 
 @router.post("/leads/send-batch")
@@ -662,19 +670,21 @@ async def send_batch_ready_leads(
                 "risk_score": lead.risk_score or 60
             }
             html_content = render_outreach_html(lead_dict, lead.email_subject, lead.email_body)
-            success = await send_email(
+            dispatch = await send_email_with_details(
                 to_email=lead.contact_email,
                 subject=lead.email_subject,
                 html_body=html_content,
                 text_body=lead.email_body
             )
-            if success:
+            if dispatch["success"]:
                 lead.status = "sent"
                 lead.sent_at = datetime.utcnow()
                 lead.delivery_status = "delivered"
+                lead.error_message = f"Delivered via {dispatch['provider']} (ID: {dispatch.get('message_id')})"
                 sent_count += 1
             else:
                 lead.delivery_status = "failed"
+                lead.error_message = dispatch["error"] or "Dispatch failed"
                 failed_count += 1
             await db.commit()
         except Exception as e:

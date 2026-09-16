@@ -10,16 +10,17 @@ from core.config import settings
 
 logger = logging.getLogger("breachguard.email")
 
-async def send_email(to_email: str, subject: str, html_body: str, text_body: Optional[str] = None) -> bool:
+async def send_email_with_details(to_email: str, subject: str, html_body: str, text_body: Optional[str] = None) -> Dict[str, Any]:
     """
-    Dispatches transactional or alert email using:
+    Dispatches transactional or alert email with provider tracking and delivery audit:
     1. Resend REST API (preferred, fast, serverless-friendly, $0 tier - 3000 free/mo)
     2. Standard SMTP (Gmail, AWS SES, Postmark, Mailgun)
-    3. Safe Mock Logger (fallback in dev/test when credentials are unset)
+    3. Safe Mock Logger (fallback strictly in dev/test when credentials are unset)
     """
     clean_to = to_email.strip()
     clean_from = settings.FROM_EMAIL or "security@breachguard.io"
     plain_text = text_body or "This email requires an HTML-compatible email client to view."
+    last_resend_error = None
 
     # 1. Resend API
     if settings.RESEND_API_KEY:
@@ -40,10 +41,15 @@ async def send_email(to_email: str, subject: str, html_body: str, text_body: Opt
                     }
                 )
                 if res.status_code in (200, 201):
-                    logger.info(f"[EMAIL:RESEND] Dispatched successfully to {clean_to}")
-                    return True
-                elif res.status_code == 403 and "not verified" in res.text:
-                    # Automatic fallback to Resend verified sandbox address if custom domain is pending DNS verification
+                    msg_id = res.json().get("id")
+                    logger.info(f"[EMAIL:RESEND] Dispatched successfully to {clean_to} (ID: {msg_id})")
+                    return {"success": True, "provider": "resend", "message_id": msg_id, "error": None}
+
+                # Handle unverified domain fallback or sandbox mode
+                res_json = res.json() if res.headers.get("content-type", "").startswith("application/json") else {}
+                err_msg = res_json.get("message") or res.text
+
+                if res.status_code == 403 and "not verified" in res.text:
                     logger.info(f"[EMAIL:RESEND] {clean_from} not yet verified on Resend; retrying with onboarding@resend.dev sandbox")
                     retry_res = await client.post(
                         "https://api.resend.com/emails",
@@ -60,14 +66,20 @@ async def send_email(to_email: str, subject: str, html_body: str, text_body: Opt
                         }
                     )
                     if retry_res.status_code in (200, 201):
-                        logger.info(f"[EMAIL:RESEND] Dispatched successfully via sandbox to {clean_to}")
-                        return True
-                    else:
-                        logger.warning(f"[EMAIL:RESEND] Sandbox retry failed HTTP {retry_res.status_code}: {retry_res.text}")
+                        msg_id = retry_res.json().get("id")
+                        logger.info(f"[EMAIL:RESEND] Dispatched successfully via sandbox to {clean_to} (ID: {msg_id})")
+                        return {"success": True, "provider": "resend", "message_id": msg_id, "error": None}
+                    
+                    retry_json = retry_res.json() if retry_res.headers.get("content-type", "").startswith("application/json") else {}
+                    last_resend_error = retry_json.get("message") or retry_res.text
+                    logger.warning(f"[EMAIL:RESEND] Sandbox retry failed: {last_resend_error}")
                 else:
-                    logger.warning(f"[EMAIL:RESEND] Failed HTTP {res.status_code}: {res.text}")
+                    last_resend_error = err_msg
+                    logger.warning(f"[EMAIL:RESEND] Dispatch failed (HTTP {res.status_code}): {err_msg}")
+
         except Exception as e:
             logger.error(f"[EMAIL:RESEND] Network error dispatching to {clean_to}: {e}")
+            last_resend_error = str(e)
 
     # 2. Standard SMTP
     if settings.SMTP_HOST:
@@ -94,15 +106,34 @@ async def send_email(to_email: str, subject: str, html_body: str, text_body: Opt
         try:
             await asyncio.to_thread(_send_smtp_sync)
             logger.info(f"[EMAIL:SMTP] Dispatched successfully to {clean_to}")
-            return True
+            return {"success": True, "provider": "smtp", "message_id": None, "error": None}
         except Exception as e:
             logger.error(f"[EMAIL:SMTP] Error dispatching to {clean_to}: {e}")
 
-    # 3. Fallback / Dev Mock Logger
+    # If Resend API key was provided and it failed, and no working SMTP:
+    if settings.RESEND_API_KEY and last_resend_error:
+        if "only send testing emails to your own email address" in last_resend_error:
+            formatted_error = (
+                "Resend Sandbox Restriction: In unverified testing mode, emails can only be sent to your registered account "
+                "(khubbiahmed@gmail.com). To send to real client domains, please verify your custom domain at https://resend.com/domains."
+            )
+        else:
+            formatted_error = f"Resend Error: {last_resend_error}"
+        return {"success": False, "provider": "resend", "message_id": None, "error": formatted_error}
+
+    # 3. Dev mock fallback (only if credentials are unset)
     logger.info(
         f"[EMAIL:MOCK_DISPATCH] Simulated email delivery to: {clean_to} | Subject: '{subject}'"
     )
-    return True
+    return {"success": True, "provider": "mock", "message_id": "simulated_mock_dispatch", "error": None}
+
+
+async def send_email(to_email: str, subject: str, html_body: str, text_body: Optional[str] = None) -> bool:
+    """
+    Convenience wrapper for send_email_with_details returning boolean.
+    """
+    res = await send_email_with_details(to_email, subject, html_body, text_body)
+    return res["success"]
 
 # ==============================================================================
 # HTML EMAIL TEMPLATES (Enterprise Dark Mode)

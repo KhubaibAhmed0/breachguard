@@ -2112,7 +2112,7 @@ export default function GrowthAdminPage() {
               {/* Live Preview of Free Scanner CTA */}
               <div className="p-3 rounded-lg bg-bg-inset border border-border-default flex items-center justify-between">
                 <div className="text-2xs text-text-muted">
-                  Recipient CTA Target: <span className="font-mono text-accent">https://breachguard.io/?scan={activeLead.domain}</span>
+                  Recipient CTA Target: <span className="font-mono text-accent">{typeof window !== 'undefined' ? window.location.origin : 'https://breachguard-khubbiahmed-1955s-projects.vercel.app'}/?scan={activeLead.domain}</span>
                 </div>
                 <a
                   href={`/?scan=${activeLead.domain}`}

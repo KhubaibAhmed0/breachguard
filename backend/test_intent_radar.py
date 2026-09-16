@@ -53,7 +53,7 @@ def test_intent_radar():
     # 3. Test Suggested Social Reply Hook
     print("\n[TEST 3] Testing Value-First Social Reply Hook Generator...")
     reply = generate_suggested_reply("dmarc_spoofing", "CloudLogix", "cloudlogix.io", title)
-    assert "breachguard.io/?scan=cloudlogix.io" in reply
+    assert "scan=cloudlogix.io" in reply
     assert "DMARC" in reply
     print("  [PASS] Generated personalized, non-salesy social reply hook with scanner link")
 

@@ -209,7 +209,7 @@ Would you be open to a 5-minute chat this week on how we automate continuous per
 Best regards,
 Khubaib Ahmed
 Founder, BreachGuard Threat Intelligence
-https://breachguard.io"""
+{settings.FRONTEND_URL}"""
 
     elif angle == "open_ports":
         subject = f"Potential perimeter exposure on {domain}"
@@ -233,7 +233,7 @@ If you'd find it helpful, I'm happy to share our 1-page remediation playbook or 
 Best regards,
 Khubaib Ahmed
 Founder, BreachGuard Threat Intelligence
-https://breachguard.io"""
+{settings.FRONTEND_URL}"""
 
     else:  # executive_summary
         subject = f"External risk assessment for {domain} (Score: {risk_score}/100)"
@@ -258,7 +258,7 @@ Let me know if you'd like us to generate the full 12-page executive PDF report f
 Best regards,
 Khubaib Ahmed
 Founder, BreachGuard Threat Intelligence
-https://breachguard.io"""
+{settings.FRONTEND_URL}"""
 
     return subject, body.strip()
 
@@ -378,10 +378,10 @@ Here is why (and how to check your domain in 10 seconds): 🧵
 • Graduate your policy: p=none -> p=quarantine -> p=reject
 
 We built a free tool that runs this full passive email audit for your domain:
-👉 https://breachguard.io/?ref=x-dmarc-thread
+👉 https://breachguard-khubbiahmed-1955s-projects.vercel.app/?ref=x-dmarc-thread
 
 Drop your domain and see what your DMARC score actually looks like.""",
-        "call_to_action": "Audit your domain's DMARC status free: https://breachguard.io",
+        "call_to_action": "Audit your domain's DMARC status free: https://breachguard-khubbiahmed-1955s-projects.vercel.app",
         "target_subreddit": None
     },
     {
@@ -408,10 +408,10 @@ Teams publish a DMARC record to pass compliance checkboxes, set the policy to `p
 How to audit your perimeter:
 You don't need a $20k enterprise scanner to find these. You can inspect CT logs via crt.sh and test your email posture manually.
 
-Alternatively, we built an open community scanner at https://breachguard.io that bundles subdomain discovery, DMARC evaluation, and Shodan telemetry into a single 10-second report.
+Alternatively, we built an open community scanner at https://breachguard-khubbiahmed-1955s-projects.vercel.app that bundles subdomain discovery, DMARC evaluation, and Shodan telemetry into a single 10-second report.
 
 Curious: How often does your team audit external-facing subdomains?""",
-        "call_to_action": "Run a free perimeter check on BreachGuard: https://breachguard.io",
+        "call_to_action": "Run a free perimeter check on BreachGuard: https://breachguard-khubbiahmed-1955s-projects.vercel.app",
         "target_subreddit": "r/sysadmin"
     },
     {
@@ -439,8 +439,8 @@ The fix?
 • Monitor dark web intelligence feeds continuously for employee emails
 
 Check if any of your corporate credentials have been indexed:
-👉 https://breachguard.io/?ref=x-infostealers""",
-        "call_to_action": "Check your domain's exposure index: https://breachguard.io",
+👉 https://breachguard-khubbiahmed-1955s-projects.vercel.app/?ref=x-infostealers""",
+        "call_to_action": "Check your domain's exposure index: https://breachguard-khubbiahmed-1955s-projects.vercel.app",
         "target_subreddit": None
     },
     {
@@ -472,10 +472,10 @@ The pitch isn't "Buy our software." It's "We already identified these 3 issues o
 
 We automated this entire pipeline inside BreachGuard (with full white-labeling and PDF report generation).
 
-You can test the assessment engine free on your own domain: https://breachguard.io
+You can test the assessment engine free on your own domain: https://breachguard-khubbiahmed-1955s-projects.vercel.app
 
 What does your current outbound lead-qualification workflow look like for new clients?""",
-        "call_to_action": "Check out the passive assessment engine at https://breachguard.io",
+        "call_to_action": "Check out the passive assessment engine at https://breachguard-khubbiahmed-1955s-projects.vercel.app",
         "target_subreddit": "r/msp"
     },
     {
@@ -505,8 +505,8 @@ How to protect yourself:
 • Place all non-production environments behind an IP allowlist or Cloudflare Zero Trust tunnel.
 
 Run a free scan to see every subdomain currently visible for your domain:
-👉 https://breachguard.io/?ref=x-ct-logs""",
-        "call_to_action": "View your public subdomains: https://breachguard.io",
+👉 https://breachguard-khubbiahmed-1955s-projects.vercel.app/?ref=x-ct-logs""",
+        "call_to_action": "View your public subdomains: https://breachguard-khubbiahmed-1955s-projects.vercel.app",
         "target_subreddit": None
     },
     {
@@ -533,10 +533,10 @@ Here is a straightforward reference guide:
 • Crucial: If your policy is `p=none`, inboxes only report failures; they don't block them. You need `p=quarantine` or `p=reject` to stop spoofing cold.
 
 We built a free real-time DNS validator that tests your SPF lookup count, DKIM selectors, and DMARC alignment automatically:
-https://breachguard.io
+https://breachguard-khubbiahmed-1955s-projects.vercel.app
 
 Feel free to bookmark this cheat sheet!""",
-        "call_to_action": "Test your DNS email records: https://breachguard.io",
+        "call_to_action": "Test your DNS email records: https://breachguard-khubbiahmed-1955s-projects.vercel.app",
         "target_subreddit": "r/cybersecurity"
     }
 ]

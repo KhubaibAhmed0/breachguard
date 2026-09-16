@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     RESEND_API_KEY: Optional[str] = None
     FROM_EMAIL: str = "security@breachguard.io"
     VIRUSTOTAL_API_KEY: Optional[str] = None
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "https://breachguard-khubbiahmed-1955s-projects.vercel.app"
     CRON_SECRET: Optional[str] = None
     
     class Config:

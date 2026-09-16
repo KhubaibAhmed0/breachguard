@@ -67,7 +67,7 @@ PRESEEDED_SIGNALS = [
         "extracted_company": "CloudLogix",
         "extracted_domain": "cloudlogix.io",
         "extracted_email": "dave@cloudlogix.io",
-        "suggested_reply": "Hey Dave, you're hitting two classic blockers: 1) Google/Yahoo treat p=none as an unenforced policy, so any slight SPF/DKIM misalignment flags as spam. 2) The 10 DNS lookup limit breaks authentication when you stack marketing tools (HubSpot/Sendgrid). You can test your exact domain alignment passively using BreachGuard's free scanner (breachguard.io/?scan=cloudlogix.io) to see which subdomains are failing SPF alignment before switching to quarantine.",
+        "suggested_reply": "Hey Dave, you're hitting two classic blockers: 1) Google/Yahoo treat p=none as an unenforced policy, so any slight SPF/DKIM misalignment flags as spam. 2) The 10 DNS lookup limit breaks authentication when you stack marketing tools (HubSpot/Sendgrid). You can test your exact domain alignment passively using BreachGuard's free scanner (breachguard-khubbiahmed-1955s-projects.vercel.app/?scan=cloudlogix.io) to see which subdomains are failing SPF alignment before switching to quarantine.",
         "suggested_email_angle": "dmarc_spoofing"
     },
     {
@@ -83,7 +83,7 @@ PRESEEDED_SIGNALS = [
         "extracted_company": "Apex Managed IT",
         "extracted_domain": "apexmanagedit.com",
         "extracted_email": "brett@apexmanagedit.com",
-        "suggested_reply": "Brett, non-intrusive passive reconnaissance is the #1 conversion lever for MSP pitches because you don't need credentials or permission to map their public attack surface. You can run their domain through BreachGuard (breachguard.io) — it queries certificate transparency logs, Shodan InternetDB for open ports (22, 3389, 5432), and DMARC enforcement, then generates a branded executive scorecard you can hand to their CEO.",
+        "suggested_reply": "Brett, non-intrusive passive reconnaissance is the #1 conversion lever for MSP pitches because you don't need credentials or permission to map their public attack surface. You can run their domain through BreachGuard (breachguard-khubbiahmed-1955s-projects.vercel.app) — it queries certificate transparency logs, Shodan InternetDB for open ports (22, 3389, 5432), and DMARC enforcement, then generates a branded executive scorecard you can hand to their CEO.",
         "suggested_email_angle": "executive_summary"
     },
     {
@@ -115,7 +115,7 @@ PRESEEDED_SIGNALS = [
         "extracted_company": "Quantum Banking",
         "extracted_domain": "quantumbanking.co",
         "extracted_email": "alex@quantumbanking.co",
-        "suggested_reply": "Alex, Shodan and automated botnets scan the entire IPv4 space within 45 minutes of a port being opened. BreachGuard (breachguard.io/?scan=quantumbanking.co) runs passive external attack surface audits mapping all certificate transparency subdomains and listening administrative interfaces with automated risk scoring.",
+        "suggested_reply": "Alex, Shodan and automated botnets scan the entire IPv4 space within 45 minutes of a port being opened. BreachGuard (breachguard-khubbiahmed-1955s-projects.vercel.app/?scan=quantumbanking.co) runs passive external attack surface audits mapping all certificate transparency subdomains and listening administrative interfaces with automated risk scoring.",
         "suggested_email_angle": "open_ports"
     },
     {
@@ -131,7 +131,7 @@ PRESEEDED_SIGNALS = [
         "extracted_company": "Vortex Analytics",
         "extracted_domain": "vortexanalytics.com",
         "extracted_email": "eli@vortexanalytics.com",
-        "suggested_reply": "Eli, enterprise CISOs typically look at external signals to verify if what you wrote on the questionnaire matches reality: 1) Does your domain have DMARC p=reject? 2) Are there exposed ports on your apex domain or staging subdomains? You can generate an instant executive perimeter scorecard at breachguard.io to verify your external posture.",
+        "suggested_reply": "Eli, enterprise CISOs typically look at external signals to verify if what you wrote on the questionnaire matches reality: 1) Does your domain have DMARC p=reject? 2) Are there exposed ports on your apex domain or staging subdomains? You can generate an instant executive perimeter scorecard at breachguard-khubbiahmed-1955s-projects.vercel.app to verify your external posture.",
         "suggested_email_angle": "dmarc_spoofing"
     },
     {
@@ -147,7 +147,7 @@ PRESEEDED_SIGNALS = [
         "extracted_company": "Vector Logistics",
         "extracted_domain": "vectorlogistics.net",
         "extracted_email": "mark@vectorlogistics.net",
-        "suggested_reply": "Mark, this is classic Business Email Compromise (BEC). Without a DMARC policy (p=reject or p=quarantine), any external mail server can put your CEO's address in the From: header and Outlook will render their name with zero warning. You can audit vectorlogistics.net's exact DMARC and SPF alignment at breachguard.io/?scan=vectorlogistics.net.",
+        "suggested_reply": "Mark, this is classic Business Email Compromise (BEC). Without a DMARC policy (p=reject or p=quarantine), any external mail server can put your CEO's address in the From: header and Outlook will render their name with zero warning. You can audit vectorlogistics.net's exact DMARC and SPF alignment at breachguard-khubbiahmed-1955s-projects.vercel.app/?scan=vectorlogistics.net.",
         "suggested_email_angle": "dmarc_spoofing"
     },
     {
@@ -163,7 +163,7 @@ PRESEEDED_SIGNALS = [
         "extracted_company": "Delta IT Solutions",
         "extracted_domain": "deltaitsolutions.com",
         "extracted_email": "greg@deltaitsolutions.com",
-        "suggested_reply": "Greg, most dark web monitoring platforms charge hefty minimums per seat. BreachGuard (breachguard.io) offers white-label domain and employee exposure monitoring where you can monitor client domains passively, generate co-branded PDF risk audits, and notify clients automatically.",
+        "suggested_reply": "Greg, most dark web monitoring platforms charge hefty minimums per seat. BreachGuard (breachguard-khubbiahmed-1955s-projects.vercel.app) offers white-label domain and employee exposure monitoring where you can monitor client domains passively, generate co-branded PDF risk audits, and notify clients automatically.",
         "suggested_email_angle": "executive_summary"
     },
     {
@@ -179,7 +179,7 @@ PRESEEDED_SIGNALS = [
         "extracted_company": "CareSync Telehealth",
         "extracted_domain": "caresynchealth.io",
         "extracted_email": "rachel@caresynchealth.io",
-        "suggested_reply": "Rachel, HIPAA auditors verify technical safeguards by checking whether administrative ports (RDP, SSH, DBs) are reachable and whether email transmission is protected against interception and spoofing. You can run caresynchealth.io through BreachGuard (breachguard.io) to get an immediate perimeter audit report.",
+        "suggested_reply": "Rachel, HIPAA auditors verify technical safeguards by checking whether administrative ports (RDP, SSH, DBs) are reachable and whether email transmission is protected against interception and spoofing. You can run caresynchealth.io through BreachGuard (breachguard-khubbiahmed-1955s-projects.vercel.app) to get an immediate perimeter audit report.",
         "suggested_email_angle": "open_ports"
     }
 ]
@@ -273,7 +273,7 @@ def generate_suggested_reply(category: str, company: Optional[str], domain: Opti
     to post as a comment on Reddit or X.
     """
     target = domain or (f"{company.lower()}.com" if company else "your domain")
-    scanner_link = f"breachguard.io/?scan={target}" if domain else "breachguard.io"
+    scanner_link = f"breachguard-khubbiahmed-1955s-projects.vercel.app/?scan={target}" if domain else "breachguard-khubbiahmed-1955s-projects.vercel.app"
     
     if category == "dmarc_spoofing":
         return (

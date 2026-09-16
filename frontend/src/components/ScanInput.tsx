@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 import { getApiBaseUrl } from '@/lib/api';
 
@@ -31,6 +31,18 @@ export function ScanInput({ onScanComplete }: ScanInputProps) {
   const [domain, setDomain] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const scanParam = params.get('scan');
+      if (scanParam && scanParam.trim()) {
+        const target = scanParam.trim();
+        setDomain(target);
+        performScan(target);
+      }
+    }
+  }, []);
 
   const performScan = async (targetValue: string) => {
     const cleanTarget = targetValue.trim();

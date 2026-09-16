@@ -10,9 +10,15 @@ from core.config import settings
 
 logger = logging.getLogger("breachguard.email")
 
-async def send_email_with_details(to_email: str, subject: str, html_body: str, text_body: Optional[str] = None) -> Dict[str, Any]:
+async def send_email_with_details(
+    to_email: str, 
+    subject: str, 
+    html_body: str, 
+    text_body: Optional[str] = None,
+    attachments: Optional[List[Dict[str, Any]]] = None
+) -> Dict[str, Any]:
     """
-    Dispatches transactional or alert email with provider tracking and delivery audit:
+    Dispatches transactional or alert email with provider tracking, delivery audit, and attachment support:
     1. Resend REST API (preferred, fast, serverless-friendly, $0 tier - 3000 free/mo)
     2. Standard SMTP (Gmail, AWS SES, Postmark, Mailgun)
     3. Safe Mock Logger (fallback strictly in dev/test when credentials are unset)
@@ -22,9 +28,30 @@ async def send_email_with_details(to_email: str, subject: str, html_body: str, t
     plain_text = text_body or "This email requires an HTML-compatible email client to view."
     last_resend_error = None
 
+    # Format attachments for Resend if present
+    resend_attachments = None
+    if attachments:
+        resend_attachments = []
+        for att in attachments:
+            if "content" in att and "filename" in att:
+                resend_attachments.append({
+                    "filename": att["filename"],
+                    "content": att["content"]
+                })
+
     # 1. Resend API
     if settings.RESEND_API_KEY:
         try:
+            req_payload = {
+                "from": f"BreachGuard Security <{clean_from}>",
+                "to": [clean_to],
+                "subject": subject,
+                "html": html_body,
+                "text": plain_text
+            }
+            if resend_attachments:
+                req_payload["attachments"] = resend_attachments
+
             async with httpx.AsyncClient(timeout=10.0) as client:
                 res = await client.post(
                     "https://api.resend.com/emails",
@@ -32,13 +59,7 @@ async def send_email_with_details(to_email: str, subject: str, html_body: str, t
                         "Authorization": f"Bearer {settings.RESEND_API_KEY}",
                         "Content-Type": "application/json"
                     },
-                    json={
-                        "from": f"BreachGuard Security <{clean_from}>",
-                        "to": [clean_to],
-                        "subject": subject,
-                        "html": html_body,
-                        "text": plain_text
-                    }
+                    json=req_payload
                 )
                 if res.status_code in (200, 201):
                     msg_id = res.json().get("id")
@@ -51,19 +72,23 @@ async def send_email_with_details(to_email: str, subject: str, html_body: str, t
 
                 if res.status_code == 403 and "not verified" in res.text:
                     logger.info(f"[EMAIL:RESEND] {clean_from} not yet verified on Resend; retrying with onboarding@resend.dev sandbox")
+                    sandbox_payload = {
+                        "from": "BreachGuard Security <onboarding@resend.dev>",
+                        "to": [clean_to],
+                        "subject": subject,
+                        "html": html_body,
+                        "text": plain_text
+                    }
+                    if resend_attachments:
+                        sandbox_payload["attachments"] = resend_attachments
+
                     retry_res = await client.post(
                         "https://api.resend.com/emails",
                         headers={
                             "Authorization": f"Bearer {settings.RESEND_API_KEY}",
                             "Content-Type": "application/json"
                         },
-                        json={
-                            "from": "BreachGuard Security <onboarding@resend.dev>",
-                            "to": [clean_to],
-                            "subject": subject,
-                            "html": html_body,
-                            "text": plain_text
-                        }
+                        json=sandbox_payload
                     )
                     if retry_res.status_code in (200, 201):
                         msg_id = retry_res.json().get("id")
@@ -84,13 +109,32 @@ async def send_email_with_details(to_email: str, subject: str, html_body: str, t
     # 2. Standard SMTP
     if settings.SMTP_HOST:
         def _send_smtp_sync():
-            msg = MIMEMultipart("alternative")
+            msg = MIMEMultipart("mixed") if attachments else MIMEMultipart("alternative")
             msg["Subject"] = subject
             msg["From"] = f"BreachGuard Security <{clean_from}>"
             msg["To"] = clean_to
 
-            msg.attach(MIMEText(plain_text, "plain", "utf-8"))
-            msg.attach(MIMEText(html_body, "html", "utf-8"))
+            # Body part
+            body_part = MIMEMultipart("alternative")
+            body_part.attach(MIMEText(plain_text, "plain", "utf-8"))
+            body_part.attach(MIMEText(html_body, "html", "utf-8"))
+            msg.attach(body_part)
+
+            # Attachments
+            if attachments:
+                from email.mime.application import MIMEApplication
+                import base64
+                for att in attachments:
+                    content_bytes = att.get("raw_bytes")
+                    if not content_bytes and "content" in att:
+                        try:
+                            content_bytes = base64.b64decode(att["content"])
+                        except Exception:
+                            content_bytes = None
+                    if content_bytes:
+                        part = MIMEApplication(content_bytes, _subtype="pdf")
+                        part.add_header("Content-Disposition", "attachment", filename=att.get("filename", "assessment.pdf"))
+                        msg.attach(part)
 
             with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
                 server.ehlo()
@@ -123,16 +167,22 @@ async def send_email_with_details(to_email: str, subject: str, html_body: str, t
 
     # 3. Dev mock fallback (only if credentials are unset)
     logger.info(
-        f"[EMAIL:MOCK_DISPATCH] Simulated email delivery to: {clean_to} | Subject: '{subject}'"
+        f"[EMAIL:MOCK_DISPATCH] Simulated email delivery to: {clean_to} | Subject: '{subject}' | Attachments: {len(attachments) if attachments else 0}"
     )
     return {"success": True, "provider": "mock", "message_id": "simulated_mock_dispatch", "error": None}
 
 
-async def send_email(to_email: str, subject: str, html_body: str, text_body: Optional[str] = None) -> bool:
+async def send_email(
+    to_email: str, 
+    subject: str, 
+    html_body: str, 
+    text_body: Optional[str] = None,
+    attachments: Optional[List[Dict[str, Any]]] = None
+) -> bool:
     """
     Convenience wrapper for send_email_with_details returning boolean.
     """
-    res = await send_email_with_details(to_email, subject, html_body, text_body)
+    res = await send_email_with_details(to_email, subject, html_body, text_body, attachments=attachments)
     return res["success"]
 
 # ==============================================================================

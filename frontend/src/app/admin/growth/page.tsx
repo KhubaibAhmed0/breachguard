@@ -300,6 +300,36 @@ export default function GrowthAdminPage() {
     showToast(`Opened Gmail compose for ${lead.contact_email}!`, 'success');
   };
 
+  const handleDownloadPdf = async (lead: OutreachLead) => {
+    try {
+      showToast(`Generating 12-page executive report for ${lead.company_name}...`, 'info');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const cleanApiBase = apiBase.endsWith('/api') ? apiBase : `${apiBase}/api`;
+      const res = await fetch(`${cleanApiBase}/admin/growth/leads/${lead.id}/pdf`, {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to generate PDF (HTTP ${res.status})`);
+      }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const cleanName = lead.company_name.replace(/[^a-zA-Z0-9_\-]/g, '_');
+      a.download = `${cleanName}_Executive_Cyber_Risk_Assessment.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      showToast(`Downloaded ${cleanName}_Executive_Cyber_Risk_Assessment.pdf! Ready to attach to Gmail.`, 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Failed to download PDF audit', 'error');
+    }
+  };
+
   // Handlers
   const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -942,6 +972,16 @@ export default function GrowthAdminPage() {
                                 >
                                   <Mail className="w-3 h-3 text-red-400" />
                                   <span>Gmail</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadPdf(lead)}
+                                  title="Download 12-Page Executive Cyber Risk Assessment PDF"
+                                  className="px-2 py-1 rounded-md text-xs font-medium bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/25 transition-colors flex items-center gap-1 cursor-pointer"
+                                >
+                                  <FileText className="w-3 h-3 text-amber-400" />
+                                  <span>PDF Audit</span>
                                 </button>
 
                                 <button
@@ -2109,20 +2149,28 @@ export default function GrowthAdminPage() {
                 />
               </div>
 
-              {/* Live Preview of Free Scanner CTA */}
-              <div className="p-3 rounded-lg bg-bg-inset border border-border-default flex items-center justify-between">
-                <div className="text-2xs text-text-muted">
-                  Recipient CTA Target: <span className="font-mono text-accent">{typeof window !== 'undefined' ? window.location.origin : 'https://breachguard-khubbiahmed-1955s-projects.vercel.app'}/?scan={activeLead.domain}</span>
+              {/* Attached 12-Page Assessment Banner */}
+              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded bg-amber-500/20 text-amber-300">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-amber-200">Enclosed Executive Risk Assessment</div>
+                    <div className="text-[11px] text-amber-300/80 font-mono">
+                      {activeLead.company_name.replace(/[^a-zA-Z0-9_\-]/g, '_')}_Executive_Cyber_Risk_Assessment.pdf (12 Pages)
+                    </div>
+                  </div>
                 </div>
-                <a
-                  href={`/?scan=${activeLead.domain}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-2xs text-text-secondary hover:text-text-primary flex items-center gap-1 underline"
+                <button
+                  type="button"
+                  onClick={() => handleDownloadPdf(activeLead)}
+                  className="px-2.5 py-1.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-medium border border-amber-500/30 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Download the 12-page PDF assessment"
                 >
-                  <span>Preview landing report</span>
-                  <ArrowUpRight className="w-3 h-3" />
-                </a>
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF Audit</span>
+                </button>
               </div>
             </div>
 
@@ -2144,6 +2192,21 @@ export default function GrowthAdminPage() {
                 >
                   Close
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeLead) {
+                      handleDownloadPdf(activeLead);
+                    }
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Download 12-page executive report to attach to Gmail"
+                >
+                  <FileText className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Download PDF Audit</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => {

@@ -33,6 +33,7 @@ from services.intent_radar_service import (
     push_signal_to_google_sheet_webhook
 )
 from services.email_service import send_email, send_email_with_details
+from services.report_service import generate_lead_pdf_report
 
 logger = logging.getLogger("breachguard.growth.router")
 
@@ -578,6 +579,99 @@ async def delete_lead(
     return {"status": "success", "message": "Lead deleted successfully"}
 
 
+@router.get("/leads/{lead_id}/pdf")
+async def download_lead_pdf(
+    lead_id: int,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    Generates and streams the comprehensive 12-page Executive Cyber Risk Assessment PDF
+    for the target outreach lead.
+    """
+    await ensure_growth_tables()
+    result = await db.execute(select(OutreachLead).where(OutreachLead.id == lead_id))
+    lead = result.scalars().first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    # If lead has not been scanned yet, run passive reconnaissance first
+    if lead.risk_score is None:
+        try:
+            recon = await run_passive_reconnaissance(lead.domain)
+            lead.risk_score = recon["risk_score"]
+            lead.risk_level = recon["risk_level"]
+            lead.dmarc_status = recon["dmarc_status"]
+            lead.dmarc_record = recon["dmarc_record"]
+            lead.exposed_ports = json.dumps(recon["exposed_ports"])
+            lead.subdomains_count = recon["subdomains_count"]
+            lead.breach_count = recon["breach_count"]
+            lead.breach_sources = json.dumps(recon["breach_sources"])
+            lead.top_findings = json.dumps(recon["top_findings"])
+            lead.status = "ready"
+            await db.commit()
+            await db.refresh(lead)
+        except Exception as e:
+            logger.warning(f"Recon failed prior to PDF generation for lead {lead_id}: {e}")
+
+    # Build lead dictionary
+    ports = []
+    if lead.exposed_ports:
+        try:
+            ports = json.loads(lead.exposed_ports)
+        except Exception:
+            ports = []
+
+    sources = []
+    if lead.breach_sources:
+        try:
+            sources = json.loads(lead.breach_sources)
+        except Exception:
+            sources = []
+
+    findings = []
+    if lead.top_findings:
+        try:
+            findings = json.loads(lead.top_findings)
+        except Exception:
+            findings = []
+
+    lead_dict = {
+        "id": lead.id,
+        "company_name": lead.company_name,
+        "domain": lead.domain,
+        "risk_score": lead.risk_score or 65,
+        "risk_level": lead.risk_level or "HIGH RISK",
+        "dmarc_status": lead.dmarc_status or "missing",
+        "dmarc_record": lead.dmarc_record,
+        "exposed_ports": ports,
+        "subdomains_count": lead.subdomains_count or 4,
+        "breach_count": lead.breach_count or 0,
+        "breach_sources": sources,
+        "top_findings": findings
+    }
+
+    try:
+        pdf_path = generate_lead_pdf_report(lead_dict)
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        clean_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', lead.company_name)
+        filename = f"{clean_name}_Executive_Cyber_Risk_Assessment.pdf"
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to generate lead PDF for {lead.company_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"PDF Generation Failed: {str(e)}")
+
+
 @router.post("/leads/{lead_id}/send")
 async def send_lead_email(
     lead_id: int,
@@ -585,7 +679,8 @@ async def send_lead_email(
     admin: User = Depends(require_admin)
 ):
     """
-    1-Click Send: Sends the personalized outreach email via Resend with rate throttling.
+    1-Click Send: Sends the personalized outreach email with the attached 12-page PDF
+    via Resend with rate throttling.
     """
     await ensure_growth_tables()
     result = await db.execute(select(OutreachLead).where(OutreachLead.id == lead_id))
@@ -610,25 +705,71 @@ async def send_lead_email(
     }
     html_content = render_outreach_html(lead_dict, lead.email_subject, lead.email_body)
 
-    # 3. Dispatch via Resend / SMTP
+    # 3. Generate lead 12-page PDF report for automatic attachment
+    attachments = []
+    try:
+        recon_ports = []
+        if lead.exposed_ports:
+            try:
+                recon_ports = json.loads(lead.exposed_ports)
+            except Exception:
+                recon_ports = []
+
+        recon_sources = []
+        if lead.breach_sources:
+            try:
+                recon_sources = json.loads(lead.breach_sources)
+            except Exception:
+                recon_sources = []
+
+        lead_pdf_dict = {
+            "id": lead.id,
+            "company_name": lead.company_name,
+            "domain": lead.domain,
+            "risk_score": lead.risk_score or 65,
+            "risk_level": lead.risk_level or "HIGH RISK",
+            "dmarc_status": lead.dmarc_status or "missing",
+            "dmarc_record": lead.dmarc_record,
+            "exposed_ports": recon_ports,
+            "subdomains_count": lead.subdomains_count or 4,
+            "breach_count": lead.breach_count or 0,
+            "breach_sources": recon_sources,
+        }
+        pdf_path = generate_lead_pdf_report(lead_pdf_dict)
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+        import base64
+        b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+        clean_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', lead.company_name)
+        attachments.append({
+            "filename": f"{clean_name}_Executive_Cyber_Risk_Assessment.pdf",
+            "content": b64_pdf,
+            "raw_bytes": pdf_bytes
+        })
+    except Exception as pdf_err:
+        logger.warning(f"Could not attach PDF report to outreach email for {lead.company_name}: {pdf_err}")
+
+    # 4. Dispatch via Resend / SMTP with attached PDF
     dispatch = await send_email_with_details(
         to_email=lead.contact_email,
         subject=lead.email_subject,
         html_body=html_content,
-        text_body=lead.email_body
+        text_body=lead.email_body,
+        attachments=attachments if attachments else None
     )
 
     if dispatch["success"]:
         lead.status = "sent"
         lead.sent_at = datetime.utcnow()
         lead.delivery_status = "delivered"
-        lead.error_message = f"Delivered via {dispatch['provider']} (ID: {dispatch.get('message_id')})"
+        lead.error_message = f"Delivered via {dispatch['provider']} with 12-page PDF attached (ID: {dispatch.get('message_id')})"
         await db.commit()
         return {
             "status": "success",
-            "message": f"Email successfully dispatched to {lead.contact_email}",
+            "message": f"Email successfully dispatched to {lead.contact_email} with 12-page PDF audit attached",
             "provider": dispatch["provider"],
-            "message_id": dispatch.get("message_id")
+            "message_id": dispatch.get("message_id"),
+            "has_attachment": len(attachments) > 0
         }
     else:
         lead.delivery_status = "failed"

@@ -162,10 +162,12 @@ async def run_passive_reconnaissance(domain: str) -> Dict[str, Any]:
 
 def generate_cold_email_copy(lead_data: Dict[str, Any], angle: str = "dmarc_spoofing") -> Tuple[str, str]:
     """
-    Generates high-converting, personalized cold email copy highlighting real vulnerabilities.
+    Generates high-converting, personalized cold email copy highlighting real vulnerabilities
+    and referencing the attached 12-page Executive Cyber Risk Assessment PDF.
     Returns (subject, text_body).
     """
     company = lead_data.get("company_name") or "your team"
+    clean_company = re.sub(r'[^a-zA-Z0-9_\-]', '_', company)
     contact_name = lead_data.get("contact_name")
     greeting = f"Hi {contact_name}," if contact_name and contact_name.strip() else f"Hello {company} team,"
     domain = lead_data.get("domain", "your company")
@@ -177,11 +179,11 @@ def generate_cold_email_copy(lead_data: Dict[str, Any], angle: str = "dmarc_spoo
         except Exception:
             exposed_ports = []
     breach_count = lead_data.get("breach_count", 0)
+    subdomains_count = lead_data.get("subdomains_count", 4)
     risk_score = lead_data.get("risk_score", 62)
-    scanner_url = f"{settings.FRONTEND_URL}/?scan={domain}"
 
     if angle == "dmarc_spoofing":
-        subject = f"Quick question regarding {domain}'s email authentication"
+        subject = f"[Security Notice] DMARC & Email Spoofing Audit for {company}"
         
         if dmarc_status == "missing":
             vuln_detail = f"Our automated perimeter scanner noticed that {domain} currently does not have a published DMARC record."
@@ -195,24 +197,28 @@ def generate_cold_email_copy(lead_data: Dict[str, Any], angle: str = "dmarc_spoo
 
         body = f"""{greeting}
 
-I noticed {company} while researching organizations in your sector and ran a quick, non-intrusive external perimeter scan on {domain}.
+I noticed {company} while researching organizations in your sector and ran a non-intrusive external perimeter audit on {domain}.
 
 {vuln_detail}
 
 {impact_detail} With Google and Yahoo's strict sender requirements now in effect, this also risks your legitimate transactional and sales emails landing in spam folders.
 
-We generated a complimentary, real-time perimeter breakdown for {domain} showing exact SPF/DKIM/DMARC records and remediation steps:
-{scanner_url}
+I have attached our complete 12-page Executive Cyber Risk Assessment for {company} directly to this email ({clean_company}_Executive_Cyber_Risk_Assessment.pdf).
 
-Would you be open to a 5-minute chat this week on how we automate continuous perimeter defense and DMARC enforcement for teams like {company}?
+The report includes:
+• DMARC, SPF, and transport encryption (MTA-STS) gap analysis
+• Discovered public hostnames and network port telemetry
+• Unified External Cyber Risk Score ({risk_score}/100)
+• Actionable 3-phase technical remediation roadmap (NIST CSF & CIS Controls aligned)
+
+Would you be open to a brief 5-minute conversation this week to review the findings and ensure your domain authentication is fully protected?
 
 Best regards,
 Khubaib Ahmed
-Founder, BreachGuard Threat Intelligence
-{settings.FRONTEND_URL}"""
+Founder, BreachGuard Threat Intelligence"""
 
     elif angle == "open_ports":
-        subject = f"Potential perimeter exposure on {domain}"
+        subject = f"[Security Notice] External Attack Surface Assessment for {company}"
         ports_str = ", ".join(exposed_ports[:3]) if exposed_ports else "unmonitored administrative services"
         
         body = f"""{greeting}
@@ -221,22 +227,20 @@ I'm reaching out because our external attack surface reconnaissance platform fla
 
 Specifically, passive internet telemetry indexed the following externally reachable services:
 • Exposed Services: {ports_str}
-• Resolvable Hostnames: {lead_data.get('subdomains_count', 4)} discovered in Certificate Transparency logs
+• Resolvable Hostnames: {subdomains_count} discovered in Certificate Transparency logs
 
 Administrative interfaces exposed directly to the public internet are prime targets for automated credential stuffing and port scanners like Shodan.
 
-You can inspect the full external risk assessment for {domain} without creating an account here:
-{scanner_url}
+I have attached our complete 12-page Executive Cyber Risk Assessment for {company} ({clean_company}_Executive_Cyber_Risk_Assessment.pdf) detailing exact IP addresses, port evidence, and firewall isolation guidance.
 
-If you'd find it helpful, I'm happy to share our 1-page remediation playbook or run through our external attack surface findings with your security lead.
+Would you be open to a quick 5-minute call this week to review our perimeter findings with your technical team?
 
 Best regards,
 Khubaib Ahmed
-Founder, BreachGuard Threat Intelligence
-{settings.FRONTEND_URL}"""
+Founder, BreachGuard Threat Intelligence"""
 
     else:  # executive_summary
-        subject = f"External risk assessment for {domain} (Score: {risk_score}/100)"
+        subject = f"Executive Cyber Risk Assessment: {company} ({domain}) — Score {risk_score}/100"
         
         body = f"""{greeting}
 
@@ -246,19 +250,15 @@ Here is a brief snapshot of what external threat actors can observe about your p
 • Overall Perimeter Risk Score: {risk_score}/100
 • Email Security Status: {dmarc_status.upper() if dmarc_status else 'Needs Review'}
 • Compromised Identity Signals: {breach_count} breach records indexed
-• External Attack Surface: {lead_data.get('subdomains_count', 3)} observable hostnames
+• External Attack Surface: {subdomains_count} observable hostnames
 
-We built BreachGuard to help fast-growing organizations eliminate external attack surface blindspots before adversaries can exploit them.
+I have attached our complete 12-page Executive Cyber Risk Assessment for {company} directly to this email ({clean_company}_Executive_Cyber_Risk_Assessment.pdf). It contains the complete technical evidence, scoring methodology, and prioritized remediation roadmap.
 
-You can view your complete interactive risk scorecard here:
-{scanner_url}
-
-Let me know if you'd like us to generate the full 12-page executive PDF report for your leadership team.
+Let me know if you would like to discuss our recommendations or explore automated continuous perimeter defense for {company}.
 
 Best regards,
 Khubaib Ahmed
-Founder, BreachGuard Threat Intelligence
-{settings.FRONTEND_URL}"""
+Founder, BreachGuard Threat Intelligence"""
 
     return subject, body.strip()
 

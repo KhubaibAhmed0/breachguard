@@ -282,6 +282,24 @@ export default function GrowthAdminPage() {
     setTimeout(() => setCopiedReplyId(null), 3000);
   };
 
+  const handleOpenInGmail = (lead: OutreachLead, customSubject?: string, customBody?: string) => {
+    const to = encodeURIComponent(lead.contact_email || '');
+    const subject = encodeURIComponent(customSubject || lead.email_subject || `Cybersecurity Exposure Notice regarding ${lead.domain}`);
+    const body = encodeURIComponent(customBody || lead.email_body || '');
+
+    // Launch Google Mail web compose URL directly
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`;
+    window.open(gmailUrl, '_blank');
+
+    if (lead.status !== 'sent') {
+      updateLeadMutation.mutate({
+        leadId: lead.id,
+        data: { status: 'sent' }
+      });
+    }
+    showToast(`Opened Gmail compose for ${lead.contact_email}!`, 'success');
+  };
+
   // Handlers
   const handleCreateLead = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -914,6 +932,16 @@ export default function GrowthAdminPage() {
                                   className="p-1.5 rounded-md hover:bg-bg-inset text-text-muted hover:text-text-primary transition-colors cursor-pointer"
                                 >
                                   <RefreshCw className={cn("w-3.5 h-3.5", scanLeadMutation.isPending && "animate-spin")} />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenInGmail(lead)}
+                                  title="1-Click Open in Gmail Compose (Zero Setup / 100% Free)"
+                                  className="px-2 py-1 rounded-md text-xs font-medium bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/25 transition-colors flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Mail className="w-3 h-3 text-red-400" />
+                                  <span>Gmail</span>
                                 </button>
 
                                 <button
@@ -2116,6 +2144,21 @@ export default function GrowthAdminPage() {
                 >
                   Close
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (activeLead) {
+                      handleOpenInGmail(activeLead, editedSubject, editedBody);
+                      setIsEmailEditorOpen(false);
+                    }
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Open this personalized draft directly in Gmail compose"
+                >
+                  <Mail className="w-3.5 h-3.5 text-red-400" />
+                  <span>Open in Gmail</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => handleSendSingleEmail(activeLead.id)}

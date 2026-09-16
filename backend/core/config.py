@@ -98,10 +98,15 @@ class Settings(BaseSettings):
         elif url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         
-        # Automatic IPv4 Pooler routing for Supabase on IPv4-only cloud platforms (like Vercel)
+        # Automatic IPv4 Transaction Pooler routing for Supabase (Port 6543)
+        # Prevents EMAXCONNSESSION (pool_size: 15 limit) and connection leaks on serverless/Vercel
         if "db.eqcpazrhhplewwzjnxod.supabase.co" in url:
-            url = url.replace("db.eqcpazrhhplewwzjnxod.supabase.co:5432", "aws-0-ap-southeast-1.pooler.supabase.com:5432")
-            url = url.replace("db.eqcpazrhhplewwzjnxod.supabase.co", "aws-0-ap-southeast-1.pooler.supabase.com:5432")
+            url = url.replace("db.eqcpazrhhplewwzjnxod.supabase.co:5432", "aws-0-ap-southeast-1.pooler.supabase.com:6543")
+            url = url.replace("db.eqcpazrhhplewwzjnxod.supabase.co", "aws-0-ap-southeast-1.pooler.supabase.com:6543")
+            if "postgres:" in url and "postgres.eqcpazrhhplewwzjnxod" not in url:
+                url = url.replace("postgres:", "postgres.eqcpazrhhplewwzjnxod:", 1)
+        elif "pooler.supabase.com" in url:
+            url = url.replace(":5432", ":6543")
             if "postgres:" in url and "postgres.eqcpazrhhplewwzjnxod" not in url:
                 url = url.replace("postgres:", "postgres.eqcpazrhhplewwzjnxod:", 1)
         return url

@@ -80,6 +80,16 @@ BreachGuard is an **External Cyber Risk & Perimeter Monitoring Platform** built 
 7. **Dynamic API & Universal CORS Resolution**:
    * Dynamic runtime host detection in `frontend/src/lib/api.ts` (`getApiBaseUrl()`) automatically routes requests to `localhost:8000` on dev machines and `https://breachguard-w88w.vercel.app/api` in production/Vercel previews without compile-time baking.
    * Universal CORS in `backend/main.py` allowing all Vercel preview/production domains and local development origins with full HTTP 200 preflight support.
+8. **Warm Graphite Design System**:
+   * Pure cardless, flat Warm Graphite aesthetic (`#0e0d0c` base background, `#171514` surface, `#262320` borders).
+   * Strict typography: Inter for all UI prose, JetBrains Mono strictly for technical identifiers and telemetry codes.
+9. **MSP White-Labeling & Co-Branding**:
+   * Dynamic partner custom logo, custom accent color, and "Prepared by" attribution toggle on `/settings` (Organization tab).
+   * Live split-screen interactive mock PDF preview in the browser.
+   * Injected dynamically into ReportLab PDF generation and in-browser preview on `/reports`.
+10. **One-Click Auto-Fixes & Ticket Export**:
+   * Exposure and Finding tables equipped with "Export Ticket" (Jira/ServiceNow) and "Auto-Fix" automated remediation buttons.
+   * Backed by `/api/exposures/{id}/export`, `/api/exposures/{id}/fix`, `/api/findings/{id}/export`, and `/api/findings/{id}/fix` with instant cache invalidation and toast feedback.
 
 ---
 

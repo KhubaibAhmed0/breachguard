@@ -33,6 +33,7 @@ import {
 } from '@/hooks/useApi';
 import { OutreachLead, SocialPost, ProspectSignal } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
+import api from '@/lib/api';
 import { 
   Zap, Mail, Send, Share2, Plus, Upload, RefreshCw, Eye, 
   Trash2, CheckCircle2, AlertTriangle, ShieldAlert, Globe, 
@@ -248,11 +249,30 @@ export default function GrowthAdminPage() {
     }
   };
 
-  const handleExportRadarCsv = () => {
-    const q = new URLSearchParams();
-    if (radarCategoryFilter && radarCategoryFilter !== 'all') q.set('category', radarCategoryFilter);
-    if (radarMinScoreFilter) q.set('min_score', String(radarMinScoreFilter));
-    window.open(`/api/admin/growth/radar/export?${q.toString()}`, '_blank');
+  const handleExportRadarCsv = async () => {
+    try {
+      const params: any = {};
+      if (radarCategoryFilter && radarCategoryFilter !== 'all') params.category = radarCategoryFilter;
+      if (radarMinScoreFilter) params.min_score = radarMinScoreFilter;
+
+      const res = await api.get('/admin/growth/radar/export', {
+        params,
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([res.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'breachguard_buyer_radar.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      showToast('Google Sheet-ready CSV downloaded!', 'success');
+    } catch (err: any) {
+      showToast('Failed to export radar CSV', 'error');
+    }
   };
 
   const handleCopyReplyHook = (signalId: number, text: string) => {

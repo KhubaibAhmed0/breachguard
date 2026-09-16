@@ -723,6 +723,7 @@ export function useProspectSignals(params?: {
       const res = await api.get(`/admin/growth/radar/signals?${q.toString()}`);
       return res.data || [];
     },
+    refetchInterval: 30000,
   });
 }
 

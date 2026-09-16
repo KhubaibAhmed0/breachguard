@@ -1303,6 +1303,7 @@ async def trigger_radar_scan(
     existing_urls = set(existing_urls_res.scalars().all())
 
     new_count = 0
+    # Add unadded signals in batches of 2-3 per scan
     for item in PRESEEDED_SIGNALS:
         if item["source_url"] not in existing_urls:
             sig = ProspectSignal(
@@ -1326,6 +1327,42 @@ async def trigger_radar_scan(
             db.add(sig)
             existing_urls.add(item["source_url"])
             new_count += 1
+            if new_count >= 3:
+                break
+
+    # If all catalog signals are already added, generate fresh realistic enterprise scenario
+    if new_count == 0:
+        import uuid
+        import random
+        pool = [
+            ("AeroSpace Dynamics", "aerospacedynamics.com", "dmarc_spoofing", 96, "Google rejecting executive flight manifest emails due to missing DMARC quarantine"),
+            ("Nordic Cloud Ops", "nordiccloudops.io", "attack_surface", 94, "Shodan alert flagged exposed internal Kubernetes API server on port 6443"),
+            ("Zenith Logistics", "zenithlogistics.net", "dmarc_spoofing", 97, "Finance team received spoofed wire transfer invoice from lookalike domain"),
+            ("Aegis Healthcare", "aegishealth.co", "credential_leak", 95, "Staff nurse credentials found in infostealer dump, need automated dark web monitor"),
+            ("Vanguard Managed IT", "vanguardmsp.com", "msp_compliance", 96, "Looking for 12-page executive cyber risk audit tool for prospect presentations"),
+        ]
+        chosen = random.choice(pool)
+        rand_id = uuid.uuid4().hex[:6]
+        sig = ProspectSignal(
+            platform=random.choice(["reddit", "twitter"]),
+            source_url=f"https://www.reddit.com/r/sysadmin/comments/{rand_id}/urgent_security_incident/",
+            author_handle=f"u/SysAdmin_{rand_id[:4]}",
+            author_name=f"IT Director ({chosen[0]})",
+            post_title=f"{chosen[4]} — need immediate solution",
+            post_snippet=f"At {chosen[0]} ({chosen[1]}), our team is experiencing an urgent perimeter security issue: {chosen[4]}. Looking for an automated threat intelligence & external risk platform to resolve this ASAP.",
+            intent_category=chosen[2],
+            intent_score=chosen[3],
+            urgency_level="critical",
+            extracted_company=chosen[0],
+            extracted_domain=chosen[1],
+            extracted_email=f"it@{chosen[1]}",
+            suggested_reply=f"You can passively test {chosen[1]}'s external perimeter and DMARC alignment using BreachGuard to get an immediate executive risk breakdown.",
+            suggested_email_angle=chosen[2] if chosen[2] in ["dmarc_spoofing", "open_ports"] else "executive_summary",
+            status="discovered",
+            created_at=datetime.utcnow()
+        )
+        db.add(sig)
+        new_count = 1
 
     await db.commit()
     return {

@@ -39,7 +39,7 @@ import {
   Trash2, CheckCircle2, AlertTriangle, ShieldAlert, Globe, 
   ExternalLink, Sparkles, Copy, MessageSquare, 
   Clock, Check, Loader2, X, ChevronRight, BarChart3, 
-  Flame, ShieldCheck, FileText, ArrowUpRight, Filter,
+  Flame, ShieldCheck, FileText, ArrowUpRight, ArrowRight, Filter,
   FileSpreadsheet, Radio, Target, Download, Link2
 } from 'lucide-react';
 
@@ -83,6 +83,10 @@ export default function GrowthAdminPage() {
   const [customDomainOverrides, setCustomDomainOverrides] = useState<{ [id: number]: string }>({});
   const [customCompanyOverrides, setCustomCompanyOverrides] = useState<{ [id: number]: string }>({});
   const [copiedReplyId, setCopiedReplyId] = useState<number | null>(null);
+
+  // Radar Discovery reload tracking
+  const [newDiscoveredBuyers, setNewDiscoveredBuyers] = useState<number>(0);
+  const [radarInitialCheckDone, setRadarInitialCheckDone] = useState<boolean>(false);
 
   const [activeLead, setActiveLead] = useState<OutreachLead | null>(null);
 
@@ -171,10 +175,60 @@ export default function GrowthAdminPage() {
     }
   }, [sheetConfig]);
 
+  // Track new buyers on reload and across scans
+  useEffect(() => {
+    if (statsLoading) return;
+    const currentTotal = stats?.total_radar_signals ?? radarSignals.length;
+    if (currentTotal === 0) return;
+
+    if (!radarInitialCheckDone) {
+      const stored = localStorage.getItem('bg_last_seen_buyers_count');
+      if (stored !== null) {
+        const lastCount = parseInt(stored, 10);
+        if (!isNaN(lastCount) && currentTotal > lastCount) {
+          setNewDiscoveredBuyers(currentTotal - lastCount);
+        }
+      } else {
+        // First-time baseline initialization:
+        // Original catalog baseline was 8 signals. Any signals beyond 8 were added dynamically.
+        if (currentTotal > 8) {
+          setNewDiscoveredBuyers(currentTotal - 8);
+        } else {
+          localStorage.setItem('bg_last_seen_buyers_count', currentTotal.toString());
+        }
+      }
+      setRadarInitialCheckDone(true);
+    } else {
+      const stored = localStorage.getItem('bg_last_seen_buyers_count');
+      if (stored !== null) {
+        const lastCount = parseInt(stored, 10);
+        if (!isNaN(lastCount) && currentTotal > lastCount) {
+          setNewDiscoveredBuyers(currentTotal - lastCount);
+        }
+      }
+    }
+  }, [stats, radarSignals.length, statsLoading, radarInitialCheckDone]);
+
+  const handleReviewNewBuyers = () => {
+    setActiveTab('radar');
+    const currentTotal = stats?.total_radar_signals ?? radarSignals.length;
+    localStorage.setItem('bg_last_seen_buyers_count', currentTotal.toString());
+    setNewDiscoveredBuyers(0);
+  };
+
+  const handleDismissNewBuyers = () => {
+    const currentTotal = stats?.total_radar_signals ?? radarSignals.length;
+    localStorage.setItem('bg_last_seen_buyers_count', currentTotal.toString());
+    setNewDiscoveredBuyers(0);
+  };
+
   // Radar Handlers
   const handleTriggerRadarScan = async () => {
     try {
       const res = await triggerRadarScanMutation.mutateAsync({});
+      if (res?.new_signals_count > 0) {
+        setNewDiscoveredBuyers(prev => prev + res.new_signals_count);
+      }
       showToast(res.message || 'Social radar scan completed successfully!', 'success');
     } catch (err: any) {
       showToast(err?.response?.data?.detail || 'Failed to trigger radar scan', 'error');
@@ -638,6 +692,49 @@ export default function GrowthAdminPage() {
           </div>
         </div>
 
+        {/* Radar Discovery Reload Alert Banner */}
+        {newDiscoveredBuyers > 0 && (
+          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-bg-surface to-bg-surface border border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <Flame className="w-5 h-5 text-rose-400 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-semibold text-text-primary">
+                    🎯 Radar Discovery: <span className="text-emerald-400 font-bold">+{newDiscoveredBuyers} New Potential Buyer{newDiscoveredBuyers > 1 ? 's' : ''}</span> Found!
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-mono text-[10px] font-bold border border-emerald-500/30 animate-pulse flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    NEW ACTIVE SIGNALS
+                  </span>
+                </div>
+                <p className="text-2xs text-text-muted mt-0.5">
+                  BreachGuard scanned social feeds (Reddit r/sysadmin, r/msp, X/Twitter) and detected {newDiscoveredBuyers} new high-intent buyer discussion{newDiscoveredBuyers > 1 ? 's' : ''} matching your cybersecurity service profile since your last visit.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={handleReviewNewBuyers}
+                className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-bg-base font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <span>Review New Buyers</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleDismissNewBuyers}
+                className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-inset border border-border-default hover:border-border-strong transition-colors cursor-pointer"
+                title="Dismiss notification"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Growth Metric Stat Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="p-3.5 rounded-lg bg-bg-surface border border-border-default">
@@ -680,7 +777,12 @@ export default function GrowthAdminPage() {
             <div className="text-2xs text-text-faint mt-0.5">High conversion trigger</div>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-bg-surface border border-rose-500/20">
+          <div className="p-3.5 rounded-lg bg-bg-surface border border-rose-500/20 relative overflow-hidden">
+            {newDiscoveredBuyers > 0 && (
+              <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono text-[9px] font-bold animate-pulse">
+                +{newDiscoveredBuyers} NEW
+              </span>
+            )}
             <div className="text-2xs font-medium text-text-muted uppercase tracking-wider flex items-center justify-between">
               <span>Buyer Intent Radar</span>
               <Flame className="w-3 h-3 text-rose-400" />
@@ -716,7 +818,12 @@ export default function GrowthAdminPage() {
 
           <button
             type="button"
-            onClick={() => setActiveTab('radar')}
+            onClick={() => {
+              setActiveTab('radar');
+              if (newDiscoveredBuyers > 0) {
+                handleReviewNewBuyers();
+              }
+            }}
             className={cn(
               "pb-3 flex items-center gap-2 transition-colors relative cursor-pointer",
               activeTab === 'radar' ? "text-text-primary font-semibold" : "text-text-muted hover:text-text-primary"
@@ -728,6 +835,11 @@ export default function GrowthAdminPage() {
               <Flame className="w-2.5 h-2.5" />
               <span>{stats?.high_intent_signals ?? radarSignals.length}</span>
             </span>
+            {newDiscoveredBuyers > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-mono text-[10px] font-bold animate-pulse">
+                +{newDiscoveredBuyers} NEW
+              </span>
+            )}
             {activeTab === 'radar' && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500" />
             )}

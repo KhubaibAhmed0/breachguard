@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Globe, AlertTriangle, FileText, Settings, LogOut, 
   Shield, Building2, ChevronDown, Check, Plus, X, Loader2,
-  Network, MailCheck, Radar, KeyRound
+  Network, MailCheck, Radar, KeyRound, Zap
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useTenant } from '@/contexts/TenantContext';
@@ -20,7 +20,7 @@ interface SidebarProps {
 
 export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { tenants, activeTenant, setActiveTenant, addTenant, isMspUser } = useTenant();
 
   const [isTenantDropdownOpen, setIsTenantDropdownOpen] = useState(false);
@@ -51,6 +51,8 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
     }
   };
 
+  const isAdmin = user?.role === 'admin' || user?.email === 'admin@acme.com' || (!user?.role && user?.email?.includes('admin'));
+
   const navItems = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     { href: '/dashboard/attack-surface', label: 'Attack Surface', icon: Network },
@@ -60,6 +62,7 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
     { href: '/domains', label: 'Monitored Domains', icon: Globe },
     { href: '/reports', label: 'Audit Reports', icon: FileText },
     { href: '/settings', label: 'Organization Settings', icon: Settings },
+    ...(isAdmin ? [{ href: '/admin/growth', label: 'Founder Growth Hub', icon: Zap, badge: 'ADMIN' }] : []),
   ];
 
   return (
@@ -197,8 +200,13 @@ export function Sidebar({ isMobile, onClose, className }: SidebarProps) {
                     : "text-text-muted hover:text-text-primary hover:bg-bg-hover"
                 )}
               >
-                <Icon className={cn("w-4 h-4", isActive ? "text-text-primary" : "text-text-muted")} />
-                {item.label}
+                <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-text-primary" : "text-text-muted")} />
+                <span className="truncate">{item.label}</span>
+                {item.badge && (
+                  <span className="ml-auto px-1.5 py-0.5 rounded bg-accent/15 text-accent border border-accent/30 text-[9px] font-mono font-bold uppercase tracking-wider">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}

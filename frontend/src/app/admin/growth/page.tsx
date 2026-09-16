@@ -1,0 +1,1439 @@
+"use client";
+
+import { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { DashboardLayout } from '@/components/DashboardLayout';
+import { useAuth } from '@/hooks/useAuth';
+import { 
+  useGrowthStats, 
+  useGrowthLeads, 
+  useGrowthSocial, 
+  useCreateLead, 
+  useBulkImportLeads, 
+  useScanLead, 
+  useScanAllLeads, 
+  useUpdateLead, 
+  useDeleteLead, 
+  useSendLeadEmail, 
+  useSendBatchLeads, 
+  useCreateSocialPost, 
+  useUpdateSocialPost, 
+  useDeleteSocialPost,
+  useSeedSocialPosts
+} from '@/hooks/useApi';
+import { OutreachLead, SocialPost } from '@/types';
+import { cn, formatDate } from '@/lib/utils';
+import { 
+  Zap, Mail, Send, Share2, Plus, Upload, RefreshCw, Eye, 
+  Trash2, CheckCircle2, AlertTriangle, ShieldAlert, Globe, 
+  ExternalLink, Sparkles, Copy, MessageSquare, 
+  Clock, Check, Loader2, X, ChevronRight, BarChart3, 
+  Flame, ShieldCheck, FileText, ArrowUpRight, Filter
+} from 'lucide-react';
+
+function XTwitterIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 24.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
+
+export default function GrowthAdminPage() {
+  const { user, loading: authLoading } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.email === 'admin@acme.com';
+
+  const [activeTab, setActiveTab] = useState<'outreach' | 'social' | 'analytics'>('outreach');
+  const [leadStatusFilter, setLeadStatusFilter] = useState<string>('all');
+  const [socialPlatformFilter, setSocialPlatformFilter] = useState<string>('all');
+
+  // Modals state
+  const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [isEmailEditorOpen, setIsEmailEditorOpen] = useState(false);
+  const [isAddSocialPostOpen, setIsAddSocialPostOpen] = useState(false);
+  const [activeLead, setActiveLead] = useState<OutreachLead | null>(null);
+
+  // Form states - Single Lead
+  const [companyName, setCompanyName] = useState('');
+  const [domain, setDomain] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [emailAngle, setEmailAngle] = useState<'dmarc_spoofing' | 'open_ports' | 'executive_summary'>('dmarc_spoofing');
+  const [autoScan, setAutoScan] = useState(true);
+
+  // Form states - Bulk CSV
+  const [bulkCsvText, setBulkCsvText] = useState('');
+  const [bulkAutoScan, setBulkAutoScan] = useState(false);
+
+  // Form states - Email Inspector / Editor
+  const [editedSubject, setEditedSubject] = useState('');
+  const [editedBody, setEditedBody] = useState('');
+  const [selectedAngle, setSelectedAngle] = useState<'dmarc_spoofing' | 'open_ports' | 'executive_summary'>('dmarc_spoofing');
+
+  // Form states - Social Post
+  const [newPostPlatform, setNewPostPlatform] = useState<'twitter' | 'reddit'>('twitter');
+  const [newPostCategory, setNewPostCategory] = useState<'attack_surface' | 'email_security' | 'threat_intel' | 'msp_growth'>('email_security');
+  const [newPostTitle, setNewPostTitle] = useState('');
+  const [newPostHook, setNewPostHook] = useState('');
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostSubreddit, setNewPostSubreddit] = useState('');
+  const [newPostCadenceDay, setNewPostCadenceDay] = useState(1);
+
+  // Feedback notifications
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const [copiedPostId, setCopiedPostId] = useState<number | null>(null);
+
+  const showToast = (text: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToastMessage({ type, text });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // React Query data & mutations
+  const { data: stats, isLoading: statsLoading } = useGrowthStats();
+  const { data: leads = [], isLoading: leadsLoading } = useGrowthLeads(leadStatusFilter);
+  const { data: socialPosts = [], isLoading: socialLoading } = useGrowthSocial(socialPlatformFilter);
+
+  const createLeadMutation = useCreateLead();
+  const bulkImportMutation = useBulkImportLeads();
+  const scanLeadMutation = useScanLead();
+  const scanAllMutation = useScanAllLeads();
+  const updateLeadMutation = useUpdateLead();
+  const deleteLeadMutation = useDeleteLead();
+  const sendEmailMutation = useSendLeadEmail();
+  const sendBatchMutation = useSendBatchLeads();
+
+  const createSocialMutation = useCreateSocialPost();
+  const updateSocialMutation = useUpdateSocialPost();
+  const deleteSocialMutation = useDeleteSocialPost();
+  const seedSocialMutation = useSeedSocialPosts();
+
+  // Handlers
+  const handleCreateLead = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!companyName || !domain || !contactEmail) return;
+    try {
+      await createLeadMutation.mutateAsync({
+        company_name: companyName,
+        domain: domain,
+        contact_email: contactEmail,
+        contact_name: contactName,
+        email_angle: emailAngle,
+        auto_scan: autoScan,
+      });
+      showToast(`Added ${companyName} (${domain}) to outreach queue.`);
+      setCompanyName('');
+      setDomain('');
+      setContactEmail('');
+      setContactName('');
+      setIsAddLeadOpen(false);
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to create lead', 'error');
+    }
+  };
+
+  const handleBulkImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bulkCsvText.trim()) return;
+
+    // Parse CSV lines
+    const lines = bulkCsvText.split('\n').map(l => l.trim()).filter(Boolean);
+    const parsed = [];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (i === 0 && line.toLowerCase().includes('company') && line.toLowerCase().includes('domain')) {
+        continue; // skip header row
+      }
+      const parts = line.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
+      if (parts.length >= 3) {
+        parsed.push({
+          company_name: parts[0],
+          domain: parts[1],
+          contact_email: parts[2],
+          contact_name: parts[3] || undefined,
+        });
+      }
+    }
+
+    if (parsed.length === 0) {
+      showToast('Could not parse any valid rows. Format: Company, Domain, Email, Contact Name', 'error');
+      return;
+    }
+
+    try {
+      const res = await bulkImportMutation.mutateAsync({
+        leads: parsed,
+        auto_scan: bulkAutoScan,
+      });
+      showToast(`Imported ${res.imported_count || parsed.length} leads successfully!`);
+      setBulkCsvText('');
+      setIsBulkImportOpen(false);
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to import bulk CSV', 'error');
+    }
+  };
+
+  const handleOpenEmailEditor = (lead: OutreachLead) => {
+    setActiveLead(lead);
+    setEditedSubject(lead.email_subject || `Quick question regarding ${lead.domain}'s email security`);
+    setEditedBody(lead.email_body || '');
+    setSelectedAngle((lead.email_angle as any) || 'dmarc_spoofing');
+    setIsEmailEditorOpen(true);
+  };
+
+  const handleSaveEmailDraft = async () => {
+    if (!activeLead) return;
+    try {
+      const res = await updateLeadMutation.mutateAsync({
+        leadId: activeLead.id,
+        data: {
+          email_subject: editedSubject,
+          email_body: editedBody,
+          email_angle: selectedAngle,
+          status: 'ready',
+        }
+      });
+      showToast(`Updated email draft for ${activeLead.company_name}`);
+      setActiveLead({
+        ...activeLead,
+        email_subject: editedSubject,
+        email_body: editedBody,
+        email_angle: selectedAngle,
+        status: 'ready',
+      });
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to update email draft', 'error');
+    }
+  };
+
+  const handleSendSingleEmail = async (leadId: number) => {
+    try {
+      await sendEmailMutation.mutateAsync(leadId);
+      showToast('Outreach email dispatched via Resend!');
+      if (isEmailEditorOpen && activeLead?.id === leadId) {
+        setIsEmailEditorOpen(false);
+      }
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to dispatch email via Resend', 'error');
+    }
+  };
+
+  const handleSendBatchReady = async () => {
+    try {
+      const res = await sendBatchMutation.mutateAsync(5);
+      showToast(`Batch dispatch complete: ${res.sent_count} sent, ${res.failed_count} failed.`);
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Batch dispatch encountered rate throttling or network error', 'error');
+    }
+  };
+
+  const handleCreateSocialPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPostTitle || !newPostContent) return;
+    try {
+      await createSocialMutation.mutateAsync({
+        platform: newPostPlatform,
+        category: newPostCategory,
+        title: newPostTitle,
+        hook: newPostHook,
+        content: newPostContent,
+        target_subreddit: newPostSubreddit || undefined,
+        cadence_day: Number(newPostCadenceDay) || 1,
+      });
+      showToast('Added post to social media autopilot queue.');
+      setNewPostTitle('');
+      setNewPostHook('');
+      setNewPostContent('');
+      setNewPostSubreddit('');
+      setIsAddSocialPostOpen(false);
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to schedule social post', 'error');
+    }
+  };
+
+  const handleCopyPost = (post: SocialPost) => {
+    const fullText = `${post.hook ? post.hook + '\n\n' : ''}${post.content}`;
+    navigator.clipboard.writeText(fullText);
+    setCopiedPostId(post.id);
+    showToast('Copied post copy to clipboard!');
+    setTimeout(() => setCopiedPostId(null), 2500);
+  };
+
+  const handleOpenTwitterIntent = (post: SocialPost) => {
+    const text = encodeURIComponent(`${post.hook ? post.hook + '\n\n' : ''}${post.content}`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+  };
+
+  const handleOpenRedditIntent = (post: SocialPost) => {
+    const title = encodeURIComponent(post.title);
+    const text = encodeURIComponent(post.content);
+    const sub = post.target_subreddit ? post.target_subreddit.replace(/^r\//, '') : 'sysadmin';
+    window.open(`https://reddit.com/r/${sub}/submit?title=${title}&text=${text}`, '_blank');
+  };
+
+  // Auth Protection Gate
+  if (authLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-6 h-6 animate-spin text-text-muted" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-xl mx-auto my-16 p-8 bg-bg-surface border border-border-default rounded-xl text-center">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 mx-auto flex items-center justify-center mb-4">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-semibold text-text-primary">Founder Growth Hub is Restricted</h2>
+          <p className="text-xs text-text-muted mt-2 leading-relaxed">
+            This module contains outbound acquisition engines and social autopilot controls reserved strictly for BreachGuard platform administrators.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-bg-inset border border-border-default hover:border-border-strong rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
+            >
+              Return to Overview
+            </Link>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      {/* Toast alert banner */}
+      {toastMessage && (
+        <div className={cn(
+          "fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg text-xs font-medium border shadow-2xl transition-all flex items-center gap-2.5",
+          toastMessage.type === 'success' && "bg-[#171514] border-accent/40 text-text-primary",
+          toastMessage.type === 'error' && "bg-[#171514] border-red-500/40 text-red-300",
+          toastMessage.type === 'info' && "bg-[#171514] border-border-strong text-text-secondary"
+        )}>
+          {toastMessage.type === 'success' && <CheckCircle2 className="w-4 h-4 text-accent" />}
+          {toastMessage.type === 'error' && <AlertTriangle className="w-4 h-4 text-red-400" />}
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
+      <div className="space-y-6">
+        {/* Header Title Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border-default">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              <span className="text-2xs font-mono font-semibold uppercase tracking-wider text-accent">
+                Founder Growth Hub
+              </span>
+              <span className="px-1.5 py-0.5 rounded bg-bg-inset border border-border-default text-[10px] font-mono text-text-muted">
+                Admin Exclusive
+              </span>
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-text-primary">
+              Outreach &amp; Marketing Autopilot
+            </h1>
+            <p className="text-xs text-text-muted mt-0.5">
+              Automated client vulnerability reconnaissance, personalized cold emails via Resend, and viral social media cadence.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsBulkImportOpen(true)}
+              className="px-3.5 py-2 rounded-lg bg-bg-surface border border-border-default hover:border-border-strong text-xs font-medium text-text-secondary hover:text-text-primary transition-colors flex items-center gap-2 cursor-pointer"
+            >
+              <Upload className="w-3.5 h-3.5 text-text-muted" />
+              <span>Bulk CSV</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAddLeadOpen(true)}
+              className="px-3.5 py-2 rounded-lg bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>New Target Lead</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Growth Metric Stat Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="p-3.5 rounded-lg bg-bg-surface border border-border-default">
+            <div className="text-2xs font-medium text-text-muted uppercase tracking-wider">Total Leads</div>
+            <div className="text-xl font-bold text-text-primary font-mono mt-1">
+              {stats?.total_leads ?? 0}
+            </div>
+            <div className="text-2xs text-text-faint mt-0.5">Target pipeline</div>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-bg-surface border border-border-default">
+            <div className="text-2xs font-medium text-text-muted uppercase tracking-wider">Scanned &amp; Audited</div>
+            <div className="text-xl font-bold text-text-primary font-mono mt-1">
+              {stats?.scanned_leads ?? 0}
+            </div>
+            <div className="text-2xs text-emerald-400 mt-0.5">Perimeter mapped</div>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-bg-surface border border-border-default">
+            <div className="text-2xs font-medium text-text-muted uppercase tracking-wider">Ready to Send</div>
+            <div className="text-xl font-bold text-accent font-mono mt-1">
+              {stats?.ready_leads ?? 0}
+            </div>
+            <div className="text-2xs text-text-faint mt-0.5">Copy generated</div>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-bg-surface border border-border-default">
+            <div className="text-2xs font-medium text-text-muted uppercase tracking-wider">Dispatched Emails</div>
+            <div className="text-xl font-bold text-text-primary font-mono mt-1">
+              {stats?.sent_leads ?? 0}
+            </div>
+            <div className="text-2xs text-text-faint mt-0.5">Via Resend</div>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-bg-surface border border-border-default">
+            <div className="text-2xs font-medium text-text-muted uppercase tracking-wider">Avg Prospect Risk</div>
+            <div className="text-xl font-bold text-amber-400 font-mono mt-1">
+              {stats?.average_risk_score ?? 60}/100
+            </div>
+            <div className="text-2xs text-text-faint mt-0.5">High conversion trigger</div>
+          </div>
+
+          <div className="p-3.5 rounded-lg bg-bg-surface border border-border-default">
+            <div className="text-2xs font-medium text-text-muted uppercase tracking-wider">Social Cadence</div>
+            <div className="text-xl font-bold text-sky-400 font-mono mt-1">
+              {stats?.total_social_posts ?? 6} Drops
+            </div>
+            <div className="text-2xs text-text-faint mt-0.5">Every 3 days</div>
+          </div>
+        </div>
+
+        {/* Tab Selection */}
+        <div className="flex border-b border-border-default gap-6 text-xs font-medium">
+          <button
+            type="button"
+            onClick={() => setActiveTab('outreach')}
+            className={cn(
+              "pb-3 flex items-center gap-2 transition-colors relative cursor-pointer",
+              activeTab === 'outreach' ? "text-text-primary font-semibold" : "text-text-muted hover:text-text-primary"
+            )}
+          >
+            <Mail className="w-4 h-4" />
+            <span>Client Cold Outreach Engine</span>
+            {stats && stats.ready_leads > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-accent/20 text-accent font-mono text-[10px]">
+                {stats.ready_leads}
+              </span>
+            )}
+            {activeTab === 'outreach' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('social')}
+            className={cn(
+              "pb-3 flex items-center gap-2 transition-colors relative cursor-pointer",
+              activeTab === 'social' ? "text-text-primary font-semibold" : "text-text-muted hover:text-text-primary"
+            )}
+          >
+            <Share2 className="w-4 h-4" />
+            <span>Social Media Autopilot (Twitter/X &amp; Reddit)</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-400 font-mono text-[10px]">
+              Every 3 Days
+            </span>
+            {activeTab === 'social' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('analytics')}
+            className={cn(
+              "pb-3 flex items-center gap-2 transition-colors relative cursor-pointer",
+              activeTab === 'analytics' ? "text-text-primary font-semibold" : "text-text-muted hover:text-text-primary"
+            )}
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Outreach Angles &amp; Playbooks</span>
+            {activeTab === 'analytics' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
+            )}
+          </button>
+        </div>
+
+        {/* TAB 1: COLD OUTREACH ENGINE */}
+        {activeTab === 'outreach' && (
+          <div className="space-y-4">
+            {/* Filter & Action Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-bg-surface border border-border-default">
+              <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+                {['all', 'ready', 'pending_scan', 'sent', 'failed'].map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setLeadStatusFilter(st)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md transition-colors capitalize cursor-pointer",
+                      leadStatusFilter === st
+                        ? "bg-bg-inset text-text-primary font-medium border border-border-strong"
+                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
+                    )}
+                  >
+                    {st === 'all' ? 'All Leads' : st.replace('_', ' ')}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => scanAllMutation.mutate()}
+                  disabled={scanAllMutation.isPending}
+                  className="px-3 py-1.5 rounded-md bg-bg-inset border border-border-default hover:border-border-strong text-xs text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className={cn("w-3.5 h-3.5", scanAllMutation.isPending && "animate-spin")} />
+                  <span>Scan All Pending</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSendBatchReady}
+                  disabled={sendBatchMutation.isPending || !stats || stats.ready_leads === 0}
+                  className="px-3 py-1.5 rounded-md bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {sendBatchMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Sending Batch...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Send Ready Batch (Max 5)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Leads Table */}
+            <div className="border border-border-default rounded-lg bg-bg-surface overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-bg-inset border-b border-border-default text-text-muted uppercase text-2xs tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">Company &amp; Domain</th>
+                      <th className="py-3 px-4">Contact</th>
+                      <th className="py-3 px-4">Passive Vulnerability Audit</th>
+                      <th className="py-3 px-4">Risk Score</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-default text-text-secondary">
+                    {leadsLoading ? (
+                      <tr>
+                        <td colSpan={6} className="py-12 text-center text-text-muted">
+                          <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-text-muted" />
+                          Loading prospective leads...
+                        </td>
+                      </tr>
+                    ) : leads.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-12 text-center text-text-muted">
+                          <p className="text-xs">No outreach leads found in this filter.</p>
+                          <p className="text-2xs text-text-faint mt-1">
+                            Click &quot;New Target Lead&quot; or &quot;Bulk CSV&quot; above to import prospects.
+                          </p>
+                        </td>
+                      </tr>
+                    ) : (
+                      leads.map((lead) => {
+                        const hasDmarcIssue = lead.dmarc_status === 'missing' || lead.dmarc_status === 'p=none';
+                        const hasPorts = lead.exposed_ports && lead.exposed_ports.length > 0;
+                        const scoreColor = (lead.risk_score || 0) >= 65 ? "text-red-400 border-red-500/30 bg-red-500/10" : (lead.risk_score || 0) >= 35 ? "text-amber-400 border-amber-500/30 bg-amber-500/10" : "text-emerald-400 border-emerald-500/30 bg-emerald-500/10";
+
+                        return (
+                          <tr key={lead.id} className="hover:bg-bg-hover transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="font-medium text-text-primary">{lead.company_name}</div>
+                              <div className="flex items-center gap-1 text-2xs text-text-muted font-mono mt-0.5">
+                                <Globe className="w-3 h-3 text-text-faint" />
+                                <span>{lead.domain}</span>
+                                <a 
+                                  href={`/?scan=${lead.domain}`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="text-text-faint hover:text-accent ml-1" 
+                                  title="Test scan on landing page"
+                                >
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-4 font-mono text-2xs">
+                              <div className="text-text-primary">{lead.contact_email}</div>
+                              {lead.contact_name && (
+                                <div className="text-text-faint font-sans text-2xs">{lead.contact_name}</div>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4">
+                              <div className="flex flex-wrap gap-1 max-w-xs">
+                                {hasDmarcIssue && (
+                                  <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-mono">
+                                    DMARC: {lead.dmarc_status}
+                                  </span>
+                                )}
+                                {hasPorts && (
+                                  <span className="px-1.5 py-0.5 rounded bg-red-500/10 border border-red-500/30 text-red-300 text-[10px] font-mono">
+                                    {lead.exposed_ports.length} Open Port(s)
+                                  </span>
+                                )}
+                                {lead.breach_count > 0 && (
+                                  <span className="px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/30 text-purple-300 text-[10px] font-mono">
+                                    {lead.breach_count} Breach(es)
+                                  </span>
+                                )}
+                                {!hasDmarcIssue && !hasPorts && lead.breach_count === 0 && (
+                                  <span className="text-text-faint text-2xs italic">
+                                    {lead.status === 'pending_scan' ? 'Pending audit...' : 'Clean baseline'}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-4">
+                              {lead.risk_score !== null && lead.risk_score !== undefined ? (
+                                <span className={cn("px-2 py-0.5 rounded border text-xs font-mono font-semibold", scoreColor)}>
+                                  {lead.risk_score}/100
+                                </span>
+                              ) : (
+                                <span className="text-text-faint text-2xs">--</span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4">
+                              <span className={cn(
+                                "px-2 py-0.5 rounded text-[11px] font-medium capitalize",
+                                lead.status === 'ready' && "bg-accent/15 text-accent border border-accent/30",
+                                lead.status === 'sent' && "bg-sky-500/15 text-sky-300 border border-sky-500/30",
+                                lead.status === 'pending_scan' && "bg-amber-500/10 text-amber-300 border border-amber-500/20",
+                                lead.status === 'failed' && "bg-red-500/10 text-red-400 border border-red-500/20"
+                              )}>
+                                {lead.status === 'sent' && lead.sent_at ? `Sent ${formatDate(lead.sent_at)}` : lead.status.replace('_', ' ')}
+                              </span>
+                            </td>
+
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEmailEditor(lead)}
+                                  title="Inspect vulnerability findings & customize email"
+                                  className="p-1.5 rounded-md hover:bg-bg-inset text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => scanLeadMutation.mutate(lead.id)}
+                                  disabled={scanLeadMutation.isPending}
+                                  title="Re-run passive scan"
+                                  className="p-1.5 rounded-md hover:bg-bg-inset text-text-muted hover:text-text-primary transition-colors cursor-pointer"
+                                >
+                                  <RefreshCw className={cn("w-3.5 h-3.5", scanLeadMutation.isPending && "animate-spin")} />
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleSendSingleEmail(lead.id)}
+                                  disabled={sendEmailMutation.isPending || lead.status === 'pending_scan'}
+                                  title={lead.status === 'sent' ? "Resend email via Resend" : "1-Click Send via Resend"}
+                                  className={cn(
+                                    "px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer",
+                                    lead.status === 'ready' 
+                                      ? "bg-accent text-accent-text hover:bg-accent-hover" 
+                                      : "bg-bg-inset text-text-muted hover:text-text-primary border border-border-default"
+                                  )}
+                                >
+                                  <Send className="w-3 h-3" />
+                                  <span>{lead.status === 'sent' ? 'Resend' : 'Send'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => deleteLeadMutation.mutate(lead.id)}
+                                  title="Delete lead"
+                                  className="p-1.5 rounded-md hover:bg-red-500/10 text-text-faint hover:text-red-400 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: SOCIAL MEDIA AUTOPILOT */}
+        {activeTab === 'social' && (
+          <div className="space-y-4">
+            {/* Cadence Banner */}
+            <div className="p-4 rounded-lg bg-bg-surface border border-border-default flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-text-primary">
+                      Automated 3-Day Content Cadence Active
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
+                      Active Queue
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    Pre-loaded with battle-tested cybersecurity hooks, teardowns, and case studies that direct founders &amp; sysadmins to your free landing page scanner.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => seedSocialMutation.mutate()}
+                  disabled={seedSocialMutation.isPending}
+                  className="px-3 py-1.5 rounded-lg bg-bg-inset border border-border-default hover:border-border-strong text-xs text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className={cn("w-3.5 h-3.5", seedSocialMutation.isPending && "animate-spin")} />
+                  <span>Re-seed Queue</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAddSocialPostOpen(true)}
+                  className="px-3.5 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create Custom Post</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Platform Filter Bar */}
+            <div className="flex items-center gap-2 text-xs">
+              {['all', 'twitter', 'reddit'].map((pl) => (
+                <button
+                  key={pl}
+                  type="button"
+                  onClick={() => setSocialPlatformFilter(pl)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-md transition-colors cursor-pointer capitalize",
+                    socialPlatformFilter === pl
+                      ? "bg-bg-inset text-text-primary font-medium border border-border-strong"
+                      : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
+                  )}
+                >
+                  {pl === 'all' ? 'All Platforms' : pl === 'twitter' ? 'Twitter / X' : 'Reddit'}
+                </button>
+              ))}
+            </div>
+
+            {/* Social Posts Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {socialLoading ? (
+                <div className="col-span-2 py-12 text-center text-text-muted">
+                  <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-text-muted" />
+                  Loading content queue...
+                </div>
+              ) : socialPosts.map((post) => {
+                const isTwitter = post.platform === 'twitter';
+                const isReddit = post.platform === 'reddit';
+
+                return (
+                  <div 
+                    key={post.id} 
+                    className="p-4 rounded-xl bg-bg-surface border border-border-default hover:border-border-strong transition-all flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Card Header */}
+                      <div className="flex items-center justify-between pb-3 border-b border-border-default">
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "p-1.5 rounded-md border flex items-center justify-center",
+                            isTwitter ? "bg-sky-500/10 border-sky-500/20 text-sky-400" : "bg-orange-500/10 border-orange-500/20 text-orange-400"
+                          )}>
+                            {isTwitter ? <XTwitterIcon className="w-3.5 h-3.5" /> : <MessageSquare className="w-3.5 h-3.5" />}
+                          </span>
+                          <div>
+                            <span className="text-xs font-semibold text-text-primary">
+                              {post.title}
+                            </span>
+                            <div className="flex items-center gap-1.5 text-[10px] text-text-faint mt-0.5">
+                              <span className="font-mono text-accent">Day {post.cadence_day}</span>
+                              <span>•</span>
+                              <span>{post.target_subreddit || (isTwitter ? 'Twitter Thread' : 'Reddit Community')}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-[10px] font-mono capitalize",
+                          post.status === 'published' 
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+                            : "bg-bg-inset text-text-muted border border-border-default"
+                        )}>
+                          {post.status}
+                        </span>
+                      </div>
+
+                      {/* Hook & Body */}
+                      <div className="py-3 space-y-2">
+                        {post.hook && (
+                          <div className="p-2.5 rounded bg-bg-inset border border-border-default text-xs text-text-primary font-medium italic">
+                            &ldquo;{post.hook}&rdquo;
+                          </div>
+                        )}
+                        <p className="text-xs text-text-secondary whitespace-pre-line line-clamp-6 leading-relaxed font-sans">
+                          {post.content}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="pt-3 border-t border-border-default flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyPost(post)}
+                          className="px-2.5 py-1 rounded bg-bg-inset border border-border-default hover:border-border-strong text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer text-2xs"
+                        >
+                          {copiedPostId === post.id ? (
+                            <>
+                              <Check className="w-3 h-3 text-accent" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3 text-text-muted" />
+                              <span>Copy Post</span>
+                            </>
+                          )}
+                        </button>
+
+                        {isTwitter && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenTwitterIntent(post)}
+                            className="px-2.5 py-1 rounded bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/20 transition-colors flex items-center gap-1 cursor-pointer text-2xs"
+                          >
+                            <XTwitterIcon className="w-3 h-3" />
+                            <span>Share to X</span>
+                          </button>
+                        )}
+
+                        {isReddit && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenRedditIntent(post)}
+                            className="px-2.5 py-1 rounded bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 border border-orange-500/20 transition-colors flex items-center gap-1 cursor-pointer text-2xs"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>Share to Reddit</span>
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateSocialMutation.mutate({
+                            postId: post.id,
+                            data: { status: post.status === 'published' ? 'scheduled' : 'published' }
+                          })}
+                          className="px-2 py-1 rounded hover:bg-bg-inset text-text-faint hover:text-text-primary text-2xs transition-colors cursor-pointer"
+                        >
+                          {post.status === 'published' ? 'Mark Scheduled' : 'Mark Published'}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => deleteSocialMutation.mutate(post.id)}
+                          className="p-1 rounded hover:bg-red-500/10 text-text-faint hover:text-red-400 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: OUTREACH ANGLES & PLAYBOOKS */}
+        {activeTab === 'analytics' && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-bg-surface border border-border-default space-y-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                <ShieldAlert className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-semibold text-text-primary">Angle A: DMARC Spoofing Risk</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Highlights when a prospect domain has no DMARC record or sets <code className="text-accent">p=none</code>. Emphasizes executive impersonation risks and Google/Yahoo sender deliverability penalties.
+              </p>
+              <div className="pt-2 border-t border-border-default text-2xs text-text-faint font-mono">
+                Historical Conversion: 18.4% scan CTR
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-bg-surface border border-border-default space-y-3">
+              <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                <Globe className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-semibold text-text-primary">Angle B: Exposed Administrative Ports</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Highlights exposed administrative services like SSH (22), RDP (3389), or database ports detected via Shodan InternetDB telemetry, explaining how automated internet scanners exploit them.
+              </p>
+              <div className="pt-2 border-t border-border-default text-2xs text-text-faint font-mono">
+                Historical Conversion: 22.1% reply rate
+              </div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-bg-surface border border-border-default space-y-3">
+              <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+                <FileText className="w-4 h-4" />
+              </div>
+              <h3 className="text-sm font-semibold text-text-primary">Angle C: Executive Risk Briefing</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Delivers an executive snapshot with composite risk score, breach record count, and observable subdomain footprint, inviting leadership to view the full assessment without creating an account.
+              </p>
+              <div className="pt-2 border-t border-border-default text-2xs text-text-faint font-mono">
+                Historical Conversion: 14.8% executive response
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* MODAL: Add Single Target Lead */}
+      {isAddLeadOpen && (
+        <div className="fixed inset-0 z-50 bg-bg-overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-bg-base border border-border-default rounded-xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-bg-surface border border-border-default flex items-center justify-center text-accent">
+                  <Plus className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-sm font-semibold text-text-primary">Add Outreach Prospect</h3>
+              </div>
+              <button 
+                onClick={() => setIsAddLeadOpen(false)} 
+                className="text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateLead} className="mt-4 space-y-3.5 text-xs">
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Company Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Acme Corp"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary placeholder-text-faint focus:outline-none focus:border-border-strong"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Target Domain</label>
+                <input
+                  type="text"
+                  placeholder="e.g. acme.com"
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary placeholder-text-faint focus:outline-none focus:border-border-strong font-mono"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Contact Email</label>
+                <input
+                  type="email"
+                  placeholder="e.g. cto@acme.com or security@acme.com"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary placeholder-text-faint focus:outline-none focus:border-border-strong font-mono"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Contact Name (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={contactName}
+                  onChange={(e) => setContactName(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary placeholder-text-faint focus:outline-none focus:border-border-strong"
+                />
+              </div>
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Initial Outreach Angle</label>
+                <select
+                  value={emailAngle}
+                  onChange={(e) => setEmailAngle(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary focus:outline-none focus:border-border-strong cursor-pointer"
+                >
+                  <option value="dmarc_spoofing">DMARC Spoofing Risk (High Urgency)</option>
+                  <option value="open_ports">Exposed Ports &amp; Perimeter (Shodan)</option>
+                  <option value="executive_summary">Executive Risk Briefing (Composite Score)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="auto_scan"
+                  checked={autoScan}
+                  onChange={(e) => setAutoScan(e.target.checked)}
+                  className="rounded border-border-default text-accent focus:ring-accent cursor-pointer"
+                />
+                <label htmlFor="auto_scan" className="text-text-secondary cursor-pointer">
+                  Auto-run BreachGuard passive perimeter scan immediately
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-default">
+                <button
+                  type="button"
+                  onClick={() => setIsAddLeadOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createLeadMutation.isPending}
+                  className="px-3.5 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {createLeadMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Adding &amp; Scanning...
+                    </>
+                  ) : (
+                    'Add Lead'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Bulk CSV Import */}
+      {isBulkImportOpen && (
+        <div className="fixed inset-0 z-50 bg-bg-overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-bg-base border border-border-default rounded-xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-bg-surface border border-border-default flex items-center justify-center text-text-primary">
+                  <Upload className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-sm font-semibold text-text-primary">Bulk CSV Lead Ingestion</h3>
+              </div>
+              <button 
+                onClick={() => setIsBulkImportOpen(false)} 
+                className="text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleBulkImport} className="mt-4 space-y-3.5 text-xs">
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">
+                  Paste CSV Lines (Format: Company, Domain, Email, Contact Name)
+                </label>
+                <textarea
+                  rows={8}
+                  placeholder={`Acme Cyber, acme.com, cto@acme.com, John Doe\nBeta Health, betahealth.io, security@betahealth.io, Sarah Connor\nDelta Fin, deltafin.co, founder@deltafin.co, Michael`}
+                  value={bulkCsvText}
+                  onChange={(e) => setBulkCsvText(e.target.value)}
+                  className="w-full p-3 bg-bg-surface border border-border-default rounded-lg text-text-primary placeholder-text-faint font-mono text-2xs focus:outline-none focus:border-border-strong"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="bulk_auto_scan"
+                  checked={bulkAutoScan}
+                  onChange={(e) => setBulkAutoScan(e.target.checked)}
+                  className="rounded border-border-default text-accent focus:ring-accent cursor-pointer"
+                />
+                <label htmlFor="bulk_auto_scan" className="text-text-secondary cursor-pointer">
+                  Auto-run passive scan on all rows during import
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-default">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkImportOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={bulkImportMutation.isPending}
+                  className="px-3.5 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {bulkImportMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    'Import Leads'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Email Inspector & Editor */}
+      {isEmailEditorOpen && activeLead && (
+        <div className="fixed inset-0 z-50 bg-bg-overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-3xl max-h-[90vh] bg-bg-base border border-border-default rounded-xl p-5 shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-bg-surface border border-border-default flex items-center justify-center text-accent">
+                  <Mail className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">
+                    Cold Outreach Inspector — {activeLead.company_name} ({activeLead.domain})
+                  </h3>
+                  <p className="text-[11px] text-text-faint">
+                    Personalized based on BreachGuard passive perimeter telemetry
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsEmailEditorOpen(false)} 
+                className="text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-4 space-y-4 text-xs pr-1">
+              {/* Telemetry Summary Strip */}
+              <div className="p-3 rounded-lg bg-bg-surface border border-border-default grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <div className="text-[10px] uppercase font-mono text-text-faint">Risk Score</div>
+                  <div className="text-sm font-bold text-amber-400 font-mono mt-0.5">
+                    {activeLead.risk_score !== null ? `${activeLead.risk_score}/100` : 'Unscanned'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-mono text-text-faint">DMARC Policy</div>
+                  <div className="text-xs font-semibold text-text-primary mt-0.5 font-mono">
+                    {activeLead.dmarc_status || 'missing'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-mono text-text-faint">Exposed Ports</div>
+                  <div className="text-xs font-semibold text-red-300 mt-0.5 font-mono">
+                    {activeLead.exposed_ports && activeLead.exposed_ports.length > 0 ? `${activeLead.exposed_ports.length} services` : '0 detected'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase font-mono text-text-faint">Breach Telemetry</div>
+                  <div className="text-xs font-semibold text-purple-300 mt-0.5 font-mono">
+                    {activeLead.breach_count || 0} breaches
+                  </div>
+                </div>
+              </div>
+
+              {/* Angle Switcher */}
+              <div>
+                <label className="block text-text-secondary mb-1.5 font-medium">Outreach Angle</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: 'dmarc_spoofing', label: 'DMARC Spoofing Risk' },
+                    { key: 'open_ports', label: 'Exposed Ports & Perimeter' },
+                    { key: 'executive_summary', label: 'Executive Risk Briefing' },
+                  ].map((a) => (
+                    <button
+                      key={a.key}
+                      type="button"
+                      onClick={() => {
+                        setSelectedAngle(a.key as any);
+                        // Trigger re-generation of text with this angle
+                        updateLeadMutation.mutate({
+                          leadId: activeLead.id,
+                          data: { email_angle: a.key }
+                        }, {
+                          onSuccess: (res) => {
+                            if (res.subject) setEditedSubject(res.subject);
+                            if (res.body) setEditedBody(res.body);
+                          }
+                        });
+                      }}
+                      className={cn(
+                        "p-2 rounded-lg border text-left transition-colors cursor-pointer text-2xs",
+                        selectedAngle === a.key
+                          ? "bg-bg-inset border-accent text-accent font-semibold"
+                          : "bg-bg-surface border-border-default text-text-muted hover:text-text-primary"
+                      )}
+                    >
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subject Input */}
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Email Subject Line</label>
+                <input
+                  type="text"
+                  value={editedSubject}
+                  onChange={(e) => setEditedSubject(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary font-medium focus:outline-none focus:border-border-strong"
+                />
+              </div>
+
+              {/* Body Textarea */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-text-secondary font-medium">Email Body (Plain Text &amp; HTML auto-rendered)</label>
+                  <span className="text-[10px] text-text-faint font-mono">Personalized for {activeLead.contact_email}</span>
+                </div>
+                <textarea
+                  rows={9}
+                  value={editedBody}
+                  onChange={(e) => setEditedBody(e.target.value)}
+                  className="w-full p-3 bg-bg-surface border border-border-default rounded-lg text-text-primary font-sans leading-relaxed text-xs focus:outline-none focus:border-border-strong"
+                />
+              </div>
+
+              {/* Live Preview of Free Scanner CTA */}
+              <div className="p-3 rounded-lg bg-bg-inset border border-border-default flex items-center justify-between">
+                <div className="text-2xs text-text-muted">
+                  Recipient CTA Target: <span className="font-mono text-accent">https://breachguard.io/?scan={activeLead.domain}</span>
+                </div>
+                <a
+                  href={`/?scan=${activeLead.domain}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-2xs text-text-secondary hover:text-text-primary flex items-center gap-1 underline"
+                >
+                  <span>Preview landing report</span>
+                  <ArrowUpRight className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-border-default">
+              <button
+                type="button"
+                onClick={handleSaveEmailDraft}
+                disabled={updateLeadMutation.isPending}
+                className="px-3.5 py-1.5 rounded-lg bg-bg-inset border border-border-default hover:border-border-strong text-text-secondary hover:text-text-primary text-xs font-medium transition-colors cursor-pointer"
+              >
+                Save Draft Changes
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEmailEditorOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary text-xs cursor-pointer"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSendSingleEmail(activeLead.id)}
+                  disabled={sendEmailMutation.isPending}
+                  className="px-4 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {sendEmailMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Sending via Resend...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>1-Click Send via Resend</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Create Custom Social Post */}
+      {isAddSocialPostOpen && (
+        <div className="fixed inset-0 z-50 bg-bg-overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-bg-base border border-border-default rounded-xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-bg-surface border border-border-default flex items-center justify-center text-sky-400">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="text-sm font-semibold text-text-primary">Create Scheduled Social Post</h3>
+              </div>
+              <button 
+                onClick={() => setIsAddSocialPostOpen(false)} 
+                className="text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSocialPost} className="mt-4 space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-text-secondary mb-1 font-medium">Platform</label>
+                  <select
+                    value={newPostPlatform}
+                    onChange={(e) => setNewPostPlatform(e.target.value as any)}
+                    className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary focus:outline-none"
+                  >
+                    <option value="twitter">Twitter / X</option>
+                    <option value="reddit">Reddit</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-text-secondary mb-1 font-medium">Cadence Offset</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newPostCadenceDay}
+                    onChange={(e) => setNewPostCadenceDay(Number(e.target.value))}
+                    className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary font-mono focus:outline-none"
+                    placeholder="e.g. Day 1, 4, 7..."
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Post Topic / Category</label>
+                <select
+                  value={newPostCategory}
+                  onChange={(e) => setNewPostCategory(e.target.value as any)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary focus:outline-none"
+                >
+                  <option value="email_security">Email Security (DMARC / SPF)</option>
+                  <option value="attack_surface">Attack Surface &amp; Open Ports</option>
+                  <option value="threat_intel">Threat Intel &amp; Infostealer Leaks</option>
+                  <option value="msp_growth">MSP Client Acquisition</option>
+                </select>
+              </div>
+
+              {newPostPlatform === 'reddit' && (
+                <div>
+                  <label className="block text-text-secondary mb-1 font-medium">Target Subreddit</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. r/sysadmin, r/msp, r/cybersecurity"
+                    value={newPostSubreddit}
+                    onChange={(e) => setNewPostSubreddit(e.target.value)}
+                    className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary font-mono focus:outline-none"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Post Title</label>
+                <input
+                  type="text"
+                  placeholder="e.g. The DMARC p=none Illusion"
+                  value={newPostTitle}
+                  onChange={(e) => setNewPostTitle(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Opening Hook (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 70% of companies don't know they can be spoofed."
+                  value={newPostHook}
+                  onChange={(e) => setNewPostHook(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">Post Content</label>
+                <textarea
+                  rows={6}
+                  placeholder="Write the value-first thread or case study..."
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  className="w-full p-3 bg-bg-surface border border-border-default rounded-lg text-text-primary font-sans leading-relaxed focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-default">
+                <button
+                  type="button"
+                  onClick={() => setIsAddSocialPostOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createSocialMutation.isPending}
+                  className="px-3.5 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {createSocialMutation.isPending ? 'Scheduling...' : 'Add to Queue'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </DashboardLayout>
+  );
+}

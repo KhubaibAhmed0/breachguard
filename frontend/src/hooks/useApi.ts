@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { API_BASE_URL } from '@/lib/api';
-import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity } from '@/types';
+import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity, OutreachLead, SocialPost, GrowthStats } from '@/types';
 
 export function useDomains() {
   return useQuery<Domain[]>({
@@ -445,6 +445,220 @@ export function useFixFinding() {
       queryClient.invalidateQueries({ queryKey: ['findings'] });
       queryClient.invalidateQueries({ queryKey: ['attackSurfaceFindings'] });
       queryClient.invalidateQueries({ queryKey: ['riskOverview'] });
+    },
+  });
+}
+
+// =============================================================================
+// FOUNDER GROWTH HUB (ADMIN ONLY) HOOKS
+// =============================================================================
+
+export function useGrowthStats() {
+  return useQuery<GrowthStats>({
+    queryKey: ['growthStats'],
+    queryFn: async () => {
+      const res = await api.get('/admin/growth/stats');
+      return res.data;
+    },
+    refetchInterval: 15000,
+  });
+}
+
+export function useGrowthLeads(status?: string) {
+  return useQuery<OutreachLead[]>({
+    queryKey: ['growthLeads', status || 'all'],
+    queryFn: async () => {
+      const params = status && status !== 'all' ? { status } : {};
+      const res = await api.get('/admin/growth/leads', { params });
+      return res.data;
+    },
+  });
+}
+
+export function useGrowthSocial(platform?: string) {
+  return useQuery<SocialPost[]>({
+    queryKey: ['growthSocial', platform || 'all'],
+    queryFn: async () => {
+      const params = platform && platform !== 'all' ? { platform } : {};
+      const res = await api.get('/admin/growth/social', { params });
+      return res.data;
+    },
+  });
+}
+
+export function useCreateLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      company_name: string;
+      domain: string;
+      contact_email: string;
+      contact_name?: string;
+      email_angle?: string;
+      auto_scan?: boolean;
+    }) => {
+      const res = await api.post('/admin/growth/leads', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useBulkImportLeads() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      leads: Array<{ company_name: string; domain: string; contact_email: string; contact_name?: string }>;
+      auto_scan?: boolean;
+    }) => {
+      const res = await api.post('/admin/growth/leads/bulk', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useScanLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadId: number) => {
+      const res = await api.post(`/admin/growth/leads/${leadId}/scan`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useScanAllLeads() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await api.post('/admin/growth/leads/scan-all');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useUpdateLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ leadId, data }: { leadId: number; data: Partial<OutreachLead> }) => {
+      const res = await api.put(`/admin/growth/leads/${leadId}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+    },
+  });
+}
+
+export function useDeleteLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadId: number) => {
+      const res = await api.delete(`/admin/growth/leads/${leadId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useSendLeadEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (leadId: number) => {
+      const res = await api.post(`/admin/growth/leads/${leadId}/send`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useSendBatchLeads() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (maxCount: number = 5) => {
+      const res = await api.post(`/admin/growth/leads/send-batch?max_count=${maxCount}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useCreateSocialPost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Partial<SocialPost>) => {
+      const res = await api.post('/admin/growth/social', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthSocial'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useUpdateSocialPost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ postId, data }: { postId: number; data: Partial<SocialPost> }) => {
+      const res = await api.put(`/admin/growth/social/${postId}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthSocial'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useDeleteSocialPost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (postId: number) => {
+      const res = await api.delete(`/admin/growth/social/${postId}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthSocial'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useSeedSocialPosts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await api.post('/admin/growth/social/seed');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthSocial'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
     },
   });
 }

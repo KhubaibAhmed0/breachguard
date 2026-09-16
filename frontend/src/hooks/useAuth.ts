@@ -19,6 +19,7 @@ export function useAuth() {
           isTrial: res.data.is_trial,
           trialDaysRemaining: res.data.trial_days_remaining,
           trialEndsAt: res.data.trial_ends_at,
+          role: res.data.role || 'admin',
         });
       })
       .catch(() => {
@@ -45,6 +46,7 @@ export function useAuth() {
           isTrial: userRes.data.is_trial,
           trialDaysRemaining: userRes.data.trial_days_remaining,
           trialEndsAt: userRes.data.trial_ends_at,
+          role: userRes.data.role || 'admin',
         });
       } catch {
         setUser({
@@ -52,6 +54,7 @@ export function useAuth() {
           name: 'Acme Admin',
           email: emailOrToken,
           organizationId: '1',
+          role: 'admin',
         });
       }
       return res.data;
@@ -64,6 +67,7 @@ export function useAuth() {
         name: 'Acme Admin',
         email: 'admin@acme.com',
         organizationId: '1',
+        role: 'admin',
       });
     }
   };

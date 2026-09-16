@@ -9,6 +9,7 @@ export interface User {
   isTrial?: boolean;
   trialDaysRemaining?: number;
   trialEndsAt?: string;
+  role?: string;
 }
 
 export interface Organization {
@@ -95,4 +96,53 @@ export interface ProspectScanResult {
     medium: number;
     low: number;
   };
+}
+
+export interface OutreachLead {
+  id: number;
+  company_name: string;
+  domain: string;
+  contact_email: string;
+  contact_name?: string | null;
+  status: 'pending_scan' | 'scanned' | 'ready' | 'sent' | 'failed';
+  risk_score?: number | null;
+  risk_level?: string | null;
+  dmarc_status?: string | null;
+  dmarc_record?: string | null;
+  exposed_ports: string[];
+  subdomains_count: number;
+  breach_count: number;
+  breach_sources: string[];
+  top_findings: string[];
+  email_angle?: string | null;
+  email_subject?: string | null;
+  email_body?: string | null;
+  sent_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface SocialPost {
+  id: number;
+  platform: 'twitter' | 'reddit' | 'both';
+  category: 'attack_surface' | 'email_security' | 'threat_intel' | 'msp_growth';
+  title: string;
+  hook?: string | null;
+  content: string;
+  call_to_action?: string | null;
+  target_subreddit?: string | null;
+  cadence_day: number;
+  scheduled_for: string;
+  status: 'scheduled' | 'ready' | 'published';
+  published_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface GrowthStats {
+  total_leads: number;
+  scanned_leads: number;
+  ready_leads: number;
+  sent_leads: number;
+  average_risk_score: number;
+  total_social_posts: number;
+  published_social_posts: number;
 }

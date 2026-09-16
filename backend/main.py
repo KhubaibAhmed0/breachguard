@@ -16,7 +16,7 @@ from routers import (
     auth, domains, exposures, reports, prospect, billing,
     identities, integrations, msp, api_keys,
     attack_surface, email_security, findings, risk,
-    team, cron
+    team, cron, growth
 )
 
 logger = logging.getLogger(__name__)
@@ -281,6 +281,7 @@ app.include_router(findings.router)
 app.include_router(risk.router)
 app.include_router(team.router, prefix="/api/team", tags=["team"])
 app.include_router(cron.router, prefix="/api/cron", tags=["cron"])
+app.include_router(growth.router, prefix="/api/admin/growth", tags=["admin-growth"])
 
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError

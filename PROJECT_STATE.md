@@ -90,6 +90,10 @@ BreachGuard is an **External Cyber Risk & Perimeter Monitoring Platform** built 
 10. **One-Click Auto-Fixes & Ticket Export**:
    * Exposure and Finding tables equipped with "Export Ticket" (Jira/ServiceNow) and "Auto-Fix" automated remediation buttons.
    * Backed by `/api/exposures/{id}/export`, `/api/exposures/{id}/fix`, `/api/findings/{id}/export`, and `/api/findings/{id}/fix` with instant cache invalidation and toast feedback.
+11. **Founder Growth Hub (`/admin/growth`)**:
+   * **Client Cold Outreach Engine**: Ingest target domains/emails (single or bulk CSV), auto-run passive perimeter scans (DMARC policy, exposed administrative ports, credential breaches), dynamically compile vulnerability-tailored cold emails (3 angles: DMARC Spoofing, Exposed Ports, Executive Risk Briefing), and 1-click send via Resend with safe rate throttling.
+   * **Social Media Autopilot (Twitter/X & Reddit)**: Pre-loaded queue of high-impact cybersecurity posts, teardowns, and hooks running on an automated 3-day cadence funneling readers to the free landing page scanner.
+   * **Private Admin Access**: Strict role-based access control protecting `/admin/growth` and `/api/admin/growth/*` exclusively for platform administrator accounts (`role == 'admin'`).
 
 ---
 

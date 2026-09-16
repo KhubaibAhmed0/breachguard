@@ -81,3 +81,43 @@ class GrowthSetting(Base):
     key = Column(String, unique=True, index=True, nullable=False)
     value = Column(Text, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ProspectSignal(Base):
+    """
+    Represents a potential buyer or customer lead discovered by scanning social media
+    discussions (Reddit, Twitter/X, tech forums) for urgent cybersecurity pain points.
+    """
+    __tablename__ = "prospect_signals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    platform = Column(String, nullable=False, index=True)      # reddit, twitter, web
+    source_url = Column(String, nullable=False)
+    author_handle = Column(String, nullable=False, index=True) # u/username or @handle
+    author_name = Column(String, nullable=True)
+    
+    post_title = Column(String, nullable=False)
+    post_snippet = Column(Text, nullable=False)
+    
+    # Intent categorization & scoring
+    intent_category = Column(String, nullable=False, index=True) # dmarc_spoofing, credential_leak, attack_surface, msp_compliance
+    intent_score = Column(Integer, default=70, index=True)       # 1-100%
+    urgency_level = Column(String, default="high")               # critical, high, medium
+    
+    # Extracted entity data
+    extracted_company = Column(String, nullable=True, index=True)
+    extracted_domain = Column(String, nullable=True, index=True)
+    extracted_email = Column(String, nullable=True)
+    
+    # Actionable generation
+    suggested_reply = Column(Text, nullable=True)                # Value-first, non-salesy response hook for Reddit/X
+    suggested_email_angle = Column(String, default="dmarc_spoofing") # dmarc_spoofing, open_ports, executive_summary
+    
+    # Lifecycle status: discovered, converted_to_lead, synced_to_sheet, dismissed
+    status = Column(String, default="discovered", index=True)
+    converted_lead_id = Column(Integer, nullable=True)
+    synced_to_sheet_at = Column(DateTime, nullable=True)
+    
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+

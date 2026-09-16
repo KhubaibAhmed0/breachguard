@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { API_BASE_URL } from '@/lib/api';
-import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity, OutreachLead, SocialPost, GrowthStats, GoogleSheetConfig, GoogleSheetSyncResult } from '@/types';
+import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity, OutreachLead, SocialPost, GrowthStats, GoogleSheetConfig, GoogleSheetSyncResult, ProspectSignal } from '@/types';
 
 export function useDomains() {
   return useQuery<Domain[]>({
@@ -700,4 +700,129 @@ export function useSyncGoogleSheet() {
     },
   });
 }
+
+// ==============================================================================
+// Buyer Intent Radar Hooks
+// ==============================================================================
+
+export function useProspectSignals(params?: {
+  category?: string;
+  platform?: string;
+  min_score?: number;
+  status?: string;
+}) {
+  return useQuery<ProspectSignal[]>({
+    queryKey: ['prospectSignals', params],
+    queryFn: async () => {
+      const q = new URLSearchParams();
+      if (params?.category && params.category !== 'all') q.set('category', params.category);
+      if (params?.platform && params.platform !== 'all') q.set('platform', params.platform);
+      if (params?.min_score) q.set('min_score', String(params.min_score));
+      if (params?.status && params.status !== 'all') q.set('status', params.status);
+
+      const res = await api.get(`/admin/growth/radar/signals?${q.toString()}`);
+      return res.data || [];
+    },
+  });
+}
+
+export function useTriggerRadarScan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data?: { subreddits?: string[]; category?: string }) => {
+      const res = await api.post('/admin/growth/radar/scan', data || {});
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prospectSignals'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useIngestRadarUrl() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { url: string; text?: string; platform?: string }) => {
+      const res = await api.post('/admin/growth/radar/ingest-url', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prospectSignals'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useConvertSignalToLead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      signalId,
+      data,
+    }: {
+      signalId: number;
+      data?: {
+        company_name?: string;
+        domain?: string;
+        contact_email?: string;
+        contact_name?: string;
+        email_angle?: string;
+        auto_scan?: boolean;
+      };
+    }) => {
+      const res = await api.post(`/admin/growth/radar/signals/${signalId}/convert`, data || {});
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prospectSignals'] });
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function usePushSignalToSheet() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ signalId, webhookUrl }: { signalId: number; webhookUrl?: string }) => {
+      const res = await api.post(`/admin/growth/radar/signals/${signalId}/push-sheet`, {
+        webhook_url: webhookUrl,
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prospectSignals'] });
+    },
+  });
+}
+
+export function useBatchConvertSignals() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (minScore: number = 80) => {
+      const res = await api.post(`/admin/growth/radar/signals/batch-convert?min_score=${minScore}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prospectSignals'] });
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+    },
+  });
+}
+
+export function useUpdateSignalStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ signalId, status }: { signalId: number; status: string }) => {
+      const res = await api.post(`/admin/growth/radar/signals/${signalId}/status`, { status });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prospectSignals'] });
+    },
+  });
+}
+
 

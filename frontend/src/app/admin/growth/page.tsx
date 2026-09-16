@@ -22,9 +22,16 @@ import {
   useSeedSocialPosts,
   useGoogleSheetConfig,
   useSaveGoogleSheetConfig,
-  useSyncGoogleSheet
+  useSyncGoogleSheet,
+  useProspectSignals,
+  useTriggerRadarScan,
+  useIngestRadarUrl,
+  useConvertSignalToLead,
+  usePushSignalToSheet,
+  useBatchConvertSignals,
+  useUpdateSignalStatus
 } from '@/hooks/useApi';
-import { OutreachLead, SocialPost } from '@/types';
+import { OutreachLead, SocialPost, ProspectSignal } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
 import { 
   Zap, Mail, Send, Share2, Plus, Upload, RefreshCw, Eye, 
@@ -32,7 +39,7 @@ import {
   ExternalLink, Sparkles, Copy, MessageSquare, 
   Clock, Check, Loader2, X, ChevronRight, BarChart3, 
   Flame, ShieldCheck, FileText, ArrowUpRight, Filter,
-  FileSpreadsheet
+  FileSpreadsheet, Radio, Target, Download, Link2
 } from 'lucide-react';
 
 function XTwitterIcon({ className }: { className?: string }) {
@@ -47,9 +54,15 @@ export default function GrowthAdminPage() {
   const { user, loading: authLoading } = useAuth();
   const isAdmin = user?.role === 'admin' || user?.email === 'admin@acme.com';
 
-  const [activeTab, setActiveTab] = useState<'outreach' | 'social' | 'analytics'>('outreach');
+  const [activeTab, setActiveTab] = useState<'outreach' | 'radar' | 'social' | 'analytics'>('outreach');
   const [leadStatusFilter, setLeadStatusFilter] = useState<string>('all');
   const [socialPlatformFilter, setSocialPlatformFilter] = useState<string>('all');
+
+  // Buyer Intent Radar filters & states
+  const [radarCategoryFilter, setRadarCategoryFilter] = useState<string>('all');
+  const [radarPlatformFilter, setRadarPlatformFilter] = useState<string>('all');
+  const [radarMinScoreFilter, setRadarMinScoreFilter] = useState<number>(0);
+  const [radarStatusFilter, setRadarStatusFilter] = useState<string>('all');
 
   // Modals state
   const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
@@ -57,6 +70,19 @@ export default function GrowthAdminPage() {
   const [isGoogleSheetModalOpen, setIsGoogleSheetModalOpen] = useState(false);
   const [isEmailEditorOpen, setIsEmailEditorOpen] = useState(false);
   const [isAddSocialPostOpen, setIsAddSocialPostOpen] = useState(false);
+  const [isIngestUrlModalOpen, setIsIngestUrlModalOpen] = useState(false);
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+
+  // Radar Interactive states
+  const [ingestUrlInput, setIngestUrlInput] = useState('');
+  const [ingestTextInput, setIngestTextInput] = useState('');
+  const [sheetWebhookUrlInput, setSheetWebhookUrlInput] = useState('');
+  const [expandedReplySignalId, setExpandedReplySignalId] = useState<number | null>(null);
+  const [editingSignalId, setEditingSignalId] = useState<number | null>(null);
+  const [customDomainOverrides, setCustomDomainOverrides] = useState<{ [id: number]: string }>({});
+  const [customCompanyOverrides, setCustomCompanyOverrides] = useState<{ [id: number]: string }>({});
+  const [copiedReplyId, setCopiedReplyId] = useState<number | null>(null);
+
   const [activeLead, setActiveLead] = useState<OutreachLead | null>(null);
 
   // Google Sheets state
@@ -121,6 +147,20 @@ export default function GrowthAdminPage() {
   const saveGoogleSheetMutation = useSaveGoogleSheetConfig();
   const syncGoogleSheetMutation = useSyncGoogleSheet();
 
+  // Radar query & mutations
+  const { data: radarSignals = [], isLoading: radarLoading, refetch: refetchRadar } = useProspectSignals({
+    category: radarCategoryFilter,
+    platform: radarPlatformFilter,
+    min_score: radarMinScoreFilter || undefined,
+    status: radarStatusFilter,
+  });
+  const triggerRadarScanMutation = useTriggerRadarScan();
+  const ingestRadarUrlMutation = useIngestRadarUrl();
+  const convertSignalMutation = useConvertSignalToLead();
+  const pushSignalToSheetMutation = usePushSignalToSheet();
+  const batchConvertSignalsMutation = useBatchConvertSignals();
+  const updateSignalStatusMutation = useUpdateSignalStatus();
+
   useEffect(() => {
     if (sheetConfig?.sheet_url) {
       setSheetUrlInput(sheetConfig.sheet_url);
@@ -129,6 +169,98 @@ export default function GrowthAdminPage() {
       setSheetAutoScan(sheetConfig.auto_scan);
     }
   }, [sheetConfig]);
+
+  // Radar Handlers
+  const handleTriggerRadarScan = async () => {
+    try {
+      const res = await triggerRadarScanMutation.mutateAsync({});
+      showToast(res.message || 'Social radar scan completed successfully!', 'success');
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to trigger radar scan', 'error');
+    }
+  };
+
+  const handleIngestUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ingestUrlInput.trim()) return;
+    try {
+      const res = await ingestRadarUrlMutation.mutateAsync({
+        url: ingestUrlInput.trim(),
+        text: ingestTextInput.trim() || undefined,
+      });
+      showToast(res.message || 'Discussion post ingested & scored!', 'success');
+      setIngestUrlInput('');
+      setIngestTextInput('');
+      setIsIngestUrlModalOpen(false);
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to ingest discussion URL', 'error');
+    }
+  };
+
+  const handleConvertSignal = async (signal: ProspectSignal) => {
+    const domain = customDomainOverrides[signal.id] || signal.extracted_domain;
+    if (!domain) {
+      showToast('Please specify a corporate domain before converting to an outreach lead.', 'error');
+      setEditingSignalId(signal.id);
+      return;
+    }
+    try {
+      const company = customCompanyOverrides[signal.id] || signal.extracted_company || domain.split('.')[0];
+      const res = await convertSignalMutation.mutateAsync({
+        signalId: signal.id,
+        data: {
+          company_name: company,
+          domain: domain,
+          contact_name: signal.author_name || signal.author_handle,
+          contact_email: signal.extracted_email || `security@${domain}`,
+          email_angle: signal.suggested_email_angle || 'dmarc_spoofing',
+          auto_scan: true,
+        }
+      });
+      showToast(`Converted ${signal.author_handle} (${domain}) into an active Outreach Lead with passive audit!`, 'success');
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to convert prospect to lead', 'error');
+    }
+  };
+
+  const handlePushSignalToSheet = async (signalId: number) => {
+    try {
+      const res = await pushSignalToSheetMutation.mutateAsync({
+        signalId,
+        webhookUrl: sheetWebhookUrlInput || undefined,
+      });
+      showToast(res.message || 'Prospect pushed to Google Sheet!', 'success');
+    } catch (err: any) {
+      if (err?.response?.status === 400 && err?.response?.data?.detail?.includes('webhook')) {
+        setIsWebhookModalOpen(true);
+      } else {
+        showToast(err?.response?.data?.detail || 'Failed to push to Google Sheet', 'error');
+      }
+    }
+  };
+
+  const handleBatchConvertSignals = async () => {
+    try {
+      const res = await batchConvertSignalsMutation.mutateAsync(80);
+      showToast(res.message || 'Batch conversion complete!', 'success');
+    } catch (err: any) {
+      showToast(err?.response?.data?.detail || 'Failed to batch convert signals', 'error');
+    }
+  };
+
+  const handleExportRadarCsv = () => {
+    const q = new URLSearchParams();
+    if (radarCategoryFilter && radarCategoryFilter !== 'all') q.set('category', radarCategoryFilter);
+    if (radarMinScoreFilter) q.set('min_score', String(radarMinScoreFilter));
+    window.open(`/api/admin/growth/radar/export?${q.toString()}`, '_blank');
+  };
+
+  const handleCopyReplyHook = (signalId: number, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedReplyId(signalId);
+    showToast('Suggested reply hook copied to clipboard!');
+    setTimeout(() => setCopiedReplyId(null), 3000);
+  };
 
   // Handlers
   const handleCreateLead = async (e: React.FormEvent) => {
@@ -480,12 +612,15 @@ export default function GrowthAdminPage() {
             <div className="text-2xs text-text-faint mt-0.5">High conversion trigger</div>
           </div>
 
-          <div className="p-3.5 rounded-lg bg-bg-surface border border-border-default">
-            <div className="text-2xs font-medium text-text-muted uppercase tracking-wider">Social Cadence</div>
-            <div className="text-xl font-bold text-sky-400 font-mono mt-1">
-              {stats?.total_social_posts ?? 6} Drops
+          <div className="p-3.5 rounded-lg bg-bg-surface border border-rose-500/20">
+            <div className="text-2xs font-medium text-text-muted uppercase tracking-wider flex items-center justify-between">
+              <span>Buyer Intent Radar</span>
+              <Flame className="w-3 h-3 text-rose-400" />
             </div>
-            <div className="text-2xs text-text-faint mt-0.5">Every 3 days</div>
+            <div className="text-xl font-bold text-rose-400 font-mono mt-1">
+              {stats?.high_intent_signals ?? radarSignals.length} Urgent
+            </div>
+            <div className="text-2xs text-text-faint mt-0.5">Reddit &amp; X Prospects</div>
           </div>
         </div>
 
@@ -508,6 +643,25 @@ export default function GrowthAdminPage() {
             )}
             {activeTab === 'outreach' && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('radar')}
+            className={cn(
+              "pb-3 flex items-center gap-2 transition-colors relative cursor-pointer",
+              activeTab === 'radar' ? "text-text-primary font-semibold" : "text-text-muted hover:text-text-primary"
+            )}
+          >
+            <Radio className="w-4 h-4 text-rose-400" />
+            <span>Buyer Intent Radar</span>
+            <span className="px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-400 font-mono text-[10px] flex items-center gap-1">
+              <Flame className="w-2.5 h-2.5" />
+              <span>{stats?.high_intent_signals ?? radarSignals.length}</span>
+            </span>
+            {activeTab === 'radar' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500" />
             )}
           </button>
 
@@ -779,7 +933,475 @@ export default function GrowthAdminPage() {
           </div>
         )}
 
-        {/* TAB 2: SOCIAL MEDIA AUTOPILOT */}
+        {/* TAB 2: BUYER INTENT RADAR */}
+        {activeTab === 'radar' && (
+          <div className="space-y-4">
+            {/* Radar Banner */}
+            <div className="p-4 rounded-lg bg-bg-surface border border-border-default flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                  <Radio className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-text-primary">
+                      Automated Social Buyer Intent Radar
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-mono flex items-center gap-1">
+                      <Flame className="w-3 h-3" />
+                      Live Feed
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    Actively monitoring Reddit (<code className="text-text-secondary font-mono">r/sysadmin</code>, <code className="text-text-secondary font-mono">r/msp</code>, <code className="text-text-secondary font-mono">r/cybersecurity</code>) and Twitter/X for companies with urgent DMARC failures, open ports, and credential breaches.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTriggerRadarScan}
+                  disabled={triggerRadarScanMutation.isPending}
+                  className="px-3 py-1.5 rounded-lg bg-bg-inset border border-border-default hover:border-border-strong text-xs text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  title="Refresh social discovery feeds"
+                >
+                  <RefreshCw className={cn("w-3.5 h-3.5", triggerRadarScanMutation.isPending && "animate-spin")} />
+                  <span>Scan Social Feeds</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsIngestUrlModalOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-bg-inset border border-border-default hover:border-border-strong text-xs text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Paste any Reddit or X link to extract and score"
+                >
+                  <Link2 className="w-3.5 h-3.5 text-text-muted" />
+                  <span>Analyze URL</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportRadarCsv}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-950/30 border border-emerald-500/40 hover:border-emerald-500 text-xs text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Download Google Sheets-ready CSV with all buyer signals"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Export Sheet CSV</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleBatchConvertSignals}
+                  disabled={batchConvertSignalsMutation.isPending}
+                  className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm"
+                  title="Batch convert all prospects with >=80% intent score"
+                >
+                  {batchConvertSignalsMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Converting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Convert All Ready (&ge;80%)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Filter & Topic Bar */}
+            <div className="p-3 rounded-lg bg-bg-surface border border-border-default space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+                {/* Platform filter tabs */}
+                <div className="flex items-center gap-1 bg-bg-inset p-1 rounded-lg border border-border-default">
+                  {[
+                    { id: 'all', label: 'All Feeds' },
+                    { id: 'reddit', label: 'Reddit Only' },
+                    { id: 'twitter', label: 'Twitter / X' },
+                  ].map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setRadarPlatformFilter(p.id)}
+                      className={cn(
+                        "px-2.5 py-1 rounded text-2xs font-medium transition-colors cursor-pointer",
+                        radarPlatformFilter === p.id
+                          ? "bg-bg-surface text-text-primary shadow-sm border border-border-strong"
+                          : "text-text-muted hover:text-text-secondary"
+                      )}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Urgency Score Filter */}
+                <div className="flex items-center gap-2">
+                  <span className="text-2xs text-text-muted">Min Urgency:</span>
+                  <div className="flex items-center gap-1">
+                    {[
+                      { score: 0, label: 'All Scores' },
+                      { score: 80, label: 'High Urgency (>=80%)' },
+                      { score: 90, label: 'Critical (>=90%)' },
+                    ].map((btn) => (
+                      <button
+                        key={btn.score}
+                        type="button"
+                        onClick={() => setRadarMinScoreFilter(btn.score)}
+                        className={cn(
+                          "px-2.5 py-1 rounded text-2xs font-medium transition-colors cursor-pointer",
+                          radarMinScoreFilter === btn.score
+                            ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 font-semibold"
+                            : "bg-bg-inset border border-border-default text-text-muted hover:text-text-secondary"
+                        )}
+                      >
+                        {btn.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Category Filter Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-border-default/60 text-2xs">
+                <span className="text-text-muted uppercase tracking-wider font-mono mr-1">Pain Point:</span>
+                {[
+                  { id: 'all', label: 'All Pain Points' },
+                  { id: 'dmarc_spoofing', label: 'DMARC & Email Spoofing' },
+                  { id: 'credential_leak', label: 'Infostealer & Dark Web Leaks' },
+                  { id: 'attack_surface', label: 'Exposed Ports & Perimeter' },
+                  { id: 'msp_compliance', label: 'MSP & Compliance Assessments' },
+                ].map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setRadarCategoryFilter(c.id)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-md transition-colors cursor-pointer",
+                      radarCategoryFilter === c.id
+                        ? "bg-bg-inset text-text-primary border border-border-strong font-medium"
+                        : "text-text-muted hover:text-text-secondary hover:bg-bg-hover"
+                    )}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Radar Signals Feed */}
+            {radarLoading ? (
+              <div className="p-12 text-center text-xs text-text-muted flex flex-col items-center justify-center gap-2 rounded-lg border border-border-default bg-bg-surface">
+                <Loader2 className="w-5 h-5 animate-spin text-rose-400" />
+                <span>Scanning social feeds and scoring buyer intent...</span>
+              </div>
+            ) : radarSignals.length === 0 ? (
+              <div className="p-12 text-center text-xs text-text-muted rounded-lg border border-border-default bg-bg-surface space-y-3">
+                <Radio className="w-8 h-8 text-text-faint mx-auto opacity-50" />
+                <div className="text-text-secondary font-medium">No buyer signals match current filters</div>
+                <p className="text-2xs text-text-muted max-w-sm mx-auto">
+                  Try adjusting the minimum urgency score or topic filter, or click "Scan Social Feeds" to refresh.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRadarCategoryFilter('all');
+                    setRadarPlatformFilter('all');
+                    setRadarMinScoreFilter(0);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-bg-inset border border-border-default text-xs text-text-primary hover:bg-bg-hover cursor-pointer"
+                >
+                  Reset Filters
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {radarSignals.map((signal) => {
+                  const isExpanded = expandedReplySignalId === signal.id;
+                  const isEditing = editingSignalId === signal.id;
+                  const currentDomain = customDomainOverrides[signal.id] || signal.extracted_domain || '';
+                  const currentCompany = customCompanyOverrides[signal.id] || signal.extracted_company || '';
+                  const isConverting = convertSignalMutation.isPending && convertSignalMutation.variables?.signalId === signal.id;
+
+                  return (
+                    <div
+                      key={signal.id}
+                      className={cn(
+                        "p-4 rounded-xl border bg-bg-surface transition-all space-y-3",
+                        signal.status === 'converted_to_lead'
+                          ? "border-emerald-500/30 bg-emerald-950/10"
+                          : signal.intent_score >= 90
+                          ? "border-rose-500/30 shadow-sm"
+                          : "border-border-default hover:border-border-strong"
+                      )}
+                    >
+                      {/* Top Meta Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border-default/60">
+                        <div className="flex items-center gap-2">
+                          {signal.platform === 'reddit' ? (
+                            <span className="px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/20 text-orange-400 font-mono text-[11px] flex items-center gap-1 font-semibold">
+                              <span>Reddit</span>
+                              <span className="text-text-muted font-normal">• {signal.author_handle}</span>
+                            </span>
+                          ) : signal.platform === 'twitter' ? (
+                            <span className="px-2 py-0.5 rounded bg-sky-500/10 border border-sky-500/20 text-sky-400 font-mono text-[11px] flex items-center gap-1 font-semibold">
+                              <XTwitterIcon className="w-3 h-3" />
+                              <span>{signal.author_handle}</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded bg-bg-inset border border-border-default text-text-secondary font-mono text-[11px]">
+                              Web Forum
+                            </span>
+                          )}
+
+                          {/* Category Badge */}
+                          <span className="px-2 py-0.5 rounded bg-bg-inset border border-border-default text-[10px] text-text-muted capitalize">
+                            {signal.intent_category.replace('_', ' ')}
+                          </span>
+
+                          {/* Status Badge */}
+                          {signal.status === 'converted_to_lead' && (
+                            <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono flex items-center gap-1 font-medium">
+                              <CheckCircle2 className="w-3 h-3" />
+                              Converted to Lead
+                            </span>
+                          )}
+                          {signal.status === 'synced_to_sheet' && (
+                            <span className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 text-[10px] font-mono flex items-center gap-1 font-medium">
+                              <FileSpreadsheet className="w-3 h-3" />
+                              In Google Sheet
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Intent Urgency Score Pill */}
+                        <div className="flex items-center gap-1.5">
+                          <div
+                            className={cn(
+                              "px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold flex items-center gap-1 border",
+                              signal.intent_score >= 90
+                                ? "bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse"
+                                : signal.intent_score >= 80
+                                ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                : "bg-sky-500/20 text-sky-300 border-sky-500/40"
+                            )}
+                          >
+                            <Flame className="w-3 h-3" />
+                            <span>{signal.intent_score}% Intent</span>
+                            <span className="text-[10px] opacity-75 font-normal uppercase">({signal.urgency_level})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Discussion Content */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-text-primary tracking-tight leading-snug">
+                          {signal.post_title}
+                        </h3>
+                        <p className="text-xs text-text-secondary mt-1 leading-relaxed bg-bg-inset/50 p-2.5 rounded-lg border border-border-default/40 font-sans">
+                          {signal.post_snippet}
+                        </p>
+                      </div>
+
+                      {/* Extracted Entity Badge Row */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-lg bg-bg-inset border border-border-default text-xs">
+                        <div className="flex flex-wrap items-center gap-4">
+                          {isEditing ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <input
+                                type="text"
+                                placeholder="Company"
+                                value={currentCompany}
+                                onChange={(e) => setCustomCompanyOverrides(prev => ({ ...prev, [signal.id]: e.target.value }))}
+                                className="px-2 py-1 bg-bg-surface border border-border-default rounded text-xs text-text-primary font-mono"
+                              />
+                              <input
+                                type="text"
+                                placeholder="domain.com"
+                                value={currentDomain}
+                                onChange={(e) => setCustomDomainOverrides(prev => ({ ...prev, [signal.id]: e.target.value }))}
+                                className="px-2 py-1 bg-bg-surface border border-border-default rounded text-xs text-text-primary font-mono"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setEditingSignalId(null)}
+                                className="px-2 py-1 bg-accent text-accent-text rounded text-xs font-medium cursor-pointer"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <div>
+                                <span className="text-2xs text-text-muted uppercase font-mono block">Company</span>
+                                <span className="font-semibold text-text-primary">
+                                  {currentCompany || <span className="text-text-muted italic">Unknown</span>}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span className="text-2xs text-text-muted uppercase font-mono block">Target Domain</span>
+                                {currentDomain ? (
+                                  <span className="font-mono text-xs font-semibold text-accent flex items-center gap-1">
+                                    <Globe className="w-3 h-3" />
+                                    <span>{currentDomain}</span>
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingSignalId(signal.id)}
+                                    className="text-amber-400 text-2xs hover:underline cursor-pointer"
+                                  >
+                                    + Add Domain
+                                  </button>
+                                )}
+                              </div>
+
+                              <div>
+                                <span className="text-2xs text-text-muted uppercase font-mono block">Contact</span>
+                                <span className="text-text-secondary font-mono text-2xs">
+                                  {signal.extracted_email || signal.author_handle}
+                                </span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {!isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingSignalId(signal.id)}
+                            className="text-[11px] text-text-muted hover:text-text-primary cursor-pointer"
+                          >
+                            Edit details
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Expandable Suggested Social Reply Hook */}
+                      {signal.suggested_reply && (
+                        <div className="border border-border-default/80 rounded-lg overflow-hidden bg-bg-base/60">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedReplySignalId(isExpanded ? null : signal.id)}
+                            className="w-full px-3 py-2 flex items-center justify-between text-xs text-text-muted hover:text-text-primary bg-bg-surface/50 transition-colors cursor-pointer"
+                          >
+                            <span className="flex items-center gap-1.5 text-text-secondary font-medium text-[11px]">
+                              <Sparkles className="w-3 h-3 text-sky-400" />
+                              <span>Suggested Value-First Reply Hook (for Reddit / X)</span>
+                            </span>
+                            <span className="text-2xs text-text-muted underline">
+                              {isExpanded ? 'Hide Reply' : 'View Script'}
+                            </span>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="p-3 border-t border-border-default/60 space-y-2">
+                              <p className="text-xs text-text-primary font-sans leading-relaxed bg-bg-inset p-3 rounded-lg border border-border-default/40 select-all">
+                                {signal.suggested_reply}
+                              </p>
+                              <div className="flex items-center justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyReplyHook(signal.id, signal.suggested_reply || '')}
+                                  className="px-2.5 py-1 rounded bg-bg-surface border border-border-default hover:border-border-strong text-2xs text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  {copiedReplyId === signal.id ? (
+                                    <>
+                                      <Check className="w-3 h-3 text-accent" />
+                                      <span className="text-accent font-medium">Copied to Clipboard!</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="w-3 h-3" />
+                                      <span>Copy Reply Hook</span>
+                                    </>
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Card Actions Toolbar */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border-default/60 text-xs">
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={signal.source_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1.5 rounded-lg bg-bg-inset border border-border-default hover:border-border-strong text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5 cursor-pointer text-2xs"
+                          >
+                            <span>Open Thread</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => handlePushSignalToSheet(signal.id)}
+                            disabled={pushSignalToSheetMutation.isPending}
+                            className="px-2.5 py-1.5 rounded-lg bg-bg-inset border border-border-default hover:border-border-strong text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer text-2xs"
+                            title="Push prospect row into Google Sheet webhook"
+                          >
+                            <FileSpreadsheet className="w-3 h-3 text-emerald-400" />
+                            <span>Push to Sheet</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {signal.status !== 'converted_to_lead' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleConvertSignal(signal)}
+                              disabled={isConverting}
+                              className="px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 text-xs shadow-sm"
+                            >
+                              {isConverting ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Auditing &amp; Converting...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="w-3.5 h-3.5" />
+                                  <span>Convert to Lead &amp; Auto-Scan</span>
+                                </>
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveTab('outreach');
+                                setLeadStatusFilter('all');
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 hover:text-emerald-200 transition-colors flex items-center gap-1.5 cursor-pointer text-xs"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
+                              <span>View in Outreach Pipeline</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => updateSignalStatusMutation.mutate({ signalId: signal.id, status: 'dismissed' })}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer"
+                            title="Dismiss prospect signal"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: SOCIAL MEDIA AUTOPILOT */}
         {activeTab === 'social' && (
           <div className="space-y-4">
             {/* Cadence Banner */}
@@ -1622,6 +2244,178 @@ export default function GrowthAdminPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Ingest & Analyze Discussion URL */}
+      {isIngestUrlModalOpen && (
+        <div className="fixed inset-0 z-50 bg-bg-overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-bg-base border border-border-default rounded-xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                  <Radio className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Analyze Discussion URL or Snippet</h3>
+                  <p className="text-[11px] text-text-faint">Extract corporate domain &amp; evaluate buyer intent urgency</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsIngestUrlModalOpen(false)} 
+                className="text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleIngestUrl} className="mt-4 space-y-3.5 text-xs">
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">
+                  Discussion / Thread URL (Reddit, Twitter/X, or Web Forum)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://www.reddit.com/r/sysadmin/comments/... or https://x.com/..."
+                  value={ingestUrlInput}
+                  onChange={(e) => setIngestUrlInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary font-mono text-xs focus:outline-none focus:border-border-strong"
+                  required
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-text-secondary font-medium">
+                    Post Text Snippet (Optional / Manual Paste)
+                  </label>
+                  <span className="text-[10px] text-text-faint">Useful if page requires login or API is blocked</span>
+                </div>
+                <textarea
+                  rows={4}
+                  placeholder="e.g. We just had a vendor spoof our domain because our DMARC is set to p=none. Boss is furious, what should I do?"
+                  value={ingestTextInput}
+                  onChange={(e) => setIngestTextInput(e.target.value)}
+                  className="w-full p-3 bg-bg-surface border border-border-default rounded-lg text-text-primary font-sans leading-relaxed text-xs focus:outline-none focus:border-border-strong"
+                />
+              </div>
+
+              <div className="p-3 rounded-lg bg-bg-surface border border-border-default text-2xs text-text-muted space-y-1">
+                <div className="text-text-secondary font-medium flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-rose-400" />
+                  <span>Automated AI Pipeline:</span>
+                </div>
+                <p>
+                  BreachGuard scores urgency (DMARC spoofing, exposed ports, infostealers), extracts company &amp; domain, drafts a value-first reply hook, and prepares 1-click conversion to passive scan.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-default">
+                <button
+                  type="button"
+                  onClick={() => setIsIngestUrlModalOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={ingestRadarUrlMutation.isPending}
+                  className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  {ingestRadarUrlMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Analyzing &amp; Scoring...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5" />
+                      Analyze &amp; Score Intent
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Google Sheet Live Webhook Configuration */}
+      {isWebhookModalOpen && (
+        <div className="fixed inset-0 z-50 bg-bg-overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-bg-base border border-border-default rounded-xl p-5 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Google Sheet Webhook Destination</h3>
+                  <p className="text-[11px] text-text-faint">Real-time prospect row forwarding to your Google Sheet</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsWebhookModalOpen(false)} 
+                className="text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3.5 text-xs">
+              <div className="p-3 rounded-lg bg-bg-surface border border-border-default space-y-2">
+                <div className="text-text-secondary font-medium flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Real-time Live Row Ingestion:</span>
+                </div>
+                <p className="text-[11px] text-text-muted leading-relaxed">
+                  Enter your Google Apps Script Webhook URL (or Zapier / Make / n8n webhook) that appends rows to your sheet. Whenever you click <strong className="text-text-primary">"Push to Sheet"</strong> on any prospect, BreachGuard instantly transmits company, domain, contact info, pain category, urgency score, and discussion link.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-text-secondary mb-1 font-medium">
+                  Webhook URL (Google Apps Script / Webhook Endpoint)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://script.google.com/macros/s/AKfycb.../exec"
+                  value={sheetWebhookUrlInput}
+                  onChange={(e) => setSheetWebhookUrlInput(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary font-mono text-xs focus:outline-none focus:border-border-strong"
+                />
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-bg-inset border border-border-default text-2xs text-text-muted flex items-start gap-2">
+                <Download className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-text-primary">No webhook configured yet?</strong> You can always click the <span className="font-semibold text-text-primary">&ldquo;Export Sheet CSV&rdquo;</span> button at the top of the Radar to instantly download formatted rows ready to copy/paste into Google Sheets.
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border-default">
+                <button
+                  type="button"
+                  onClick={() => setIsWebhookModalOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    showToast('Google Sheet Webhook URL saved!', 'success');
+                    setIsWebhookModalOpen(false);
+                  }}
+                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  Save Webhook
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

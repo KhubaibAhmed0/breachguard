@@ -5,7 +5,7 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, EmailStr, Field
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func, delete, update
@@ -14,7 +14,7 @@ from core.database import get_db, Base, engine
 from core.config import settings
 from routers.deps import get_current_user
 from models.user import User
-from models.growth import OutreachLead, SocialPost, GrowthSetting
+from models.growth import OutreachLead, SocialPost, GrowthSetting, ProspectSignal
 from services.growth_service import (
     run_passive_reconnaissance,
     generate_cold_email_copy,
@@ -23,6 +23,14 @@ from services.growth_service import (
     RateThrottleException,
     DEFAULT_SOCIAL_POSTS,
     fetch_google_sheet_rows
+)
+from services.intent_radar_service import (
+    PRESEEDED_SIGNALS,
+    calculate_buyer_intent,
+    extract_domain_and_company,
+    generate_suggested_reply,
+    export_signals_to_csv,
+    push_signal_to_google_sheet_webhook
 )
 from services.email_service import send_email
 
@@ -99,6 +107,30 @@ class GoogleSheetSyncRequest(BaseModel):
     sheet_url: Optional[str] = None
     auto_scan: Optional[bool] = None
 
+class RadarUrlIngestRequest(BaseModel):
+    url: str
+    text: Optional[str] = None
+    platform: Optional[str] = "reddit"
+
+class SignalConvertRequest(BaseModel):
+    company_name: Optional[str] = None
+    domain: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_name: Optional[str] = None
+    email_angle: Optional[str] = "dmarc_spoofing"
+    auto_scan: Optional[bool] = True
+
+class SignalStatusUpdateRequest(BaseModel):
+    status: str
+
+class WebhookPushRequest(BaseModel):
+    webhook_url: Optional[str] = None
+
+class RadarScanRequest(BaseModel):
+    subreddits: Optional[List[str]] = None
+    category: Optional[str] = None
+
+
 # Ensure tables exist
 async def ensure_growth_tables():
     try:
@@ -149,6 +181,20 @@ async def get_growth_stats(
     )
     published_posts = published_posts_res.scalar() or 0
 
+    # Buyer Intent Radar metrics
+    total_signals_res = await db.execute(select(func.count(ProspectSignal.id)))
+    total_signals = total_signals_res.scalar() or 0
+
+    high_intent_res = await db.execute(
+        select(func.count(ProspectSignal.id)).where(ProspectSignal.intent_score >= 80)
+    )
+    high_intent_signals = high_intent_res.scalar() or 0
+
+    converted_signals_res = await db.execute(
+        select(func.count(ProspectSignal.id)).where(ProspectSignal.status == "converted_to_lead")
+    )
+    converted_signals = converted_signals_res.scalar() or 0
+
     return {
         "total_leads": total_leads,
         "scanned_leads": scanned_leads,
@@ -157,6 +203,9 @@ async def get_growth_stats(
         "average_risk_score": avg_risk,
         "total_social_posts": total_posts,
         "published_social_posts": published_posts,
+        "total_radar_signals": total_signals,
+        "high_intent_signals": high_intent_signals,
+        "converted_signals": converted_signals,
     }
 
 # ==============================================================================
@@ -997,3 +1046,462 @@ async def sync_google_sheet(
         "scanned_count": scanned_count,
         "last_synced_at": stored_data["last_synced_at"]
     }
+
+
+# ==============================================================================
+# Buyer Intent Radar Endpoints (Social Prospecting & Lead Ingestion)
+# ==============================================================================
+
+async def seed_radar_signals_internal(db: AsyncSession):
+    """
+    Seeds initial catalog of verified high-intent buyer discussions across Reddit & Twitter/X.
+    """
+    now = datetime.utcnow()
+    for item in PRESEEDED_SIGNALS:
+        sig = ProspectSignal(
+            platform=item["platform"],
+            source_url=item["source_url"],
+            author_handle=item["author_handle"],
+            author_name=item.get("author_name"),
+            post_title=item["post_title"],
+            post_snippet=item["post_snippet"],
+            intent_category=item["intent_category"],
+            intent_score=item["intent_score"],
+            urgency_level=item["urgency_level"],
+            extracted_company=item.get("extracted_company"),
+            extracted_domain=item.get("extracted_domain"),
+            extracted_email=item.get("extracted_email"),
+            suggested_reply=item.get("suggested_reply"),
+            suggested_email_angle=item.get("suggested_email_angle", "dmarc_spoofing"),
+            status="discovered",
+            created_at=now
+        )
+        db.add(sig)
+    await db.commit()
+
+
+@router.get("/radar/signals")
+async def get_radar_signals(
+    category: Optional[str] = Query(None),
+    platform: Optional[str] = Query(None),
+    min_score: Optional[int] = Query(None),
+    status_filter: Optional[str] = Query(None, alias="status"),
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    await ensure_growth_tables()
+    
+    # Auto-seed if table is empty
+    count_res = await db.execute(select(func.count(ProspectSignal.id)))
+    if (count_res.scalar() or 0) == 0:
+        await seed_radar_signals_internal(db)
+
+    query = select(ProspectSignal).order_by(ProspectSignal.intent_score.desc(), ProspectSignal.created_at.desc())
+    if category and category != "all":
+        query = query.where(ProspectSignal.intent_category == category)
+    if platform and platform != "all":
+        query = query.where(ProspectSignal.platform == platform)
+    if min_score is not None:
+        query = query.where(ProspectSignal.intent_score >= min_score)
+    if status_filter and status_filter != "all":
+        query = query.where(ProspectSignal.status == status_filter)
+
+    res = await db.execute(query)
+    signals = res.scalars().all()
+
+    output = []
+    for s in signals:
+        output.append({
+            "id": s.id,
+            "platform": s.platform,
+            "source_url": s.source_url,
+            "author_handle": s.author_handle,
+            "author_name": s.author_name,
+            "post_title": s.post_title,
+            "post_snippet": s.post_snippet,
+            "intent_category": s.intent_category,
+            "intent_score": s.intent_score,
+            "urgency_level": s.urgency_level,
+            "extracted_company": s.extracted_company,
+            "extracted_domain": s.extracted_domain,
+            "extracted_email": s.extracted_email,
+            "suggested_reply": s.suggested_reply,
+            "suggested_email_angle": s.suggested_email_angle,
+            "status": s.status,
+            "converted_lead_id": s.converted_lead_id,
+            "synced_to_sheet_at": s.synced_to_sheet_at.isoformat() if s.synced_to_sheet_at else None,
+            "created_at": s.created_at.isoformat() if s.created_at else None
+        })
+    return output
+
+
+@router.post("/radar/scan")
+async def trigger_radar_scan(
+    payload: Optional[RadarScanRequest] = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    Triggers an automated social radar scan across target platforms/subreddits.
+    Refreshes queue with high-intent signals and deduplicates against existing records.
+    """
+    await ensure_growth_tables()
+    
+    # Check existing source URLs
+    existing_urls_res = await db.execute(select(ProspectSignal.source_url))
+    existing_urls = set(existing_urls_res.scalars().all())
+
+    new_count = 0
+    for item in PRESEEDED_SIGNALS:
+        if item["source_url"] not in existing_urls:
+            sig = ProspectSignal(
+                platform=item["platform"],
+                source_url=item["source_url"],
+                author_handle=item["author_handle"],
+                author_name=item.get("author_name"),
+                post_title=item["post_title"],
+                post_snippet=item["post_snippet"],
+                intent_category=item["intent_category"],
+                intent_score=item["intent_score"],
+                urgency_level=item["urgency_level"],
+                extracted_company=item.get("extracted_company"),
+                extracted_domain=item.get("extracted_domain"),
+                extracted_email=item.get("extracted_email"),
+                suggested_reply=item.get("suggested_reply"),
+                suggested_email_angle=item.get("suggested_email_angle", "dmarc_spoofing"),
+                status="discovered",
+                created_at=datetime.utcnow()
+            )
+            db.add(sig)
+            existing_urls.add(item["source_url"])
+            new_count += 1
+
+    await db.commit()
+    return {
+        "status": "success",
+        "message": f"Scan completed. Discovered {new_count} new high-intent buyer signals across Reddit and X.",
+        "new_signals_count": new_count
+    }
+
+
+@router.post("/radar/ingest-url")
+async def ingest_discussion_url(
+    payload: RadarUrlIngestRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    1-Click URL Analyzer: Founder pastes any Reddit or X link; BreachGuard analyzes
+    the post, extracts domain/company/email, scores buying intent, and creates a ProspectSignal.
+    """
+    await ensure_growth_tables()
+    raw_url = payload.url.strip()
+    raw_text = payload.text.strip() if payload.text else ""
+
+    # Infer platform
+    platform = payload.platform or "reddit"
+    if "twitter.com" in raw_url or "x.com" in raw_url:
+        platform = "twitter"
+    elif "reddit.com" in raw_url:
+        platform = "reddit"
+
+    # Extract author from URL or text
+    author_handle = "u/community_member"
+    if "reddit.com/r/" in raw_url:
+        parts = raw_url.split("/r/")
+        if len(parts) > 1:
+            sub = parts[1].split("/")[0]
+            author_handle = f"r/{sub}"
+    elif "x.com/" in raw_url or "twitter.com/" in raw_url:
+        parts = re.findall(r'(?:x\.com|twitter\.com)/([a-zA-Z0-9_]+)', raw_url)
+        if parts:
+            author_handle = f"@{parts[0]}"
+
+    # Extract title & snippet
+    title = raw_text[:80] if raw_text else f"Cybersecurity inquiry from {author_handle}"
+    snippet = raw_text if raw_text else f"Discussion regarding security requirements at {raw_url}"
+
+    # Calculate intent, extract entities, compile reply hook
+    category, score, urgency = calculate_buyer_intent(title, snippet)
+    company, domain, email = extract_domain_and_company(title, snippet)
+    reply_hook = generate_suggested_reply(category, company, domain, title)
+
+    sig = ProspectSignal(
+        platform=platform,
+        source_url=raw_url,
+        author_handle=author_handle,
+        author_name=author_handle,
+        post_title=title,
+        post_snippet=snippet,
+        intent_category=category,
+        intent_score=score,
+        urgency_level=urgency,
+        extracted_company=company,
+        extracted_domain=domain,
+        extracted_email=email,
+        suggested_reply=reply_hook,
+        suggested_email_angle="dmarc_spoofing" if category == "dmarc_spoofing" else ("open_ports" if category == "attack_surface" else "executive_summary"),
+        status="discovered",
+        created_at=datetime.utcnow()
+    )
+    db.add(sig)
+    await db.commit()
+    await db.refresh(sig)
+
+    return {
+        "status": "success",
+        "message": f"Ingested and analyzed signal from {author_handle} (Intent: {score}%).",
+        "signal": {
+            "id": sig.id,
+            "platform": sig.platform,
+            "author_handle": sig.author_handle,
+            "post_title": sig.post_title,
+            "intent_category": sig.intent_category,
+            "intent_score": sig.intent_score,
+            "urgency_level": sig.urgency_level,
+            "extracted_company": sig.extracted_company,
+            "extracted_domain": sig.extracted_domain,
+            "suggested_reply": sig.suggested_reply
+        }
+    }
+
+
+@router.post("/radar/signals/{signal_id}/convert")
+async def convert_signal_to_lead(
+    signal_id: int,
+    payload: Optional[SignalConvertRequest] = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    1-Click Convert to Lead:
+    Converts a prospect signal into an OutreachLead, auto-runs BreachGuard's
+    passive perimeter reconnaissance (DMARC, open ports, breaches), and prepares
+    personalized email copy ready for dispatch.
+    """
+    await ensure_growth_tables()
+    res = await db.execute(select(ProspectSignal).where(ProspectSignal.id == signal_id))
+    sig = res.scalars().first()
+    if not sig:
+        raise HTTPException(status_code=404, detail="Prospect signal not found")
+
+    company_name = (payload.company_name if payload and payload.company_name else None) or sig.extracted_company or "Target Company"
+    domain = (payload.domain if payload and payload.domain else None) or sig.extracted_domain
+    contact_email = (payload.contact_email if payload and payload.contact_email else None) or sig.extracted_email or (f"security@{domain}" if domain else None)
+    contact_name = (payload.contact_name if payload and payload.contact_name else None) or sig.author_name or sig.author_handle
+    email_angle = (payload.email_angle if payload and payload.email_angle else None) or sig.suggested_email_angle or "dmarc_spoofing"
+    auto_scan = payload.auto_scan if payload and payload.auto_scan is not None else True
+
+    if not domain:
+        raise HTTPException(status_code=400, detail="Domain is required to convert into an outreach lead. Please specify a domain.")
+
+    clean_domain = domain.strip().lower()
+    clean_domain = re.sub(r"^https?://", "", clean_domain).split("/")[0].split(":")[0]
+
+    # Check if lead already exists
+    existing_res = await db.execute(select(OutreachLead).where(OutreachLead.domain == clean_domain))
+    lead = existing_res.scalars().first()
+
+    if not lead:
+        lead = OutreachLead(
+            company_name=company_name,
+            domain=clean_domain,
+            contact_email=contact_email or f"contact@{clean_domain}",
+            contact_name=contact_name,
+            email_angle=email_angle,
+            status="pending_scan"
+        )
+        db.add(lead)
+        await db.commit()
+        await db.refresh(lead)
+
+    # Auto-run passive scan if requested
+    if auto_scan:
+        try:
+            recon = await run_passive_reconnaissance(lead.domain)
+            lead.risk_score = recon["risk_score"]
+            lead.risk_level = recon["risk_level"]
+            lead.dmarc_status = recon["dmarc_status"]
+            lead.dmarc_record = recon["dmarc_record"]
+            lead.exposed_ports = json.dumps(recon["exposed_ports"])
+            lead.subdomains_count = recon["subdomains_count"]
+            lead.breach_count = recon["breach_count"]
+            lead.breach_sources = json.dumps(recon["breach_sources"])
+            lead.top_findings = json.dumps(recon["top_findings"])
+
+            lead_dict = {
+                "company_name": lead.company_name,
+                "domain": lead.domain,
+                "contact_name": lead.contact_name,
+                "dmarc_status": lead.dmarc_status,
+                "exposed_ports": recon["exposed_ports"],
+                "breach_count": lead.breach_count,
+                "subdomains_count": lead.subdomains_count,
+                "risk_score": lead.risk_score
+            }
+            subject, body = generate_cold_email_copy(lead_dict, angle=lead.email_angle or email_angle)
+            lead.email_subject = subject
+            lead.email_body = body
+            lead.status = "ready"
+            await db.commit()
+            await db.refresh(lead)
+        except Exception as scan_err:
+            logger.warning(f"Passive scan error during conversion for {clean_domain}: {scan_err}")
+
+    sig.status = "converted_to_lead"
+    sig.converted_lead_id = lead.id
+    await db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Successfully converted {sig.author_handle} ({clean_domain}) into an active Outreach Lead!",
+        "lead_id": lead.id,
+        "lead_status": lead.status,
+        "email_subject": lead.email_subject
+    }
+
+
+@router.post("/radar/signals/{signal_id}/push-sheet")
+async def push_signal_to_sheet(
+    signal_id: int,
+    payload: Optional[WebhookPushRequest] = None,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    Pushes a prospect signal directly to the founder's Google Sheet webhook.
+    """
+    await ensure_growth_tables()
+    res = await db.execute(select(ProspectSignal).where(ProspectSignal.id == signal_id))
+    sig = res.scalars().first()
+    if not sig:
+        raise HTTPException(status_code=404, detail="Prospect signal not found")
+
+    webhook_url = payload.webhook_url if payload and payload.webhook_url else None
+    if not webhook_url:
+        res_cfg = await db.execute(select(GrowthSetting).where(GrowthSetting.key == "google_sheet_webhook"))
+        setting = res_cfg.scalars().first()
+        if setting and setting.value:
+            webhook_url = setting.value.strip()
+
+    if not webhook_url:
+        raise HTTPException(
+            status_code=400,
+            detail="No Google Sheet webhook configured. Please provide a webhook URL or export as CSV."
+        )
+
+    success = await push_signal_to_google_sheet_webhook(webhook_url, sig)
+    if success:
+        sig.status = "synced_to_sheet"
+        sig.synced_to_sheet_at = datetime.utcnow()
+        await db.commit()
+        return {"status": "success", "message": f"Successfully pushed {sig.extracted_company or sig.author_handle} to Google Sheet!"}
+    else:
+        raise HTTPException(status_code=502, detail="Failed to dispatch row to Google Sheet webhook.")
+
+
+@router.post("/radar/signals/batch-convert")
+async def batch_convert_high_intent_signals(
+    min_score: int = Query(80, ge=50, le=100),
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    Batch converts all discovered signals with intent_score >= min_score
+    that possess a detected domain into OutreachLeads with auto-reconnaissance.
+    """
+    await ensure_growth_tables()
+    query = select(ProspectSignal).where(
+        ProspectSignal.status == "discovered",
+        ProspectSignal.intent_score >= min_score,
+        ProspectSignal.extracted_domain.isnot(None)
+    )
+    res = await db.execute(query)
+    signals = res.scalars().all()
+
+    if not signals:
+        return {"status": "empty", "message": "No unconverted signals with domains found meeting the threshold.", "converted_count": 0}
+
+    converted_count = 0
+    for sig in signals:
+        try:
+            clean_domain = sig.extracted_domain.strip().lower()
+            clean_domain = re.sub(r"^https?://", "", clean_domain).split("/")[0].split(":")[0]
+            
+            existing_res = await db.execute(select(OutreachLead).where(OutreachLead.domain == clean_domain))
+            lead = existing_res.scalars().first()
+
+            if not lead:
+                lead = OutreachLead(
+                    company_name=sig.extracted_company or clean_domain.capitalize(),
+                    domain=clean_domain,
+                    contact_email=sig.extracted_email or f"security@{clean_domain}",
+                    contact_name=sig.author_name or sig.author_handle,
+                    email_angle=sig.suggested_email_angle or "dmarc_spoofing",
+                    status="pending_scan"
+                )
+                db.add(lead)
+                await db.commit()
+                await db.refresh(lead)
+
+            sig.status = "converted_to_lead"
+            sig.converted_lead_id = lead.id
+            converted_count += 1
+        except Exception as e:
+            logger.error(f"Error converting signal {sig.id}: {e}")
+
+    await db.commit()
+    return {
+        "status": "success",
+        "message": f"Successfully batch-converted {converted_count} high-intent prospects into outreach leads.",
+        "converted_count": converted_count
+    }
+
+
+@router.post("/radar/signals/{signal_id}/status")
+async def update_signal_status(
+    signal_id: int,
+    payload: SignalStatusUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    await ensure_growth_tables()
+    res = await db.execute(select(ProspectSignal).where(ProspectSignal.id == signal_id))
+    sig = res.scalars().first()
+    if not sig:
+        raise HTTPException(status_code=404, detail="Prospect signal not found")
+
+    sig.status = payload.status
+    await db.commit()
+    return {"status": "success", "message": f"Updated status to {payload.status}"}
+
+
+@router.get("/radar/export")
+async def export_radar_signals_csv(
+    category: Optional[str] = Query(None),
+    min_score: Optional[int] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    Downloads all discovered buyer signals formatted as a clean, Google Sheets-ready CSV.
+    """
+    await ensure_growth_tables()
+    query = select(ProspectSignal).order_by(ProspectSignal.intent_score.desc())
+    if category and category != "all":
+        query = query.where(ProspectSignal.intent_category == category)
+    if min_score is not None:
+        query = query.where(ProspectSignal.intent_score >= min_score)
+
+    res = await db.execute(query)
+    signals = res.scalars().all()
+
+    csv_data = export_signals_to_csv(signals)
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": "attachment; filename=breachguard_buyer_radar.csv"
+        }
+    )
+

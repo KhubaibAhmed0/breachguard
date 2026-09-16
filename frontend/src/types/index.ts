@@ -145,6 +145,9 @@ export interface GrowthStats {
   average_risk_score: number;
   total_social_posts: number;
   published_social_posts: number;
+  total_radar_signals?: number;
+  high_intent_signals?: number;
+  converted_signals?: number;
 }
 
 export interface GoogleSheetConfig {
@@ -162,3 +165,26 @@ export interface GoogleSheetSyncResult {
   scanned_count: number;
   last_synced_at?: string | null;
 }
+
+export interface ProspectSignal {
+  id: number;
+  platform: 'reddit' | 'twitter' | 'web';
+  source_url: string;
+  author_handle: string;
+  author_name?: string | null;
+  post_title: string;
+  post_snippet: string;
+  intent_category: 'dmarc_spoofing' | 'credential_leak' | 'attack_surface' | 'msp_compliance';
+  intent_score: number;
+  urgency_level: 'critical' | 'high' | 'medium';
+  extracted_company?: string | null;
+  extracted_domain?: string | null;
+  extracted_email?: string | null;
+  suggested_reply?: string | null;
+  suggested_email_angle?: string | null;
+  status: 'discovered' | 'converted_to_lead' | 'synced_to_sheet' | 'dismissed';
+  converted_lead_id?: number | null;
+  synced_to_sheet_at?: string | null;
+  created_at?: string | null;
+}
+

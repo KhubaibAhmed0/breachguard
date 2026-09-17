@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api, { API_BASE_URL } from '@/lib/api';
-import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity, OutreachLead, SocialPost, GrowthStats, GoogleSheetConfig, GoogleSheetSyncResult, ProspectSignal } from '@/types';
+import { Domain, Exposure, ExposureStats, Report, PrivilegedIdentity, OutreachLead, SocialPost, GrowthStats, GoogleSheetConfig, GoogleSheetSyncResult, ProspectSignal, HunterSettings, HunterRunResult } from '@/types';
 
 export function useDomains() {
   return useQuery<Domain[]>({
@@ -831,5 +831,48 @@ export function useUpdateSignalStatus() {
     },
   });
 }
+
+// ==============================================================================
+// Autonomous Client Hunter Hooks
+// ==============================================================================
+
+export function useHunterSettings() {
+  return useQuery<HunterSettings>({
+    queryKey: ['hunterSettings'],
+    queryFn: async () => {
+      const res = await api.get('/admin/growth/hunter/settings');
+      return res.data;
+    },
+  });
+}
+
+export function useSaveHunterSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { apollo_api_key?: string; hunter_api_key?: string }) => {
+      const res = await api.post('/admin/growth/hunter/settings', data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hunterSettings'] });
+    },
+  });
+}
+
+export function useRunHunter() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { industry?: string; batch_size?: number; provider?: string }) => {
+      const res = await api.post('/admin/growth/hunter/run', data);
+      return res.data as HunterRunResult;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['growthLeads'] });
+      queryClient.invalidateQueries({ queryKey: ['growthStats'] });
+      queryClient.invalidateQueries({ queryKey: ['hunterSettings'] });
+    },
+  });
+}
+
 
 

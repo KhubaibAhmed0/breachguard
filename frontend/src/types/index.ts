@@ -188,3 +188,50 @@ export interface ProspectSignal {
   created_at?: string | null;
 }
 
+export interface HunterIndustry {
+  key: string;
+  label: string;
+  description: string;
+  default_angle: string;
+  target_count: number;
+}
+
+export interface HunterSettings {
+  apollo_configured: boolean;
+  apollo_key_masked?: string | null;
+  hunter_configured: boolean;
+  hunter_key_masked?: string | null;
+  industries: HunterIndustry[];
+  default_industry: string;
+}
+
+export interface HunterRunResult {
+  status: string;
+  provider_used: string;
+  industry: string;
+  industry_label: string;
+  leads_created: number;
+  qualified_leads: Array<{
+    id: number;
+    company_name: string;
+    domain: string;
+    contact_name?: string | null;
+    contact_email: string;
+    dmarc_status?: string | null;
+    risk_score?: number | null;
+    risk_level?: string | null;
+    email_subject?: string | null;
+    pdf_ready: boolean;
+  }>;
+  audit_logs: Array<{
+    domain: string;
+    company: string;
+    dmarc_status?: string | null;
+    risk_score?: number | null;
+    exposed_ports_count: number;
+    is_vulnerable: boolean;
+  }>;
+  message: string;
+}
+
+

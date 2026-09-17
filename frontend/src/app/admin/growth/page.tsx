@@ -29,9 +29,12 @@ import {
   useConvertSignalToLead,
   usePushSignalToSheet,
   useBatchConvertSignals,
-  useUpdateSignalStatus
+  useUpdateSignalStatus,
+  useHunterSettings,
+  useSaveHunterSettings,
+  useRunHunter
 } from '@/hooks/useApi';
-import { OutreachLead, SocialPost, ProspectSignal } from '@/types';
+import { OutreachLead, SocialPost, ProspectSignal, HunterRunResult, HunterSettings } from '@/types';
 import { cn, formatDate } from '@/lib/utils';
 import api from '@/lib/api';
 import { 
@@ -40,7 +43,8 @@ import {
   ExternalLink, Sparkles, Copy, MessageSquare, 
   Clock, Check, Loader2, X, ChevronRight, BarChart3, 
   Flame, ShieldCheck, FileText, ArrowUpRight, ArrowRight, Filter,
-  FileSpreadsheet, Radio, Target, Download, Link2
+  FileSpreadsheet, Radio, Target, Download, Link2,
+  Briefcase, Scale, Calculator, Settings2, KeyRound, Building2
 } from 'lucide-react';
 
 function XTwitterIcon({ className }: { className?: string }) {
@@ -69,10 +73,21 @@ export default function GrowthAdminPage() {
   const [isAddLeadOpen, setIsAddLeadOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [isGoogleSheetModalOpen, setIsGoogleSheetModalOpen] = useState(false);
+  const [isHunterConfigModalOpen, setIsHunterConfigModalOpen] = useState(false);
   const [isEmailEditorOpen, setIsEmailEditorOpen] = useState(false);
   const [isAddSocialPostOpen, setIsAddSocialPostOpen] = useState(false);
   const [isIngestUrlModalOpen, setIsIngestUrlModalOpen] = useState(false);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+
+  // Autonomous Client Hunter states
+  const [hunterIndustry, setHunterIndustry] = useState<string>('law_firms');
+  const [hunterBatchSize, setHunterBatchSize] = useState<number>(3);
+  const [hunterProvider, setHunterProvider] = useState<string>('auto');
+  const [apolloKeyInput, setApolloKeyInput] = useState<string>('');
+  const [hunterKeyInput, setHunterKeyInput] = useState<string>('');
+  const [hunterLastResult, setHunterLastResult] = useState<HunterRunResult | null>(null);
+  const [hunterProgressStep, setHunterProgressStep] = useState<string | null>(null);
+  const [hunterError, setHunterError] = useState<string | null>(null);
 
   // Radar Interactive states
   const [ingestUrlInput, setIngestUrlInput] = useState('');
@@ -167,6 +182,44 @@ export default function GrowthAdminPage() {
   const pushSignalToSheetMutation = usePushSignalToSheet();
   const batchConvertSignalsMutation = useBatchConvertSignals();
   const updateSignalStatusMutation = useUpdateSignalStatus();
+
+  // Autonomous Client Hunter hooks & handlers
+  const { data: hunterSettings, isLoading: hunterSettingsLoading } = useHunterSettings();
+  const runHunterMutation = useRunHunter();
+  const saveHunterSettingsMutation = useSaveHunterSettings();
+
+  const handleRunClientHunter = async () => {
+    try {
+      setHunterError(null);
+      setHunterProgressStep("Querying corporate registry & live domains...");
+      const result = await runHunterMutation.mutateAsync({
+        industry: hunterIndustry,
+        batch_size: hunterBatchSize,
+        provider: hunterProvider
+      });
+      setHunterLastResult(result);
+      setHunterProgressStep(null);
+    } catch (err: any) {
+      console.error("Hunter error:", err);
+      setHunterError(err.response?.data?.detail || err.message || "Failed to hunt clients.");
+      setHunterProgressStep(null);
+    }
+  };
+
+  const handleSaveHunterKeys = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await saveHunterSettingsMutation.mutateAsync({
+        apollo_api_key: apolloKeyInput.trim() || undefined,
+        hunter_api_key: hunterKeyInput.trim() || undefined
+      });
+      setIsHunterConfigModalOpen(false);
+      setApolloKeyInput('');
+      setHunterKeyInput('');
+    } catch (err) {
+      console.error("Save hunter keys error:", err);
+    }
+  };
 
   useEffect(() => {
     if (sheetConfig?.sheet_url) {
@@ -911,6 +964,218 @@ export default function GrowthAdminPage() {
         {/* TAB 1: COLD OUTREACH ENGINE */}
         {activeTab === 'outreach' && (
           <div className="space-y-4">
+            {/* AUTONOMOUS CLIENT HUNTER (WAY 1 ENGINE) */}
+            <div className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-bg-surface via-bg-surface to-accent/5 border border-accent/20 shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-accent/5 rounded-full blur-3xl -z-0 pointer-events-none" />
+              
+              <div className="relative z-10 space-y-4">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-default/60">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center text-accent">
+                      <Target className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm sm:text-base font-bold text-text-primary tracking-tight">
+                          Autonomous B2B Client Hunter
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> 100% Real Operating Data
+                        </span>
+                      </div>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Discovers real registered companies, verifies decision-makers, runs live DNS perimeter audits, generates 12-page executive PDFs, and prepares inbox-safe cold emails on autopilot.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* API Source & Settings Button */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setIsHunterConfigModalOpen(true)}
+                      className="px-2.5 py-1.5 rounded-lg bg-bg-inset border border-border-default hover:border-accent/40 text-xs text-text-secondary hover:text-text-primary transition-all flex items-center gap-1.5 cursor-pointer"
+                      title="Configure Apollo.io or Hunter.io API Keys"
+                    >
+                      <KeyRound className="w-3.5 h-3.5 text-accent" />
+                      <span>{hunterSettings?.apollo_configured ? 'Apollo Connected' : 'API Keys (Optional)'}</span>
+                      <Settings2 className="w-3 h-3 text-text-faint" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Controls Bar: Vertical Selector + Batch Size + Hunt Button */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                  {/* Industry Vertical Selector */}
+                  <div className="md:col-span-6 space-y-1.5">
+                    <label className="text-[11px] font-medium text-text-secondary flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-accent" />
+                      <span>Target Industry Vertical</span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setHunterIndustry('law_firms')}
+                        className={cn(
+                          "p-2.5 rounded-lg border text-left transition-all cursor-pointer",
+                          hunterIndustry === 'law_firms'
+                            ? "bg-accent/10 border-accent text-text-primary shadow-sm"
+                            : "bg-bg-inset border-border-default text-text-muted hover:text-text-primary hover:border-border-strong"
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5 font-medium text-xs">
+                          <Scale className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Law Firms</span>
+                        </div>
+                        <p className="text-[10px] text-text-faint line-clamp-1 mt-0.5">Wire fraud &amp; DMARC</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setHunterIndustry('cpa_firms')}
+                        className={cn(
+                          "p-2.5 rounded-lg border text-left transition-all cursor-pointer",
+                          hunterIndustry === 'cpa_firms'
+                            ? "bg-accent/10 border-accent text-text-primary shadow-sm"
+                            : "bg-bg-inset border-border-default text-text-muted hover:text-text-primary hover:border-border-strong"
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5 font-medium text-xs">
+                          <Calculator className="w-3.5 h-3.5 text-blue-400" />
+                          <span>CPA &amp; Tax</span>
+                        </div>
+                        <p className="text-[10px] text-text-faint line-clamp-1 mt-0.5">FTC &amp; IRS 4557</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setHunterIndustry('regional_msps')}
+                        className={cn(
+                          "p-2.5 rounded-lg border text-left transition-all cursor-pointer",
+                          hunterIndustry === 'regional_msps'
+                            ? "bg-accent/10 border-accent text-text-primary shadow-sm"
+                            : "bg-bg-inset border-border-default text-text-muted hover:text-text-primary hover:border-border-strong"
+                        )}
+                      >
+                        <div className="flex items-center gap-1.5 font-medium text-xs">
+                          <Briefcase className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Regional MSPs</span>
+                        </div>
+                        <p className="text-[10px] text-text-faint line-clamp-1 mt-0.5">Retainers &amp; Resellers</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Batch Size & Source */}
+                  <div className="md:col-span-3 space-y-1.5">
+                    <label className="text-[11px] font-medium text-text-secondary flex items-center gap-1.5">
+                      <Filter className="w-3.5 h-3.5 text-text-faint" />
+                      <span>Batch Size &amp; Source</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={hunterBatchSize}
+                        onChange={(e) => setHunterBatchSize(Number(e.target.value))}
+                        className="flex-1 bg-bg-inset border border-border-default rounded-lg px-2.5 py-2 text-xs text-text-primary focus:outline-none focus:border-accent"
+                      >
+                        <option value={3}>3 Qualified Clients</option>
+                        <option value={5}>5 Qualified Clients</option>
+                        <option value={10}>10 Qualified Clients</option>
+                      </select>
+                      <select
+                        value={hunterProvider}
+                        onChange={(e) => setHunterProvider(e.target.value)}
+                        className="flex-1 bg-bg-inset border border-border-default rounded-lg px-2.5 py-2 text-xs text-text-primary focus:outline-none focus:border-accent"
+                      >
+                        <option value="auto">Auto Select</option>
+                        <option value="real_directory">Verified Real Directory</option>
+                        {hunterSettings?.apollo_configured && (
+                          <option value="apollo">Apollo.io API</option>
+                        )}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* 1-Click Hunt Trigger */}
+                  <div className="md:col-span-3">
+                    <button
+                      type="button"
+                      onClick={handleRunClientHunter}
+                      disabled={runHunterMutation.isPending}
+                      className="w-full py-2.5 px-4 rounded-lg bg-accent hover:bg-accent-hover text-accent-text font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {runHunterMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="truncate">
+                            {hunterProgressStep || "Auditing live domains..."}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          <span>Hunt Real Clients Now</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error Banner */}
+                {hunterError && (
+                  <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs text-rose-300 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                      <span>{hunterError}</span>
+                    </div>
+                    <button onClick={() => setHunterError(null)} className="text-text-muted hover:text-text-primary">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Last Run Success Summary */}
+                {hunterLastResult && (
+                  <div className="p-3.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-xs space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-emerald-300 font-medium">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span>{hunterLastResult.message}</span>
+                      </div>
+                      <button 
+                        onClick={() => setHunterLastResult(null)}
+                        className="text-text-faint hover:text-text-primary cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                      {hunterLastResult.qualified_leads.map((ql) => (
+                        <div key={ql.id} className="p-2 rounded bg-bg-surface/80 border border-border-default/60 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-text-primary truncate">{ql.company_name}</span>
+                            <span className={cn(
+                              "px-1.5 py-0.2 rounded text-[9px] font-mono uppercase font-bold",
+                              ql.dmarc_status === 'missing' ? "bg-rose-500/20 text-rose-300" : "bg-amber-500/20 text-amber-300"
+                            )}>
+                              {ql.dmarc_status === 'missing' ? 'DMARC Missing' : ql.dmarc_status}
+                            </span>
+                          </div>
+                          <div className="text-[11px] text-text-muted truncate font-mono">{ql.domain}</div>
+                          <div className="flex items-center justify-between pt-1 border-t border-border-default/40 text-[10px] text-text-faint">
+                            <span>Score: <b className="text-text-secondary">{ql.risk_score}/100</b></span>
+                            <span className="text-emerald-400 font-medium">12-Page PDF ✓</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Filter & Action Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-bg-surface border border-border-default">
               <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
@@ -2166,6 +2431,113 @@ export default function GrowthAdminPage() {
                       <span>Save &amp; Sync Now</span>
                     </>
                   )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Autonomous Hunter API Keys */}
+      {isHunterConfigModalOpen && (
+        <div className="fixed inset-0 z-50 bg-bg-overlay flex items-center justify-center p-4">
+          <div className="w-full max-w-lg bg-bg-base border border-border-default rounded-xl p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-accent/20 border border-accent/40 flex items-center justify-center text-accent">
+                  <KeyRound className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-text-primary">Autonomous Client Hunter Settings</h3>
+                  <p className="text-[11px] text-text-muted">Connect Apollo.io or Hunter.io for programmatic B2B lookup</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsHunterConfigModalOpen(false)} 
+                className="text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Explanatory note */}
+            <div className="p-3 rounded-lg bg-bg-surface border border-border-default text-xs space-y-1.5">
+              <div className="text-text-secondary font-medium flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-accent" />
+                <span>Zero Keys Required for Instant Testing</span>
+              </div>
+              <p className="text-[11px] text-text-muted leading-relaxed">
+                BreachGuard includes a verified live directory of real, operating Law Firms, CPA practices, and MSPs. Connecting your free API keys unlocks unlimited prospecting across Apollo's 275M+ registry.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveHunterKeys} className="space-y-3.5 text-xs">
+              {/* Apollo.io Key */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="font-medium text-text-secondary">Apollo.io API Key</label>
+                  <a 
+                    href="https://app.apollo.io/#/settings/api" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="text-[10px] text-accent hover:underline flex items-center gap-0.5"
+                  >
+                    <span>Get free key</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+                <input
+                  type="password"
+                  value={apolloKeyInput}
+                  onChange={(e) => setApolloKeyInput(e.target.value)}
+                  placeholder={hunterSettings?.apollo_configured ? `Currently configured (${hunterSettings.apollo_key_masked})` : "e.g. apollo_live_xxxxxxxx"}
+                  className="w-full bg-bg-surface border border-border-default rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:border-accent font-mono"
+                />
+                {hunterSettings?.apollo_configured && (
+                  <p className="text-[10px] text-emerald-400">✓ Apollo.io API key active</p>
+                )}
+              </div>
+
+              {/* Hunter.io Key */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="font-medium text-text-secondary">Hunter.io API Key (Optional)</label>
+                  <a 
+                    href="https://hunter.io/api_keys" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="text-[10px] text-accent hover:underline flex items-center gap-0.5"
+                  >
+                    <span>Get free key</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+                <input
+                  type="password"
+                  value={hunterKeyInput}
+                  onChange={(e) => setHunterKeyInput(e.target.value)}
+                  placeholder={hunterSettings?.hunter_configured ? `Currently configured (${hunterSettings.hunter_key_masked})` : "e.g. 50 free searches / month"}
+                  className="w-full bg-bg-surface border border-border-default rounded-lg px-3 py-2 text-text-primary focus:outline-none focus:border-accent font-mono"
+                />
+                {hunterSettings?.hunter_configured && (
+                  <p className="text-[10px] text-emerald-400">✓ Hunter.io API key active</p>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-default">
+                <button
+                  type="button"
+                  onClick={() => setIsHunterConfigModalOpen(false)}
+                  className="px-3 py-1.5 rounded-lg border border-border-default hover:bg-bg-hover text-text-muted hover:text-text-primary cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saveHunterSettingsMutation.isPending || (!apolloKeyInput.trim() && !hunterKeyInput.trim())}
+                  className="px-4 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text font-medium transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {saveHunterSettingsMutation.isPending ? 'Saving...' : 'Save API Credentials'}
                 </button>
               </div>
             </form>

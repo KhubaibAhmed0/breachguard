@@ -209,8 +209,9 @@ RESEND_API_KEY=your_resend_api_key
 
 | Timestamp | Scope | Change Summary (2-Line Description) |
 | :--- | :--- | :--- |
-| **2026-09-17** | **Outreach Email Template Redesign** | Removed black box card wrapper, shield icon, and interactive scorecard button from outreach emails.<br>Transformed email into clean, natural white format free of .vercel.app links to maximize executive reply rates.
-| **2026-09-17** | **Vercel SMTP Fallback** | Added automated fallback in configuration for Google App Password on serverless environments.<br>Resolved missing SMTP_PASSWORD runtime error so 1-click dispatch sends instantly on live Vercel deployments.
+| **2026-09-17** | **Autonomous B2B Client Hunter** | Built Way 1 autonomous client hunter with Apollo.io API, Hunter.io, and live authoritative DNS recon.<br>Automates zero-fake company lookup, passive DMARC/port qualification, 12-page PDF generation, and outreach staging. |
+| **2026-09-17** | **Outreach Email Template Redesign** | Removed black box card wrapper, shield icon, and interactive scorecard button from outreach emails.<br>Transformed email into clean, natural white format free of .vercel.app links to maximize executive reply rates. |
+| **2026-09-17** | **Vercel SMTP Fallback** | Added automated fallback in configuration for Google App Password on serverless environments.<br>Resolved missing SMTP_PASSWORD runtime error so 1-click dispatch sends instantly on live Vercel deployments. |
 | **2026-09-17** | **Outreach Engine & Email Sync** | Configured Gmail SMTP with authenticated Google App Password to dispatch outreach from `breachguard.io@gmail.com`.<br>Guaranteed automatic synchronization of outbound outreach emails into the official Gmail "Sent" folder. |
 | **2026-09-17** | **Executive PDF & Public Route** | Implemented public inline assessment route `GET /reports/public/{lead_id}/pdf` for zero-barrier prospect viewing.<br>Updated PDF executive governance block on Page 12 to match `breachguard.io@gmail.com` founder sign-off. |
 | **2026-09-16** | **Founder Growth Hub & Radar** | Built Founder Growth Hub (`/admin/growth`) with automated cold outreach and 12-page PDF generation.<br>Added Social Buyer Intent Radar scanning Reddit/Twitter with Google Sheets bi-directional pipeline. |

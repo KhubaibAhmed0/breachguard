@@ -34,6 +34,7 @@ from services.intent_radar_service import (
 )
 from services.email_service import send_email, send_email_with_details
 from services.report_service import generate_lead_pdf_report
+from services.client_hunter_service import run_autonomous_client_hunt, INDUSTRY_CONFIGS
 
 logger = logging.getLogger("breachguard.growth.router")
 
@@ -132,6 +133,15 @@ class WebhookPushRequest(BaseModel):
 class RadarScanRequest(BaseModel):
     subreddits: Optional[List[str]] = None
     category: Optional[str] = None
+
+class HunterRunRequest(BaseModel):
+    industry: Optional[str] = "law_firms"
+    batch_size: Optional[int] = 5
+    provider: Optional[str] = "auto"
+
+class HunterSettingsRequest(BaseModel):
+    apollo_api_key: Optional[str] = None
+    hunter_api_key: Optional[str] = None
 
 
 # Ensure tables exist
@@ -1870,4 +1880,114 @@ async def export_radar_signals_csv(
             "Content-Disposition": "attachment; filename=breachguard_buyer_radar.csv"
         }
     )
+
+
+# ==============================================================================
+# AUTONOMOUS CLIENT HUNTER (APOLLO.IO / HUNTER.IO / REAL DIRECTORY PIPELINE)
+# ==============================================================================
+
+@router.post("/hunter/run")
+async def run_hunter_pipeline(
+    payload: HunterRunRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    Executes BreachGuard's Master Autonomous Client Acquisition Engine:
+    1. Fetches candidate real businesses matching the target industry vertical.
+    2. Runs passive perimeter DNS reconnaissance on candidate domains.
+    3. Qualifies targets (detects DMARC missing/p=none, open admin ports).
+    4. Auto-generates the comprehensive 12-page Executive Cyber Risk Assessment PDF.
+    5. Drafts high-converting, inbox-safe cold email copy.
+    6. Saves into OutreachLeads table with status 'ready' for 1-click dispatch.
+    """
+    await ensure_growth_tables()
+    result = await run_autonomous_client_hunt(
+        db=db,
+        industry=payload.industry or "law_firms",
+        batch_size=payload.batch_size or 5,
+        provider=payload.provider or "auto"
+    )
+    return result
+
+
+@router.get("/hunter/settings")
+async def get_hunter_settings(
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    Returns configured API keys status and available industry verticals.
+    """
+    await ensure_growth_tables()
+    res_apollo = await db.execute(select(GrowthSetting).where(GrowthSetting.key == "apollo_api_key"))
+    apollo_setting = res_apollo.scalars().first()
+    apollo_key = apollo_setting.value.strip() if apollo_setting and apollo_setting.value else None
+
+    res_hunter = await db.execute(select(GrowthSetting).where(GrowthSetting.key == "hunter_api_key"))
+    hunter_setting = res_hunter.scalars().first()
+    hunter_key = hunter_setting.value.strip() if hunter_setting and hunter_setting.value else None
+
+    # Mask keys for security
+    masked_apollo = f"{apollo_key[:4]}...{apollo_key[-4:]}" if apollo_key and len(apollo_key) > 8 else ("Configured" if apollo_key else None)
+    masked_hunter = f"{hunter_key[:4]}...{hunter_key[-4:]}" if hunter_key and len(hunter_key) > 8 else ("Configured" if hunter_key else None)
+
+    industries = []
+    for key, cfg in INDUSTRY_CONFIGS.items():
+        industries.append({
+            "key": key,
+            "label": cfg["label"],
+            "description": cfg["description"],
+            "default_angle": cfg["default_angle"],
+            "target_count": len(cfg.get("real_targets", []))
+        })
+
+    return {
+        "apollo_configured": bool(apollo_key),
+        "apollo_key_masked": masked_apollo,
+        "hunter_configured": bool(hunter_key),
+        "hunter_key_masked": masked_hunter,
+        "industries": industries,
+        "default_industry": "law_firms"
+    }
+
+
+@router.post("/hunter/settings")
+async def save_hunter_settings(
+    payload: HunterSettingsRequest,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin)
+):
+    """
+    Saves or updates Apollo.io and Hunter.io API credentials securely.
+    """
+    await ensure_growth_tables()
+    updated = []
+
+    if payload.apollo_api_key is not None:
+        res = await db.execute(select(GrowthSetting).where(GrowthSetting.key == "apollo_api_key"))
+        setting = res.scalars().first()
+        if not setting:
+            setting = GrowthSetting(key="apollo_api_key", value=payload.apollo_api_key.strip())
+            db.add(setting)
+        else:
+            setting.value = payload.apollo_api_key.strip()
+        updated.append("Apollo.io API Key")
+
+    if payload.hunter_api_key is not None:
+        res = await db.execute(select(GrowthSetting).where(GrowthSetting.key == "hunter_api_key"))
+        setting = res.scalars().first()
+        if not setting:
+            setting = GrowthSetting(key="hunter_api_key", value=payload.hunter_api_key.strip())
+            db.add(setting)
+        else:
+            setting.value = payload.hunter_api_key.strip()
+        updated.append("Hunter.io API Key")
+
+    await db.commit()
+    return {
+        "status": "success",
+        "message": f"Successfully updated: {', '.join(updated) if updated else 'No changes'}"
+    }
+
 

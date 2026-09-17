@@ -122,6 +122,7 @@ export default function GrowthAdminPage() {
   const [bulkAutoScan, setBulkAutoScan] = useState(false);
 
   // Form states - Email Inspector / Editor
+  const [editedRecipientEmail, setEditedRecipientEmail] = useState('');
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [selectedAngle, setSelectedAngle] = useState<'dmarc_spoofing' | 'open_ports' | 'executive_summary'>('dmarc_spoofing');
@@ -423,11 +424,12 @@ export default function GrowthAdminPage() {
     }
   };
 
-  const handleOpenInGmail = (lead: OutreachLead, customSubject?: string, customBody?: string) => {
+  const handleOpenInGmail = (lead: OutreachLead, customSubject?: string, customBody?: string, customTo?: string) => {
     // 1. Automatically initiate PDF download so the file is ready on the user's screen/shelf
     handleDownloadPdf(lead);
 
-    const to = encodeURIComponent(lead.contact_email || '');
+    const recipient = (customTo && customTo.trim()) || lead.contact_email || '';
+    const to = encodeURIComponent(recipient);
     const subject = encodeURIComponent(customSubject || lead.email_subject || `Cybersecurity Exposure Notice regarding ${lead.domain}`);
     const body = encodeURIComponent(customBody || lead.email_body || '');
 
@@ -438,7 +440,10 @@ export default function GrowthAdminPage() {
     if (lead.status !== 'sent') {
       updateLeadMutation.mutate({
         leadId: lead.id,
-        data: { status: 'sent' }
+        data: { 
+          status: 'sent',
+          contact_email: recipient !== lead.contact_email ? recipient : undefined
+        } as any
       });
     }
     showToast(`Gmail opened & PDF downloaded! Drag ${lead.company_name} PDF into Gmail.`, 'success');
@@ -552,6 +557,7 @@ export default function GrowthAdminPage() {
 
   const handleOpenEmailEditor = (lead: OutreachLead) => {
     setActiveLead(lead);
+    setEditedRecipientEmail(lead.contact_email || '');
     setEditedSubject(lead.email_subject || `Quick question regarding ${lead.domain}'s email authentication`);
     setEditedBody(lead.email_body || '');
     setSelectedAngle((lead.email_angle as any) || 'dmarc_spoofing');
@@ -580,9 +586,11 @@ export default function GrowthAdminPage() {
   const handleSaveEmailDraft = async () => {
     if (!activeLead) return;
     try {
+      const recipient = editedRecipientEmail.trim() || activeLead.contact_email;
       const res = await updateLeadMutation.mutateAsync({
         leadId: activeLead.id,
         data: {
+          contact_email: recipient,
           email_subject: editedSubject,
           email_body: editedBody,
           email_angle: selectedAngle,
@@ -592,6 +600,7 @@ export default function GrowthAdminPage() {
       showToast(`Updated email draft for ${activeLead.company_name}`);
       setActiveLead({
         ...activeLead,
+        contact_email: recipient,
         email_subject: editedSubject,
         email_body: editedBody,
         email_angle: selectedAngle,
@@ -602,8 +611,14 @@ export default function GrowthAdminPage() {
     }
   };
 
-  const handleSendSingleEmail = async (leadId: number, options?: { attachPdf?: boolean; plainText?: boolean }) => {
+  const handleSendSingleEmail = async (leadId: number, options?: { attachPdf?: boolean; plainText?: boolean; recipientEmail?: string }) => {
     try {
+      if (editedRecipientEmail && activeLead && activeLead.id === leadId && editedRecipientEmail.trim() !== activeLead.contact_email) {
+        await updateLeadMutation.mutateAsync({
+          leadId,
+          data: { contact_email: editedRecipientEmail.trim() }
+        });
+      }
       const attachPdf = options?.attachPdf ?? false;
       const plainText = options?.plainText ?? true;
       await sendEmailMutation.mutateAsync({ leadId, attachPdf, plainText });
@@ -2641,6 +2656,21 @@ export default function GrowthAdminPage() {
                 </div>
               </div>
 
+              {/* Recipient Corporate Email (Editable) */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-text-secondary font-medium">Recipient Corporate Email (To:)</label>
+                  <span className="text-[10px] text-text-faint font-mono">Deliverable mailbox at @{activeLead.domain}</span>
+                </div>
+                <input
+                  type="email"
+                  value={editedRecipientEmail}
+                  onChange={(e) => setEditedRecipientEmail(e.target.value)}
+                  className="w-full px-3 py-2 bg-bg-surface border border-border-default rounded-lg text-text-primary font-mono focus:outline-none focus:border-accent text-xs"
+                  placeholder="e.g. partner@company.com"
+                />
+              </div>
+
               {/* Subject Input */}
               <div>
                 <label className="block text-text-secondary mb-1 font-medium">Email Subject Line</label>
@@ -2778,7 +2808,7 @@ export default function GrowthAdminPage() {
                   type="button"
                   onClick={() => {
                     if (activeLead) {
-                      handleOpenInGmail(activeLead, editedSubject, editedBody);
+                      handleOpenInGmail(activeLead, editedSubject, editedBody, editedRecipientEmail);
                       setIsEmailEditorOpen(false);
                     }
                   }}
@@ -2791,7 +2821,7 @@ export default function GrowthAdminPage() {
 
                 <button
                   type="button"
-                  onClick={() => handleSendSingleEmail(activeLead.id, { attachPdf: attachPdfInEmail, plainText: deliverabilitySafeMode })}
+                  onClick={() => handleSendSingleEmail(activeLead.id, { attachPdf: attachPdfInEmail, plainText: deliverabilitySafeMode, recipientEmail: editedRecipientEmail })}
                   disabled={sendEmailMutation.isPending}
                   className="px-4 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                   title={attachPdfInEmail ? "1-Click send from breachguard.io@gmail.com with 12-page PDF attached (synced to Gmail Sent tab)" : "1-Click send in Primary Inbox Safe Mode (offers PDF on reply, synced to Gmail Sent tab)"}

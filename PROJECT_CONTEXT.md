@@ -209,6 +209,7 @@ RESEND_API_KEY=your_resend_api_key
 
 | Timestamp | Scope | Change Summary (2-Line Description) |
 | :--- | :--- | :--- |
+| **2026-09-17** | **Mailbox Deliverability & Target Curation** | Updated client hunter targets with verified active published mailboxes and attorney addresses.<br>Added recipient editing in email inspector so prospects with non-generic mailboxes can be reached without 550 bounces. |
 | **2026-09-17** | **Autonomous B2B Client Hunter** | Built Way 1 autonomous client hunter with Apollo.io API, Hunter.io, and live authoritative DNS recon.<br>Automates zero-fake company lookup, passive DMARC/port qualification, 12-page PDF generation, and outreach staging. |
 | **2026-09-17** | **Outreach Email Template Redesign** | Removed black box card wrapper, shield icon, and interactive scorecard button from outreach emails.<br>Transformed email into clean, natural white format free of .vercel.app links to maximize executive reply rates. |
 | **2026-09-17** | **Vercel SMTP Fallback** | Added automated fallback in configuration for Google App Password on serverless environments.<br>Resolved missing SMTP_PASSWORD runtime error so 1-click dispatch sends instantly on live Vercel deployments. |

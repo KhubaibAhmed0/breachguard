@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     SMTP_HOST: Optional[str] = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USER: Optional[str] = "breachguard.io@gmail.com"
-    SMTP_PASSWORD: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = os.environ.get("SMTP_PASSWORD") or "nqehnjvunpmojgab"
     RESEND_API_KEY: Optional[str] = None
     FROM_EMAIL: str = "breachguard.io@gmail.com"
     VIRUSTOTAL_API_KEY: Optional[str] = None
@@ -91,6 +91,8 @@ class Settings(BaseSettings):
             self.WEBHOOK_SIGNING_KEY = secrets.token_hex(32)
 
         # Sanitize SMTP password (strip spaces from Google App Passwords)
+        if not self.SMTP_PASSWORD:
+            self.SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD") or "nqehnjvunpmojgab"
         if self.SMTP_PASSWORD:
             self.SMTP_PASSWORD = self.SMTP_PASSWORD.replace(" ", "").strip()
         if self.SMTP_USER and "@gmail.com" in self.SMTP_USER and not self.SMTP_HOST:

@@ -1621,7 +1621,7 @@ def generate_lead_pdf_report(lead_data: Dict[str, Any]) -> str:
 
     signoff_table = [
         [Paragraph("<b>Assessment Conducted By:</b>", body_bold), Paragraph("BreachGuard Threat Intelligence Automation Engine", body_style)],
-        [Paragraph("<b>Governance Inquiries:</b>", body_bold), Paragraph("security@breachguard.io | Khubaib Ahmed, Founder", body_style)],
+        [Paragraph("<b>Governance Inquiries:</b>", body_bold), Paragraph("breachguard.io@gmail.com | Khubaib Ahmed, Founder", body_style)],
         [Paragraph("<b>Document Classification:</b>", body_bold), Paragraph("<font color='#DC2626'><b>CONFIDENTIAL — STRICTLY PRIVILEGED INFORMATION</b></font>", body_style)]
     ]
     t_sign = Table(signoff_table, colWidths=[150, 390])

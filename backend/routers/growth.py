@@ -672,6 +672,97 @@ async def download_lead_pdf(
         raise HTTPException(status_code=500, detail=f"PDF Generation Failed: {str(e)}")
 
 
+@router.get("/reports/public/{lead_id}/pdf")
+async def download_public_lead_pdf(
+    lead_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Publicly accessible inline PDF viewing/download endpoint for prospect audits.
+    Enables prospects receiving cold emails to view and download their 12-page assessment directly in their browser.
+    """
+    await ensure_growth_tables()
+    result = await db.execute(select(OutreachLead).where(OutreachLead.id == lead_id))
+    lead = result.scalars().first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Executive Assessment not found")
+
+    # If lead has not been scanned yet, run passive reconnaissance first
+    if lead.risk_score is None:
+        try:
+            recon = await run_passive_reconnaissance(lead.domain)
+            lead.risk_score = recon["risk_score"]
+            lead.risk_level = recon["risk_level"]
+            lead.dmarc_status = recon["dmarc_status"]
+            lead.dmarc_record = recon["dmarc_record"]
+            lead.exposed_ports = json.dumps(recon["exposed_ports"])
+            lead.subdomains_count = recon["subdomains_count"]
+            lead.breach_count = recon["breach_count"]
+            lead.breach_sources = json.dumps(recon["breach_sources"])
+            lead.top_findings = json.dumps(recon["top_findings"])
+            lead.status = "ready"
+            await db.commit()
+            await db.refresh(lead)
+        except Exception as e:
+            logger.warning(f"Recon failed prior to public PDF generation for lead {lead_id}: {e}")
+
+    ports = []
+    if lead.exposed_ports:
+        try:
+            ports = json.loads(lead.exposed_ports)
+        except Exception:
+            ports = []
+
+    sources = []
+    if lead.breach_sources:
+        try:
+            sources = json.loads(lead.breach_sources)
+        except Exception:
+            sources = []
+
+    findings = []
+    if lead.top_findings:
+        try:
+            findings = json.loads(lead.top_findings)
+        except Exception:
+            findings = []
+
+    lead_dict = {
+        "id": lead.id,
+        "company_name": lead.company_name,
+        "domain": lead.domain,
+        "risk_score": lead.risk_score or 65,
+        "risk_level": lead.risk_level or "HIGH RISK",
+        "dmarc_status": lead.dmarc_status or "missing",
+        "dmarc_record": lead.dmarc_record,
+        "exposed_ports": ports,
+        "subdomains_count": lead.subdomains_count or 4,
+        "breach_count": lead.breach_count or 0,
+        "breach_sources": sources,
+        "top_findings": findings
+    }
+
+    try:
+        pdf_path = generate_lead_pdf_report(lead_dict)
+        with open(pdf_path, "rb") as f:
+            pdf_bytes = f.read()
+
+        clean_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', lead.company_name)
+        filename = f"{clean_name}_Executive_Cyber_Risk_Assessment.pdf"
+
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f'inline; filename="{filename}"',
+                "Access-Control-Expose-Headers": "Content-Disposition"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Failed to generate public PDF for {lead.company_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"PDF Generation Failed: {str(e)}")
+
+
 @router.post("/leads/{lead_id}/send")
 async def send_lead_email(
     lead_id: int,

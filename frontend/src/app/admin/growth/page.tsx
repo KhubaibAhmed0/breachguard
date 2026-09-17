@@ -336,24 +336,6 @@ export default function GrowthAdminPage() {
     setTimeout(() => setCopiedReplyId(null), 3000);
   };
 
-  const handleOpenInGmail = (lead: OutreachLead, customSubject?: string, customBody?: string) => {
-    const to = encodeURIComponent(lead.contact_email || '');
-    const subject = encodeURIComponent(customSubject || lead.email_subject || `Cybersecurity Exposure Notice regarding ${lead.domain}`);
-    const body = encodeURIComponent(customBody || lead.email_body || '');
-
-    // Launch Google Mail web compose URL directly
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${subject}&body=${body}`;
-    window.open(gmailUrl, '_blank');
-
-    if (lead.status !== 'sent') {
-      updateLeadMutation.mutate({
-        leadId: lead.id,
-        data: { status: 'sent' }
-      });
-    }
-    showToast(`Opened Gmail compose for ${lead.contact_email}!`, 'success');
-  };
-
   const handleDownloadPdf = async (lead: OutreachLead) => {
     try {
       showToast(`Generating 12-page executive report for ${lead.company_name}...`, 'info');
@@ -378,10 +360,33 @@ export default function GrowthAdminPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      showToast(`Downloaded ${cleanName}_Executive_Cyber_Risk_Assessment.pdf! Ready to attach to Gmail.`, 'success');
+      showToast(`Downloaded ${cleanName}_Executive_Cyber_Risk_Assessment.pdf!`, 'success');
+      return true;
     } catch (err: any) {
       showToast(err.message || 'Failed to download PDF audit', 'error');
+      return false;
     }
+  };
+
+  const handleOpenInGmail = (lead: OutreachLead, customSubject?: string, customBody?: string) => {
+    // 1. Automatically initiate PDF download so the file is ready on the user's screen/shelf
+    handleDownloadPdf(lead);
+
+    const to = encodeURIComponent(lead.contact_email || '');
+    const subject = encodeURIComponent(customSubject || lead.email_subject || `Cybersecurity Exposure Notice regarding ${lead.domain}`);
+    const body = encodeURIComponent(customBody || lead.email_body || '');
+
+    // 2. Launch Google Mail web compose URL targeting breachguard.io@gmail.com
+    const gmailUrl = `https://mail.google.com/mail/?authuser=${encodeURIComponent('breachguard.io@gmail.com')}&view=cm&fs=1&to=${to}&su=${subject}&body=${body}`;
+    window.open(gmailUrl, '_blank');
+
+    if (lead.status !== 'sent') {
+      updateLeadMutation.mutate({
+        leadId: lead.id,
+        data: { status: 'sent' }
+      });
+    }
+    showToast(`Gmail opened & PDF downloaded! Drag ${lead.company_name} PDF into Gmail.`, 'success');
   };
 
   // Handlers
@@ -955,7 +960,7 @@ export default function GrowthAdminPage() {
                       <th className="py-3 px-4">Contact</th>
                       <th className="py-3 px-4">Passive Vulnerability Audit</th>
                       <th className="py-3 px-4">Risk Score</th>
-                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 whitespace-nowrap">Status</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1043,15 +1048,16 @@ export default function GrowthAdminPage() {
                               )}
                             </td>
 
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-4 whitespace-nowrap">
                               <span className={cn(
-                                "px-2 py-0.5 rounded text-[11px] font-medium capitalize",
+                                "px-2.5 py-1 rounded-md text-[11px] font-medium capitalize whitespace-nowrap inline-flex items-center gap-1.5",
                                 lead.status === 'ready' && "bg-accent/15 text-accent border border-accent/30",
                                 lead.status === 'sent' && "bg-sky-500/15 text-sky-300 border border-sky-500/30",
                                 lead.status === 'pending_scan' && "bg-amber-500/10 text-amber-300 border border-amber-500/20",
                                 lead.status === 'failed' && "bg-red-500/10 text-red-400 border border-red-500/20"
                               )}>
-                                {lead.status === 'sent' && lead.sent_at ? `Sent ${formatDate(lead.sent_at)}` : lead.status.replace('_', ' ')}
+                                {lead.status === 'sent' && <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />}
+                                <span>{lead.status === 'sent' && lead.sent_at ? `Sent ${formatDate(lead.sent_at)}` : lead.status.replace('_', ' ')}</span>
                               </span>
                             </td>
 
@@ -1079,7 +1085,7 @@ export default function GrowthAdminPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleOpenInGmail(lead)}
-                                  title="1-Click Open in Gmail Compose (Zero Setup / 100% Free)"
+                                  title="Open Gmail & auto-download 12-page PDF ready to drag into compose"
                                   className="px-2 py-1 rounded-md text-xs font-medium bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/25 transition-colors flex items-center gap-1 cursor-pointer"
                                 >
                                   <Mail className="w-3 h-3 text-red-400" />
@@ -1100,7 +1106,7 @@ export default function GrowthAdminPage() {
                                   type="button"
                                   onClick={() => handleSendSingleEmail(lead.id)}
                                   disabled={sendEmailMutation.isPending || lead.status === 'pending_scan'}
-                                  title={lead.status === 'sent' ? "Resend email via Resend" : "1-Click Send via Resend"}
+                                  title={lead.status === 'sent' ? "Resend from breachguard.io@gmail.com with 12-page PDF attached" : "1-Click Send from breachguard.io@gmail.com with 12-page PDF attached (synced to Gmail Sent tab)"}
                                   className={cn(
                                     "px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer",
                                     lead.status === 'ready' 
@@ -1109,7 +1115,7 @@ export default function GrowthAdminPage() {
                                   )}
                                 >
                                   <Send className="w-3 h-3" />
-                                  <span>{lead.status === 'sent' ? 'Resend' : 'Send'}</span>
+                                  <span>{lead.status === 'sent' ? 'Resend' : 'Send (Gmail)'}</span>
                                 </button>
 
                                 <button
@@ -2236,6 +2242,18 @@ export default function GrowthAdminPage() {
                 </div>
               </div>
 
+              {/* Sender & Security Notice */}
+              <div className="flex items-center justify-between p-2.5 bg-bg-surface border border-border-default rounded-lg text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-text-muted font-medium">Sending From:</span>
+                  <span className="font-mono text-text-primary font-semibold">breachguard.io@gmail.com</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-2xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-medium">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>Synced to Gmail "Sent" Tab</span>
+                </div>
+              </div>
+
               {/* Subject Input */}
               <div>
                 <label className="block text-text-secondary mb-1 font-medium">Email Subject Line</label>
@@ -2328,10 +2346,10 @@ export default function GrowthAdminPage() {
                     }
                   }}
                   className="px-3.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
-                  title="Open this personalized draft directly in Gmail compose"
+                  title="Open in Gmail & auto-download 12-page PDF ready to drag into compose"
                 >
                   <Mail className="w-3.5 h-3.5 text-red-400" />
-                  <span>Open in Gmail</span>
+                  <span>Open in Gmail (Auto-Downloads PDF)</span>
                 </button>
 
                 <button
@@ -2339,16 +2357,17 @@ export default function GrowthAdminPage() {
                   onClick={() => handleSendSingleEmail(activeLead.id)}
                   disabled={sendEmailMutation.isPending}
                   className="px-4 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  title="1-Click send from breachguard.io@gmail.com with 12-page PDF attached (synced to Gmail Sent tab)"
                 >
                   {sendEmailMutation.isPending ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Sending via Resend...</span>
+                      <span>Sending via Gmail...</span>
                     </>
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5" />
-                      <span>1-Click Send via Resend</span>
+                      <span>1-Click Send (Gmail Synced)</span>
                     </>
                   )}
                 </button>

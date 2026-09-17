@@ -24,9 +24,88 @@ async def send_email_with_details(
     3. Safe Mock Logger (fallback strictly in dev/test when credentials are unset)
     """
     clean_to = to_email.strip()
-    clean_from = settings.FROM_EMAIL or "security@breachguard.io"
+    clean_from = settings.FROM_EMAIL or "breachguard.io@gmail.com"
     plain_text = text_body or "This email requires an HTML-compatible email client to view."
     last_resend_error = None
+    last_smtp_error = None
+
+    # Determine provider routing:
+    # If sender is @gmail.com or SMTP credentials are configured, prioritize SMTP so sent emails appear in the Gmail Sent folder
+    smtp_host = settings.SMTP_HOST or "smtp.gmail.com"
+    smtp_port = settings.SMTP_PORT or 587
+    smtp_user = settings.SMTP_USER or (clean_from if clean_from.endswith("@gmail.com") else None)
+    smtp_pass = (settings.SMTP_PASSWORD or "").replace(" ", "").strip()
+
+    use_smtp = bool(
+        clean_from.endswith("@gmail.com") 
+        or (smtp_host and smtp_user and smtp_pass)
+    )
+
+    # 1. Authenticated Gmail / Standard SMTP (Priority for @gmail.com senders)
+    if use_smtp:
+        if not smtp_pass:
+            err = (
+                f"Cannot send from {clean_from}: SMTP_PASSWORD is not configured. "
+                "Please set your 16-character Google App Password in environment variable SMTP_PASSWORD."
+            )
+            logger.error(f"[EMAIL:SMTP] {err}")
+            return {"success": False, "provider": "gmail_smtp", "message_id": None, "error": err}
+
+        def _send_smtp_sync():
+            msg = MIMEMultipart("mixed") if attachments else MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"BreachGuard Security <{clean_from}>"
+            msg["To"] = clean_to
+            msg["Reply-To"] = clean_from
+
+            # Body part
+            body_part = MIMEMultipart("alternative")
+            body_part.attach(MIMEText(plain_text, "plain", "utf-8"))
+            body_part.attach(MIMEText(html_body, "html", "utf-8"))
+            msg.attach(body_part)
+
+            # Attachments
+            if attachments:
+                from email.mime.application import MIMEApplication
+                import base64
+                for att in attachments:
+                    content_bytes = att.get("raw_bytes")
+                    if not content_bytes and "content" in att:
+                        try:
+                            content_bytes = base64.b64decode(att["content"])
+                        except Exception:
+                            content_bytes = None
+                    if content_bytes:
+                        part = MIMEApplication(content_bytes, _subtype="pdf")
+                        filename = att.get("filename", "assessment.pdf")
+                        part.add_header("Content-Disposition", "attachment", filename=filename)
+                        msg.attach(part)
+
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+                server.ehlo()
+                try:
+                    server.starttls()
+                    server.ehlo()
+                except smtplib.SMTPNotSupportedError:
+                    pass
+                server.login(smtp_user or clean_from, smtp_pass)
+                server.sendmail(smtp_user or clean_from, [clean_to], msg.as_string())
+
+        try:
+            await asyncio.to_thread(_send_smtp_sync)
+            provider_name = "gmail_smtp" if "gmail" in smtp_host.lower() else "smtp"
+            logger.info(f"[EMAIL:{provider_name.upper()}] Dispatched successfully to {clean_to} from {clean_from} (synced to Sent folder)")
+            import time
+            return {"success": True, "provider": provider_name, "message_id": f"smtp_{int(time.time()*1000)}", "error": None}
+        except smtplib.SMTPAuthenticationError as auth_err:
+            err = f"Gmail SMTP Authentication Failed: Invalid App Password for {smtp_user or clean_from}. ({auth_err})"
+            logger.error(f"[EMAIL:SMTP] {err}")
+            return {"success": False, "provider": "gmail_smtp", "message_id": None, "error": err}
+        except Exception as e:
+            logger.error(f"[EMAIL:SMTP] Error dispatching to {clean_to}: {e}")
+            last_smtp_error = str(e)
+            if clean_from.endswith("@gmail.com"):
+                return {"success": False, "provider": "gmail_smtp", "message_id": None, "error": f"Gmail SMTP Delivery Failed: {last_smtp_error}"}
 
     # Format attachments for Resend if present
     resend_attachments = None
@@ -39,8 +118,8 @@ async def send_email_with_details(
                     "content": att["content"]
                 })
 
-    # 1. Resend API
-    if settings.RESEND_API_KEY:
+    # 2. Resend API (used when not sending from @gmail.com)
+    if settings.RESEND_API_KEY and not clean_from.endswith("@gmail.com"):
         try:
             req_payload = {
                 "from": f"BreachGuard Security <{clean_from}>",
@@ -105,54 +184,6 @@ async def send_email_with_details(
         except Exception as e:
             logger.error(f"[EMAIL:RESEND] Network error dispatching to {clean_to}: {e}")
             last_resend_error = str(e)
-
-    # 2. Standard SMTP
-    if settings.SMTP_HOST:
-        def _send_smtp_sync():
-            msg = MIMEMultipart("mixed") if attachments else MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = f"BreachGuard Security <{clean_from}>"
-            msg["To"] = clean_to
-
-            # Body part
-            body_part = MIMEMultipart("alternative")
-            body_part.attach(MIMEText(plain_text, "plain", "utf-8"))
-            body_part.attach(MIMEText(html_body, "html", "utf-8"))
-            msg.attach(body_part)
-
-            # Attachments
-            if attachments:
-                from email.mime.application import MIMEApplication
-                import base64
-                for att in attachments:
-                    content_bytes = att.get("raw_bytes")
-                    if not content_bytes and "content" in att:
-                        try:
-                            content_bytes = base64.b64decode(att["content"])
-                        except Exception:
-                            content_bytes = None
-                    if content_bytes:
-                        part = MIMEApplication(content_bytes, _subtype="pdf")
-                        part.add_header("Content-Disposition", "attachment", filename=att.get("filename", "assessment.pdf"))
-                        msg.attach(part)
-
-            with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10) as server:
-                server.ehlo()
-                try:
-                    server.starttls()
-                    server.ehlo()
-                except smtplib.SMTPNotSupportedError:
-                    pass
-                if settings.SMTP_USER and settings.SMTP_PASSWORD:
-                    server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-                server.sendmail(clean_from, [clean_to], msg.as_string())
-
-        try:
-            await asyncio.to_thread(_send_smtp_sync)
-            logger.info(f"[EMAIL:SMTP] Dispatched successfully to {clean_to}")
-            return {"success": True, "provider": "smtp", "message_id": None, "error": None}
-        except Exception as e:
-            logger.error(f"[EMAIL:SMTP] Error dispatching to {clean_to}: {e}")
 
     # If Resend API key was provided and it failed, and no working SMTP:
     if settings.RESEND_API_KEY and last_resend_error:

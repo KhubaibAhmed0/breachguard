@@ -32,12 +32,12 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     REDIS_URL: str = "redis://localhost:6379/0"
-    SMTP_HOST: Optional[str] = None
+    SMTP_HOST: Optional[str] = "smtp.gmail.com"
     SMTP_PORT: int = 587
-    SMTP_USER: Optional[str] = None
+    SMTP_USER: Optional[str] = "breachguard.io@gmail.com"
     SMTP_PASSWORD: Optional[str] = None
     RESEND_API_KEY: Optional[str] = None
-    FROM_EMAIL: str = "security@breachguard.io"
+    FROM_EMAIL: str = "breachguard.io@gmail.com"
     VIRUSTOTAL_API_KEY: Optional[str] = None
     FRONTEND_URL: str = "https://breachguard-khubbiahmed-1955s-projects.vercel.app"
     CRON_SECRET: Optional[str] = None
@@ -89,6 +89,13 @@ class Settings(BaseSettings):
         # BG-SEC-03: Isolated webhook signing key fallback
         if not self.WEBHOOK_SIGNING_KEY:
             self.WEBHOOK_SIGNING_KEY = secrets.token_hex(32)
+
+        # Sanitize SMTP password (strip spaces from Google App Passwords)
+        if self.SMTP_PASSWORD:
+            self.SMTP_PASSWORD = self.SMTP_PASSWORD.replace(" ", "").strip()
+        if self.SMTP_USER and "@gmail.com" in self.SMTP_USER and not self.SMTP_HOST:
+            self.SMTP_HOST = "smtp.gmail.com"
+            self.SMTP_PORT = 587
 
     @property
     def async_database_url(self) -> str:

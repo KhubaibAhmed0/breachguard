@@ -52,47 +52,38 @@ async def send_email_with_details(
             return {"success": False, "provider": "gmail_smtp", "message_id": None, "error": err}
 
         def _send_smtp_sync():
+            from email.message import EmailMessage
+            import email.utils
+
             from_display = f"Khubaib Ahmed <{clean_from}>" if "gmail" in clean_from.lower() or "breachguard" in clean_from.lower() else f"BreachGuard <{clean_from}>"
-            if not attachments and not html_body:
-                # Ultra-clean Plain Text mode: Highest deliverability score in spam filters.
-                # Replicates 1-to-1 human email composed directly in native Gmail client.
-                msg = MIMEText(plain_text, "plain", "utf-8")
-                msg["Subject"] = subject
-                msg["From"] = from_display
-                msg["To"] = clean_to
-                msg["Reply-To"] = clean_from
-            else:
-                msg = MIMEMultipart("mixed") if attachments else MIMEMultipart("alternative")
-                msg["Subject"] = subject
-                msg["From"] = from_display
-                msg["To"] = clean_to
-                msg["Reply-To"] = clean_from
+            msg = EmailMessage()
+            msg["Subject"] = subject
+            msg["From"] = from_display
+            msg["To"] = clean_to
+            msg["Reply-To"] = clean_from
+            msg["Date"] = email.utils.formatdate(localtime=True)
+            msg["Message-ID"] = email.utils.make_msgid(domain="gmail.com" if "gmail" in clean_from.lower() else None)
 
-                # Body part
-                if html_body:
-                    body_part = MIMEMultipart("alternative")
-                    body_part.attach(MIMEText(plain_text, "plain", "utf-8"))
-                    body_part.attach(MIMEText(html_body, "html", "utf-8"))
-                    msg.attach(body_part)
-                else:
-                    msg.attach(MIMEText(plain_text, "plain", "utf-8"))
+            # Plain text body (sets natural 7bit/8bit transfer encoding instead of suspicious base64)
+            msg.set_content(plain_text)
 
-                # Attachments
-                if attachments:
-                    from email.mime.application import MIMEApplication
-                    import base64
-                    for att in attachments:
-                        content_bytes = att.get("raw_bytes")
-                        if not content_bytes and "content" in att:
-                            try:
-                                content_bytes = base64.b64decode(att["content"])
-                            except Exception:
-                                content_bytes = None
-                        if content_bytes:
-                            part = MIMEApplication(content_bytes, _subtype="pdf")
-                            filename = att.get("filename", "assessment.pdf")
-                            part.add_header("Content-Disposition", "attachment", filename=filename)
-                            msg.attach(part)
+            # Optional HTML alternative
+            if html_body:
+                msg.add_alternative(html_body, subtype="html")
+
+            # Attachments
+            if attachments:
+                import base64
+                for att in attachments:
+                    content_bytes = att.get("raw_bytes")
+                    if not content_bytes and "content" in att:
+                        try:
+                            content_bytes = base64.b64decode(att["content"])
+                        except Exception:
+                            content_bytes = None
+                    if content_bytes:
+                        filename = att.get("filename", "assessment.pdf")
+                        msg.add_attachment(content_bytes, maintype="application", subtype="pdf", filename=filename)
 
             with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
                 server.ehlo()
@@ -102,7 +93,7 @@ async def send_email_with_details(
                 except smtplib.SMTPNotSupportedError:
                     pass
                 server.login(smtp_user or clean_from, smtp_pass)
-                server.sendmail(smtp_user or clean_from, [clean_to], msg.as_string())
+                server.send_message(msg)
 
         try:
             await asyncio.to_thread(_send_smtp_sync)

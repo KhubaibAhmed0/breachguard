@@ -20,6 +20,7 @@
 
 | Layer | Platform / Provider | Endpoint / URL | Details / Notes |
 | :--- | :--- | :--- | :--- |
+| **2026-09-17** | **RFC 5322 Headers & Legacy Lead DB Migration** | Upgraded SMTP engine to Python EmailMessage adding RFC 5322 Date and Message-ID headers to eliminate base64 spam flags.<br>Migrated database sanitizing 15 legacy leads that were still holding pre-update [Security Notice] drafts. |
 | **2026-09-17** | **Primary Inbox Deliverability & Spam-Proof Mode** | Eliminated spam triggers with pure plain-text MIME dispatch and human conversational subject lines without marketing tables.<br>Introduced Hand-Raise PDF strategy offering reports upon reply to establish sender reputation, with optional UI attachment toggle. |
 | **Frontend Web App** | Vercel (Next.js 16) | **[breachguard-khubbiahmed-1955s-projects.vercel.app](https://breachguard-khubbiahmed-1955s-projects.vercel.app)** | Production Next.js 16 / React 19 App Router |
 | **Backend API** | Vercel Serverless | **[breachguard-w88w.vercel.app](https://breachguard-w88w.vercel.app)** | FastAPI backend deployed via `@vercel/python` |

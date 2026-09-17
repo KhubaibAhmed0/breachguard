@@ -797,6 +797,39 @@ async def send_lead_email(
     except RateThrottleException as r_err:
         raise HTTPException(status_code=429, detail=str(r_err))
 
+    # Deliverability Sanitization Safeguard:
+    # 1. Clean legacy "[Security Notice]" prefixes from stored drafts
+    clean_subject = (lead.email_subject or "").replace("[Security Notice]", "").strip()
+    if not clean_subject:
+        clean_subject = f"Quick question regarding {lead.domain}'s email authentication"
+    lead.email_subject = clean_subject
+
+    clean_body = lead.email_body or ""
+    # 2. If not attaching PDF, ensure body never falsely claims a file is attached
+    if not attach_pdf and "I have attached" in clean_body:
+        ports = []
+        if lead.exposed_ports:
+            try:
+                ports = json.loads(lead.exposed_ports)
+            except Exception:
+                ports = []
+        lead_dict_temp = {
+            "company_name": lead.company_name,
+            "domain": lead.domain,
+            "contact_name": lead.contact_name,
+            "dmarc_status": lead.dmarc_status or "missing",
+            "exposed_ports": ports,
+            "breach_count": lead.breach_count or 0,
+            "subdomains_count": lead.subdomains_count or 0,
+            "risk_score": lead.risk_score or 60
+        }
+        _, clean_body = generate_cold_email_copy(lead_dict_temp, angle=lead.email_angle or "dmarc_spoofing", attach_pdf=False)
+        lead.email_body = clean_body
+
+    # 3. Normalize bullet characters to ASCII dashes
+    clean_body = clean_body.replace("•", "-").replace("\ufffd", "-")
+    lead.email_body = clean_body
+
     # 2. Render responsive HTML email only if plain_text_mode is False
     html_content = None
     if not plain_text_mode:

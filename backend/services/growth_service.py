@@ -222,10 +222,10 @@ Founder, BreachGuard"""
 I have attached our complete 12-page Executive Cyber Risk Assessment for {company} directly to this email ({clean_company}_Executive_Cyber_Risk_Assessment.pdf).
 
 The report includes:
-• DMARC, SPF, and transport encryption (MTA-STS) gap analysis
-• Discovered public hostnames and network port telemetry
-• Unified External Cyber Risk Score ({risk_score}/100)
-• Actionable 3-phase technical remediation roadmap
+- DMARC, SPF, and transport encryption (MTA-STS) gap analysis
+- Discovered public hostnames and network port telemetry
+- Unified External Cyber Risk Score ({risk_score}/100)
+- Actionable 3-phase technical remediation roadmap
 
 Would you be open to a brief 5-minute conversation this week to review the findings and ensure your domain authentication is fully protected?
 
@@ -243,8 +243,8 @@ Founder, BreachGuard"""
 I'm reaching out because our external attack surface reconnaissance flagged potential perimeter exposure on {domain}.
 
 Passive internet telemetry indexed the following externally reachable services:
-• Exposed Services: {ports_str}
-• Resolvable Hostnames: {subdomains_count} discovered in Certificate Transparency records
+- Exposed Services: {ports_str}
+- Resolvable Hostnames: {subdomains_count} discovered in Certificate Transparency records
 
 Exposing backend or administrative interfaces directly to the public internet makes endpoints prime targets for automated credential stuffing and port scanners.
 
@@ -261,8 +261,8 @@ Founder, BreachGuard"""
 I'm reaching out because our external attack surface reconnaissance flagged potential perimeter exposure on {domain}.
 
 Passive internet telemetry indexed the following externally reachable services:
-• Exposed Services: {ports_str}
-• Resolvable Hostnames: {subdomains_count} discovered in Certificate Transparency records
+- Exposed Services: {ports_str}
+- Resolvable Hostnames: {subdomains_count} discovered in Certificate Transparency records
 
 Exposing backend or administrative interfaces directly to the public internet makes endpoints prime targets for automated credential stuffing and port scanners.
 
@@ -283,10 +283,10 @@ Founder, BreachGuard"""
 We just completed a zero-touch external cyber risk review for {company} ({domain}).
 
 Here is a brief snapshot of what external threat actors can observe about your perimeter today:
-• Overall Perimeter Risk Score: {risk_score}/100
-• Email Authentication: {dmarc_status.upper() if dmarc_status else 'Needs Review'}
-• Compromised Identity Signals: {breach_count} breach records indexed
-• External Hostnames: {subdomains_count} observable hostnames
+- Overall Perimeter Risk Score: {risk_score}/100
+- Email Authentication: {dmarc_status.upper() if dmarc_status else 'Needs Review'}
+- Compromised Identity Signals: {breach_count} breach records indexed
+- External Hostnames: {subdomains_count} observable hostnames
 
 We compiled a comprehensive 12-page Executive Cyber Risk Assessment for {company} containing the complete technical evidence, scoring methodology, and prioritized remediation roadmap.
 
@@ -301,10 +301,10 @@ Founder, BreachGuard"""
 We just completed a zero-touch external cyber risk review for {company} ({domain}).
 
 Here is a brief snapshot of what external threat actors can observe about your perimeter today:
-• Overall Perimeter Risk Score: {risk_score}/100
-• Email Authentication: {dmarc_status.upper() if dmarc_status else 'Needs Review'}
-• Compromised Identity Signals: {breach_count} breach records indexed
-• External Hostnames: {subdomains_count} observable hostnames
+- Overall Perimeter Risk Score: {risk_score}/100
+- Email Authentication: {dmarc_status.upper() if dmarc_status else 'Needs Review'}
+- Compromised Identity Signals: {breach_count} breach records indexed
+- External Hostnames: {subdomains_count} observable hostnames
 
 I have attached our complete 12-page Executive Cyber Risk Assessment for {company} directly to this email ({clean_company}_Executive_Cyber_Risk_Assessment.pdf). It contains the complete technical evidence, scoring methodology, and prioritized remediation roadmap.
 

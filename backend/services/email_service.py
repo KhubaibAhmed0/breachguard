@@ -236,7 +236,7 @@ def render_password_reset_email(reset_url: str, user_email: str) -> str:
           <!-- Header -->
           <tr>
             <td align="left" style="padding-bottom: 24px; border-bottom: 1px solid #27272a;">
-              <span style="font-size: 16px; font-weight: 700; letter-spacing: -0.5px; color: #ffffff;">🛡️ BREACHGUARD</span>
+              <span style="font-size: 16px; font-weight: 700; letter-spacing: -0.5px; color: #ffffff;">BREACHGUARD</span>
               <span style="display: block; font-size: 11px; color: #a1a1aa; margin-top: 2px;">Threat Intelligence & Exposure Defense</span>
             </td>
           </tr>
@@ -387,7 +387,7 @@ def render_team_invite_email(inviter_email: str, org_name: str, role: str, temp_
         <table role="presentation" width="100%" max-width="560px" cellspacing="0" cellpadding="0" border="0" style="max-width: 560px; background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; overflow: hidden; padding: 36px 32px;">
           <tr>
             <td align="left" style="padding-bottom: 20px; border-bottom: 1px solid #27272a;">
-              <span style="font-size: 16px; font-weight: 700; color: #ffffff;">🛡️ BREACHGUARD</span>
+              <span style="font-size: 16px; font-weight: 700; color: #ffffff;">BREACHGUARD</span>
               <span style="display: block; font-size: 11px; color: #a1a1aa; margin-top: 2px;">Team Access Authorization</span>
             </td>
           </tr>
@@ -449,7 +449,7 @@ def render_invoice_request_email(
         <table role="presentation" width="100%" max-width="560px" cellspacing="0" cellpadding="0" border="0" style="max-width: 560px; background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; overflow: hidden; padding: 36px 32px;">
           <tr>
             <td align="left" style="padding-bottom: 20px; border-bottom: 1px solid #27272a;">
-              <span style="font-size: 16px; font-weight: 700; color: #ffffff;">🛡️ BREACHGUARD</span>
+              <span style="font-size: 16px; font-weight: 700; color: #ffffff;">BREACHGUARD</span>
               <span style="display: block; font-size: 11px; color: #a1a1aa; margin-top: 2px;">Enterprise Procurement &amp; Invoicing</span>
             </td>
           </tr>

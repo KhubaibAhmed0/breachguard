@@ -265,25 +265,22 @@ Founder, BreachGuard Threat Intelligence"""
 
 def render_outreach_html(lead_data: Dict[str, Any], subject: str, text_body: str) -> str:
     """
-    Renders high-converting, professional HTML email matching BreachGuard's Warm Graphite design.
+    Renders clean, professional, high-converting direct email:
+    - Clean white/transparent background without dark black box wrappers
+    - Clean text header without shield emoji
+    - No external promotional scorecard buttons or .vercel.app links
+    - Focuses recipient attention directly on the attached 12-page executive PDF
     """
-    domain = lead_data.get("domain", "")
     risk_score = lead_data.get("risk_score", 60)
-    scanner_url = f"{settings.FRONTEND_URL}/?scan={domain}"
 
     # Format plain text body paragraphs into clean HTML paragraphs
     paragraphs = text_body.strip().split("\n\n")
     body_html = ""
     for p in paragraphs:
         formatted = p.replace("\n", "<br/>")
-        if scanner_url in formatted:
-            formatted = formatted.replace(
-                scanner_url,
-                f'<a href="{scanner_url}" style="color: #22c55e; font-weight: 600; text-decoration: underline;">{scanner_url}</a>'
-            )
-        body_html += f'<p style="margin: 0 0 16px 0; font-size: 13.5px; line-height: 1.6; color: #d4d4d8;">{formatted}</p>'
+        body_html += f'<p style="margin: 0 0 16px 0; font-size: 14.5px; line-height: 1.65; color: #1f2937;">{formatted}</p>'
 
-    score_color = "#ef4444" if risk_score >= 65 else "#f97316" if risk_score >= 35 else "#22c55e"
+    score_color = "#dc2626" if risk_score >= 65 else "#ea580c" if risk_score >= 35 else "#16a34a"
 
     return f"""<!DOCTYPE html>
 <html>
@@ -292,59 +289,36 @@ def render_outreach_html(lead_data: Dict[str, Any], subject: str, text_body: str
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{subject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0e0d0c; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #f0efee;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #0e0d0c; padding: 32px 16px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" max-width="580px" cellspacing="0" cellpadding="0" border="0" style="max-width: 580px; background-color: #171514; border: 1px solid #2a2726; border-radius: 12px; overflow: hidden; padding: 32px 28px;">
-          <!-- Header -->
-          <tr>
-            <td style="padding-bottom: 20px; border-bottom: 1px solid #2a2726;">
-              <table width="100%" cellspacing="0" cellpadding="0" border="0">
-                <tr>
-                  <td align="left">
-                    <span style="font-size: 15px; font-weight: 700; letter-spacing: -0.3px; color: #ffffff;">🛡️ BREACHGUARD</span>
-                    <span style="display: block; font-size: 11px; color: #9e9894; margin-top: 2px;">External Cyber Risk &amp; Perimeter Defense</span>
-                  </td>
-                  <td align="right">
-                    <div style="display: inline-block; padding: 4px 10px; background-color: #201d1c; border: 1px solid #2a2726; border-radius: 6px; font-size: 11px; font-family: monospace; color: {score_color}; font-weight: 600;">
-                      Risk: {risk_score}/100
-                    </div>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+<body style="margin: 0; padding: 24px 16px; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1f2937;">
+  <div style="max-width: 620px; margin: 0 auto; background-color: #ffffff;">
+    <!-- Minimal Clean Header (No Shield Emoji, No Black Box) -->
+    <div style="padding-bottom: 16px; margin-bottom: 22px; border-bottom: 1px solid #e5e7eb;">
+      <table width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td align="left" style="vertical-align: middle;">
+            <span style="font-size: 14px; font-weight: 700; letter-spacing: 0.5px; color: #111827;">BREACHGUARD</span>
+            <span style="display: block; font-size: 11.5px; color: #6b7280; margin-top: 2px;">External Cyber Risk &amp; Perimeter Defense</span>
+          </td>
+          <td align="right" style="vertical-align: middle;">
+            <span style="display: inline-block; padding: 3px 8px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 4px; font-size: 11px; font-family: -apple-system, BlinkMacSystemFont, monospace; color: {score_color}; font-weight: 600;">
+              Risk: {risk_score}/100
+            </span>
+          </td>
+        </tr>
+      </table>
+    </div>
 
-          <!-- Main Content -->
-          <tr>
-            <td style="padding-top: 24px; padding-bottom: 20px;">
-              {body_html}
+    <!-- Main Content -->
+    <div style="padding: 2px 0 16px 0;">
+      {body_html}
+    </div>
 
-              <!-- Action Button -->
-              <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin: 24px 0 12px 0;">
-                <tr>
-                  <td align="center" style="border-radius: 6px; background-color: #22c55e;">
-                    <a href="{scanner_url}" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 13px; font-weight: 600; color: #0e0d0c; text-decoration: none; border-radius: 6px;">
-                      View Interactive Risk Scorecard &rarr;
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="border-top: 1px solid #2a2726; padding-top: 18px; font-size: 11px; color: #736d6a; line-height: 1.5;">
-              This notification was generated from passive, publicly discoverable internet telemetry.<br/>
-              BreachGuard Intelligence SOC • <a href="{settings.FRONTEND_URL}" style="color: #9e9894; text-decoration: underline;">breachguard.io</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+    <!-- Confidential Footer -->
+    <div style="margin-top: 28px; padding-top: 14px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; line-height: 1.5;">
+      This assessment was generated from non-intrusive, publicly discoverable internet telemetry.<br/>
+      BreachGuard Threat Intelligence • Confidential Security Communication
+    </div>
+  </div>
 </body>
 </html>"""
 

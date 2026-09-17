@@ -160,10 +160,13 @@ async def run_passive_reconnaissance(domain: str) -> Dict[str, Any]:
     }
 
 
-def generate_cold_email_copy(lead_data: Dict[str, Any], angle: str = "dmarc_spoofing") -> Tuple[str, str]:
+def generate_cold_email_copy(lead_data: Dict[str, Any], angle: str = "dmarc_spoofing", attach_pdf: bool = False) -> Tuple[str, str]:
     """
-    Generates high-converting, personalized cold email copy highlighting real vulnerabilities
-    and referencing the attached 12-page Executive Cyber Risk Assessment PDF.
+    Generates high-converting, spam-safe personalized cold outreach copy.
+    Optimized for Primary Inbox placement:
+    - Conversational, human subject lines (no '[Security Notice]' or spam triggers)
+    - Hand-raise CTA when attach_pdf=False (offers the 12-page PDF on reply to establish domain trust)
+    - Direct attachment reference when attach_pdf=True
     Returns (subject, text_body).
     """
     company = lead_data.get("company_name") or "your team"
@@ -183,25 +186,38 @@ def generate_cold_email_copy(lead_data: Dict[str, Any], angle: str = "dmarc_spoo
     risk_score = lead_data.get("risk_score", 62)
 
     if angle == "dmarc_spoofing":
-        subject = f"[Security Notice] DMARC & Email Spoofing Audit for {company}"
+        subject = f"Quick question regarding {domain}'s email authentication"
         
         if dmarc_status == "missing":
-            vuln_detail = f"Our automated perimeter scanner noticed that {domain} currently does not have a published DMARC record."
-            impact_detail = "Without DMARC enforcement, any third party can send fraudulent emails from your domain without failing inbound inbox filters."
+            vuln_detail = f"I was reviewing external security configurations for organizations in your sector and noticed {domain} does not currently have an active DMARC policy in DNS."
+            impact_detail = "Without DMARC enforcement, third parties can send fraudulent emails spoofing your domain name, which also harms legitimate transactional deliverability under Google and Yahoo's latest sender guidelines."
         elif dmarc_status == "p=none":
-            vuln_detail = f"Our automated audit noticed that {domain} has DMARC configured with 'p=none' (monitoring only)."
-            impact_detail = "Because policy is set to 'none', major inbox providers (Google, Microsoft 365) will still accept unauthorized spoofed emails sent under your domain name."
+            vuln_detail = f"I was taking a look at external domain configurations across companies in your sector and noticed {domain} currently has DMARC configured with 'p=none' (monitoring only)."
+            impact_detail = "Because policy enforcement is disabled, inbound mail providers (like Google Workspace and Microsoft 365) will still accept unauthorized spoofed emails sent under your domain."
         else:
-            vuln_detail = f"We conducted a quick external perimeter inspection of {domain}'s email authentication and DNS transport security."
-            impact_detail = "While DMARC exists, several subdomains and transport security controls (MTA-STS, TLS-RPT) remain discoverable."
+            vuln_detail = f"I was reviewing external perimeter security across organizations in your sector and took a quick look at {domain}'s DNS and mail transport security."
+            impact_detail = "While basic DMARC is present, key transport encryption and subdomain policies (MTA-STS, TLS-RPT) remain unconfigured."
 
-        body = f"""{greeting}
-
-I noticed {company} while researching organizations in your sector and ran a non-intrusive external perimeter audit on {domain}.
+        if not attach_pdf:
+            body = f"""{greeting}
 
 {vuln_detail}
 
-{impact_detail} With Google and Yahoo's strict sender requirements now in effect, this also risks your legitimate transactional and sales emails landing in spam folders.
+{impact_detail}
+
+We recently compiled a 12-page Executive Cyber Risk Assessment for {company} mapping out your email authentication gaps, discoverable subdomains, and external attack surface.
+
+Would you like me to send over the PDF report? Let me know and I'll be happy to email it over.
+
+Best regards,
+Khubaib Ahmed
+Founder, BreachGuard"""
+        else:
+            body = f"""{greeting}
+
+{vuln_detail}
+
+{impact_detail}
 
 I have attached our complete 12-page Executive Cyber Risk Assessment for {company} directly to this email ({clean_company}_Executive_Cyber_Risk_Assessment.pdf).
 
@@ -209,27 +225,46 @@ The report includes:
 • DMARC, SPF, and transport encryption (MTA-STS) gap analysis
 • Discovered public hostnames and network port telemetry
 • Unified External Cyber Risk Score ({risk_score}/100)
-• Actionable 3-phase technical remediation roadmap (NIST CSF & CIS Controls aligned)
+• Actionable 3-phase technical remediation roadmap
 
 Would you be open to a brief 5-minute conversation this week to review the findings and ensure your domain authentication is fully protected?
 
 Best regards,
 Khubaib Ahmed
-Founder, BreachGuard Threat Intelligence"""
+Founder, BreachGuard"""
 
     elif angle == "open_ports":
-        subject = f"[Security Notice] External Attack Surface Assessment for {company}"
+        subject = f"Question regarding {domain}'s perimeter services"
         ports_str = ", ".join(exposed_ports[:3]) if exposed_ports else "unmonitored administrative services"
         
-        body = f"""{greeting}
+        if not attach_pdf:
+            body = f"""{greeting}
 
-I'm reaching out because our external attack surface reconnaissance platform flagged potential perimeter exposure on {domain}.
+I'm reaching out because our external attack surface reconnaissance flagged potential perimeter exposure on {domain}.
 
-Specifically, passive internet telemetry indexed the following externally reachable services:
+Passive internet telemetry indexed the following externally reachable services:
 • Exposed Services: {ports_str}
-• Resolvable Hostnames: {subdomains_count} discovered in Certificate Transparency logs
+• Resolvable Hostnames: {subdomains_count} discovered in Certificate Transparency records
 
-Administrative interfaces exposed directly to the public internet are prime targets for automated credential stuffing and port scanners like Shodan.
+Exposing backend or administrative interfaces directly to the public internet makes endpoints prime targets for automated credential stuffing and port scanners.
+
+We put together a 12-page Executive Cyber Risk Assessment for {company} detailing exact IP addresses, exposed port telemetry, and firewall isolation guidance.
+
+Would you like me to send over the PDF report? Let me know and I'll email it over.
+
+Best regards,
+Khubaib Ahmed
+Founder, BreachGuard"""
+        else:
+            body = f"""{greeting}
+
+I'm reaching out because our external attack surface reconnaissance flagged potential perimeter exposure on {domain}.
+
+Passive internet telemetry indexed the following externally reachable services:
+• Exposed Services: {ports_str}
+• Resolvable Hostnames: {subdomains_count} discovered in Certificate Transparency records
+
+Exposing backend or administrative interfaces directly to the public internet makes endpoints prime targets for automated credential stuffing and port scanners.
 
 I have attached our complete 12-page Executive Cyber Risk Assessment for {company} ({clean_company}_Executive_Cyber_Risk_Assessment.pdf) detailing exact IP addresses, port evidence, and firewall isolation guidance.
 
@@ -237,20 +272,39 @@ Would you be open to a quick 5-minute call this week to review our perimeter fin
 
 Best regards,
 Khubaib Ahmed
-Founder, BreachGuard Threat Intelligence"""
+Founder, BreachGuard"""
 
     else:  # executive_summary
-        subject = f"Executive Cyber Risk Assessment: {company} ({domain}) — Score {risk_score}/100"
+        subject = f"{company} — external perimeter overview ({domain})"
         
-        body = f"""{greeting}
+        if not attach_pdf:
+            body = f"""{greeting}
 
-We just completed an automated, zero-touch external cyber risk assessment for {company} ({domain}).
+We just completed a zero-touch external cyber risk review for {company} ({domain}).
 
 Here is a brief snapshot of what external threat actors can observe about your perimeter today:
 • Overall Perimeter Risk Score: {risk_score}/100
-• Email Security Status: {dmarc_status.upper() if dmarc_status else 'Needs Review'}
+• Email Authentication: {dmarc_status.upper() if dmarc_status else 'Needs Review'}
 • Compromised Identity Signals: {breach_count} breach records indexed
-• External Attack Surface: {subdomains_count} observable hostnames
+• External Hostnames: {subdomains_count} observable hostnames
+
+We compiled a comprehensive 12-page Executive Cyber Risk Assessment for {company} containing the complete technical evidence, scoring methodology, and prioritized remediation roadmap.
+
+Would you like me to send over the PDF report? Happy to email it across if you find it helpful.
+
+Best regards,
+Khubaib Ahmed
+Founder, BreachGuard"""
+        else:
+            body = f"""{greeting}
+
+We just completed a zero-touch external cyber risk review for {company} ({domain}).
+
+Here is a brief snapshot of what external threat actors can observe about your perimeter today:
+• Overall Perimeter Risk Score: {risk_score}/100
+• Email Authentication: {dmarc_status.upper() if dmarc_status else 'Needs Review'}
+• Compromised Identity Signals: {breach_count} breach records indexed
+• External Hostnames: {subdomains_count} observable hostnames
 
 I have attached our complete 12-page Executive Cyber Risk Assessment for {company} directly to this email ({clean_company}_Executive_Cyber_Risk_Assessment.pdf). It contains the complete technical evidence, scoring methodology, and prioritized remediation roadmap.
 
@@ -258,9 +312,10 @@ Let me know if you would like to discuss our recommendations or explore automate
 
 Best regards,
 Khubaib Ahmed
-Founder, BreachGuard Threat Intelligence"""
+Founder, BreachGuard"""
 
     return subject, body.strip()
+
 
 
 def render_outreach_html(lead_data: Dict[str, Any], subject: str, text_body: str) -> str:

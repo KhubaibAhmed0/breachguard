@@ -582,8 +582,11 @@ export function useDeleteLead() {
 export function useSendLeadEmail() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (leadId: number) => {
-      const res = await api.post(`/admin/growth/leads/${leadId}/send`);
+    mutationFn: async (arg: number | { leadId: number; attachPdf?: boolean; plainText?: boolean }) => {
+      const leadId = typeof arg === 'number' ? arg : arg.leadId;
+      const attachPdf = typeof arg === 'number' ? false : (arg.attachPdf ?? false);
+      const plainText = typeof arg === 'number' ? true : (arg.plainText ?? true);
+      const res = await api.post(`/admin/growth/leads/${leadId}/send?attach_pdf=${attachPdf}&plain_text_mode=${plainText}`);
       return res.data;
     },
     onSuccess: () => {
@@ -596,8 +599,11 @@ export function useSendLeadEmail() {
 export function useSendBatchLeads() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (maxCount: number = 5) => {
-      const res = await api.post(`/admin/growth/leads/send-batch?max_count=${maxCount}`);
+    mutationFn: async (arg?: number | { maxCount?: number; attachPdf?: boolean; plainText?: boolean }) => {
+      const maxCount = typeof arg === 'number' ? arg : (arg?.maxCount ?? 5);
+      const attachPdf = typeof arg === 'object' && arg?.attachPdf ? true : false;
+      const plainText = typeof arg === 'object' && arg?.plainText !== undefined ? arg.plainText : true;
+      const res = await api.post(`/admin/growth/leads/send-batch?max_count=${maxCount}&attach_pdf=${attachPdf}&plain_text_mode=${plainText}`);
       return res.data;
     },
     onSuccess: () => {

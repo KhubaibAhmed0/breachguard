@@ -1,4 +1,4 @@
-# BreachGuard — Complete Master Project Context & Architecture Reference
+# BreachGuard â€” Complete Master Project Context & Architecture Reference
 
 > **Quick Context for AI Agents & New Chat Threads**:
 > This document is the definitive persistent source of truth for BreachGuard. It contains exhaustive technical context covering product positioning, live production deployments, credentials, defense posture pillars, unified risk scoring algorithms, report generation engines, cold outreach automation, security hardening, and a continuous activity changelog.
@@ -9,7 +9,7 @@
 
 ## 1. Executive Overview & Product Identity
 
-* **Product**: **BreachGuard** — B2B External Cyber Risk & Attack Surface Monitoring SaaS Platform.
+* **Product**: **BreachGuard** â€” B2B External Cyber Risk & Attack Surface Monitoring SaaS Platform.
 * **Target Audience**: Security Operations (SecOps), MSSPs / MSPs (Managed Service Providers), IT Directors, and Compliance Officers.
 * **Core Value Proposition**: Continuously and passively scans external corporate perimeters, discovering shadow IT, unpatched listening services, email spoofing vulnerabilities, exposed credentials, and public threat intelligence without requiring agent software installation or invasive penetration probes.
 * **Aesthetic Direction**: "Quiet Authority" SOC interface built in Warm Graphite (`#0e0d0c` base background, `#171514` surface, `#262320` border, Inter prose typography, JetBrains Mono technical telemetry).
@@ -20,6 +20,7 @@
 
 | Layer | Platform / Provider | Endpoint / URL | Details / Notes |
 | :--- | :--- | :--- | :--- |
+| **2026-09-17** | **Primary Inbox Deliverability & Spam-Proof Mode** | Eliminated spam triggers with pure plain-text MIME dispatch and human conversational subject lines without marketing tables.<br>Introduced Hand-Raise PDF strategy offering reports upon reply to establish sender reputation, with optional UI attachment toggle. |
 | **Frontend Web App** | Vercel (Next.js 16) | **[breachguard-khubbiahmed-1955s-projects.vercel.app](https://breachguard-khubbiahmed-1955s-projects.vercel.app)** | Production Next.js 16 / React 19 App Router |
 | **Backend API** | Vercel Serverless | **[breachguard-w88w.vercel.app](https://breachguard-w88w.vercel.app)** | FastAPI backend deployed via `@vercel/python` |
 | **API Health Check** | Vercel Serverless | `https://breachguard-w88w.vercel.app/api/health` | Returns `{"status":"online","database":"connected"}` |
@@ -91,8 +92,8 @@ Generates a $5,000-grade corporate deliverable (`{Company}_Executive_Cyber_Risk_
 4. **Page 4: External Attack Surface & Hostname Footprint**: Discovered hostnames, open ports from Shodan, and administrative service analysis.
 5. **Page 5: Email Security Posture & Anti-Spoofing Architecture**: 7-point RFC compliance audit (SPF, DMARC, DKIM, MX, MTA-STS, TLS-RPT, DNSSEC).
 6. **Page 6: Threat Intelligence & Compromised Identity Signals**: Masked corporate identities, leak source attribution, zero-credential storage guarantee.
-7. **Pages 7–9: Detailed Technical Findings**: Detailed evidence, business impact, prioritized remediation, and NIST CSF 2.0 / CIS Controls v8 alignment for `BG-EM-01`, `BG-AS-01`, `BG-TI-01`, and `BG-DNS-01`.
-8. **Page 10: 3-Phase Actionable Remediation Roadmap**: Immediate (0–24h), Short-term (1–7d), and Strategic (7–30d) action items.
+7. **Pages 7â€“9: Detailed Technical Findings**: Detailed evidence, business impact, prioritized remediation, and NIST CSF 2.0 / CIS Controls v8 alignment for `BG-EM-01`, `BG-AS-01`, `BG-TI-01`, and `BG-DNS-01`.
+8. **Page 10: 3-Phase Actionable Remediation Roadmap**: Immediate (0â€“24h), Short-term (1â€“7d), and Strategic (7â€“30d) action items.
 9. **Page 11: Continuous Defense Architecture**: Explaining the advantages of continuous attack surface monitoring over annual point-in-time penetration tests.
 10. **Page 12: Methodology, Legal Limitations & Governance Sign-Off**: Non-intrusive OSINT guarantees, compliance cross-reference, and governance sign-off block (`breachguard.io@gmail.com | Khubaib Ahmed, Founder`).
 
@@ -212,6 +213,6 @@ RESEND_API_KEY=your_resend_api_key
 | **2026-09-17** | **Outreach Engine & Email Sync** | Configured Gmail SMTP with authenticated Google App Password to dispatch outreach from `breachguard.io@gmail.com`.<br>Guaranteed automatic synchronization of outbound outreach emails into the official Gmail "Sent" folder. |
 | **2026-09-17** | **Executive PDF & Public Route** | Implemented public inline assessment route `GET /reports/public/{lead_id}/pdf` for zero-barrier prospect viewing.<br>Updated PDF executive governance block on Page 12 to match `breachguard.io@gmail.com` founder sign-off. |
 | **2026-09-16** | **Founder Growth Hub & Radar** | Built Founder Growth Hub (`/admin/growth`) with automated cold outreach and 12-page PDF generation.<br>Added Social Buyer Intent Radar scanning Reddit/Twitter with Google Sheets bi-directional pipeline. |
-| **2026-09-14** | **Security Hardening (Measures 1–35)** | Completed 35-measure security hardening including cryptographic API keys and SSRF socket pinning.<br>Verified 31/31 automated security tests passing with zero Bandit SAST vulnerabilities. |
+| **2026-09-14** | **Security Hardening (Measures 1â€“35)** | Completed 35-measure security hardening including cryptographic API keys and SSRF socket pinning.<br>Verified 31/31 automated security tests passing with zero Bandit SAST vulnerabilities. |
 | **2026-09-13** | **Design System Revamp** | Rebuilt frontend on Warm Graphite design system (`#0e0d0c`, Inter typography, JetBrains Mono data).<br>Eliminated visual clutter and card borders to achieve high-density SOC interface aesthetic. |
 | **2026-09-11** | **Commercial Pricing Architecture** | Established 3-tier commercial model ($99 Starter, $239 Business ?, $899 Enterprise/MSP).<br>Added Option B Net-30 invoice procurement pipeline and eliminated raw session token delivery liability. |

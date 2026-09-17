@@ -13,7 +13,7 @@ logger = logging.getLogger("breachguard.email")
 async def send_email_with_details(
     to_email: str, 
     subject: str, 
-    html_body: str, 
+    html_body: Optional[str] = None, 
     text_body: Optional[str] = None,
     attachments: Optional[List[Dict[str, Any]]] = None
 ) -> Dict[str, Any]:
@@ -52,34 +52,47 @@ async def send_email_with_details(
             return {"success": False, "provider": "gmail_smtp", "message_id": None, "error": err}
 
         def _send_smtp_sync():
-            msg = MIMEMultipart("mixed") if attachments else MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = f"BreachGuard Security <{clean_from}>"
-            msg["To"] = clean_to
-            msg["Reply-To"] = clean_from
+            from_display = f"Khubaib Ahmed <{clean_from}>" if "gmail" in clean_from.lower() or "breachguard" in clean_from.lower() else f"BreachGuard <{clean_from}>"
+            if not attachments and not html_body:
+                # Ultra-clean Plain Text mode: Highest deliverability score in spam filters.
+                # Replicates 1-to-1 human email composed directly in native Gmail client.
+                msg = MIMEText(plain_text, "plain", "utf-8")
+                msg["Subject"] = subject
+                msg["From"] = from_display
+                msg["To"] = clean_to
+                msg["Reply-To"] = clean_from
+            else:
+                msg = MIMEMultipart("mixed") if attachments else MIMEMultipart("alternative")
+                msg["Subject"] = subject
+                msg["From"] = from_display
+                msg["To"] = clean_to
+                msg["Reply-To"] = clean_from
 
-            # Body part
-            body_part = MIMEMultipart("alternative")
-            body_part.attach(MIMEText(plain_text, "plain", "utf-8"))
-            body_part.attach(MIMEText(html_body, "html", "utf-8"))
-            msg.attach(body_part)
+                # Body part
+                if html_body:
+                    body_part = MIMEMultipart("alternative")
+                    body_part.attach(MIMEText(plain_text, "plain", "utf-8"))
+                    body_part.attach(MIMEText(html_body, "html", "utf-8"))
+                    msg.attach(body_part)
+                else:
+                    msg.attach(MIMEText(plain_text, "plain", "utf-8"))
 
-            # Attachments
-            if attachments:
-                from email.mime.application import MIMEApplication
-                import base64
-                for att in attachments:
-                    content_bytes = att.get("raw_bytes")
-                    if not content_bytes and "content" in att:
-                        try:
-                            content_bytes = base64.b64decode(att["content"])
-                        except Exception:
-                            content_bytes = None
-                    if content_bytes:
-                        part = MIMEApplication(content_bytes, _subtype="pdf")
-                        filename = att.get("filename", "assessment.pdf")
-                        part.add_header("Content-Disposition", "attachment", filename=filename)
-                        msg.attach(part)
+                # Attachments
+                if attachments:
+                    from email.mime.application import MIMEApplication
+                    import base64
+                    for att in attachments:
+                        content_bytes = att.get("raw_bytes")
+                        if not content_bytes and "content" in att:
+                            try:
+                                content_bytes = base64.b64decode(att["content"])
+                            except Exception:
+                                content_bytes = None
+                        if content_bytes:
+                            part = MIMEApplication(content_bytes, _subtype="pdf")
+                            filename = att.get("filename", "assessment.pdf")
+                            part.add_header("Content-Disposition", "attachment", filename=filename)
+                            msg.attach(part)
 
             with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
                 server.ehlo()
@@ -121,13 +134,15 @@ async def send_email_with_details(
     # 2. Resend API (used when not sending from @gmail.com)
     if settings.RESEND_API_KEY and not clean_from.endswith("@gmail.com"):
         try:
+            from_display = f"Khubaib Ahmed <{clean_from}>" if "gmail" in clean_from.lower() or "breachguard" in clean_from.lower() else f"BreachGuard <{clean_from}>"
             req_payload = {
-                "from": f"BreachGuard Security <{clean_from}>",
+                "from": from_display,
                 "to": [clean_to],
                 "subject": subject,
-                "html": html_body,
                 "text": plain_text
             }
+            if html_body:
+                req_payload["html"] = html_body
             if resend_attachments:
                 req_payload["attachments"] = resend_attachments
 

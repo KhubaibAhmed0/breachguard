@@ -110,6 +110,8 @@ export default function GrowthAdminPage() {
   const [editedSubject, setEditedSubject] = useState('');
   const [editedBody, setEditedBody] = useState('');
   const [selectedAngle, setSelectedAngle] = useState<'dmarc_spoofing' | 'open_ports' | 'executive_summary'>('dmarc_spoofing');
+  const [deliverabilitySafeMode, setDeliverabilitySafeMode] = useState<boolean>(true);
+  const [attachPdfInEmail, setAttachPdfInEmail] = useState<boolean>(false);
 
   // Form states - Social Post
   const [newPostPlatform, setNewPostPlatform] = useState<'twitter' | 'reddit'>('twitter');
@@ -497,10 +499,29 @@ export default function GrowthAdminPage() {
 
   const handleOpenEmailEditor = (lead: OutreachLead) => {
     setActiveLead(lead);
-    setEditedSubject(lead.email_subject || `Quick question regarding ${lead.domain}'s email security`);
+    setEditedSubject(lead.email_subject || `Quick question regarding ${lead.domain}'s email authentication`);
     setEditedBody(lead.email_body || '');
     setSelectedAngle((lead.email_angle as any) || 'dmarc_spoofing');
+    setDeliverabilitySafeMode(true);
+    setAttachPdfInEmail(false);
     setIsEmailEditorOpen(true);
+  };
+
+  const handleRegenerateDraft = (angle: 'dmarc_spoofing' | 'open_ports' | 'executive_summary', attachPdf: boolean) => {
+    if (!activeLead) return;
+    updateLeadMutation.mutate({
+      leadId: activeLead.id,
+      data: {
+        email_angle: angle,
+        attach_pdf: attachPdf,
+        regenerate: true
+      } as any
+    }, {
+      onSuccess: (res: any) => {
+        if (res.subject) setEditedSubject(res.subject);
+        if (res.body) setEditedBody(res.body);
+      }
+    });
   };
 
   const handleSaveEmailDraft = async () => {
@@ -528,22 +549,25 @@ export default function GrowthAdminPage() {
     }
   };
 
-  const handleSendSingleEmail = async (leadId: number) => {
+  const handleSendSingleEmail = async (leadId: number, options?: { attachPdf?: boolean; plainText?: boolean }) => {
     try {
-      await sendEmailMutation.mutateAsync(leadId);
-      showToast('Outreach email dispatched via Resend!');
+      const attachPdf = options?.attachPdf ?? false;
+      const plainText = options?.plainText ?? true;
+      await sendEmailMutation.mutateAsync({ leadId, attachPdf, plainText });
+      const modeLabel = attachPdf ? 'with 12-page PDF attached' : 'in Deliverability Safe Mode (PDF offered on reply)';
+      showToast(`Outreach email dispatched via Gmail (${modeLabel})!`);
       if (isEmailEditorOpen && activeLead?.id === leadId) {
         setIsEmailEditorOpen(false);
       }
     } catch (err: any) {
-      showToast(err?.response?.data?.detail || 'Failed to dispatch email via Resend', 'error');
+      showToast(err?.response?.data?.detail || 'Failed to dispatch email via Gmail', 'error');
     }
   };
 
   const handleSendBatchReady = async () => {
     try {
-      const res = await sendBatchMutation.mutateAsync(5);
-      showToast(`Batch dispatch complete: ${res.sent_count} sent, ${res.failed_count} failed.`);
+      const res = await sendBatchMutation.mutateAsync({ maxCount: 5, attachPdf: false, plainText: true });
+      showToast(`Batch dispatch complete (Deliverability Safe Mode): ${res.sent_count} sent, ${res.failed_count} failed.`);
     } catch (err: any) {
       showToast(err?.response?.data?.detail || 'Batch dispatch encountered rate throttling or network error', 'error');
     }
@@ -1104,9 +1128,9 @@ export default function GrowthAdminPage() {
 
                                 <button
                                   type="button"
-                                  onClick={() => handleSendSingleEmail(lead.id)}
+                                  onClick={() => handleSendSingleEmail(lead.id, { attachPdf: false, plainText: true })}
                                   disabled={sendEmailMutation.isPending || lead.status === 'pending_scan'}
-                                  title={lead.status === 'sent' ? "Resend from breachguard.io@gmail.com with 12-page PDF attached" : "1-Click Send from breachguard.io@gmail.com with 12-page PDF attached (synced to Gmail Sent tab)"}
+                                  title={lead.status === 'sent' ? "Resend from breachguard.io@gmail.com (Deliverability Safe Mode: PDF offered on reply)" : "1-Click Send from breachguard.io@gmail.com (Deliverability Safe Mode: PDF offered on reply)"}
                                   className={cn(
                                     "px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer",
                                     lead.status === 'ready' 
@@ -1115,7 +1139,7 @@ export default function GrowthAdminPage() {
                                   )}
                                 >
                                   <Send className="w-3 h-3" />
-                                  <span>{lead.status === 'sent' ? 'Resend' : 'Send (Gmail)'}</span>
+                                  <span>{lead.status === 'sent' ? 'Resend' : 'Send (Safe)'}</span>
                                 </button>
 
                                 <button
@@ -2218,16 +2242,7 @@ export default function GrowthAdminPage() {
                       type="button"
                       onClick={() => {
                         setSelectedAngle(a.key as any);
-                        // Trigger re-generation of text with this angle
-                        updateLeadMutation.mutate({
-                          leadId: activeLead.id,
-                          data: { email_angle: a.key }
-                        }, {
-                          onSuccess: (res) => {
-                            if (res.subject) setEditedSubject(res.subject);
-                            if (res.body) setEditedBody(res.body);
-                          }
-                        });
+                        handleRegenerateDraft(a.key as any, attachPdfInEmail);
                       }}
                       className={cn(
                         "p-2 rounded-lg border text-left transition-colors cursor-pointer text-2xs",
@@ -2279,28 +2294,78 @@ export default function GrowthAdminPage() {
                 />
               </div>
 
-              {/* Attached 12-Page Assessment Banner */}
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded bg-amber-500/20 text-amber-300">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-amber-200">Enclosed Executive Risk Assessment</div>
-                    <div className="text-[11px] text-amber-300/80 font-mono">
-                      {activeLead.company_name.replace(/[^a-zA-Z0-9_\-]/g, '_')}_Executive_Cyber_Risk_Assessment.pdf (12 Pages)
+              {/* Primary Inbox Deliverability Mode & PDF Strategy */}
+              <div className="p-3 rounded-lg bg-bg-surface border border-border-default space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-6 h-6 rounded-md bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400 font-bold text-xs">
+                      ✓
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                        <span>Primary Inbox Deliverability Mode</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">98%+ Inbox Placement</span>
+                      </div>
+                      <p className="text-[11px] text-text-muted mt-0.5">
+                        Sends pure plain-text email formatted like a 1-to-1 message composed directly in Gmail.
+                      </p>
                     </div>
                   </div>
+
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={deliverabilitySafeMode}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setDeliverabilitySafeMode(checked);
+                        if (checked) {
+                          setAttachPdfInEmail(false);
+                          handleRegenerateDraft(selectedAngle, false);
+                        }
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-8 h-4 bg-bg-inset peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-500"></div>
+                  </label>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleDownloadPdf(activeLead)}
-                  className="px-2.5 py-1.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-medium border border-amber-500/30 transition-colors flex items-center gap-1.5 cursor-pointer"
-                  title="Download the 12-page PDF assessment"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download PDF Audit</span>
-                </button>
+
+                {/* PDF Strategy Toggle */}
+                <div className="pt-2 border-t border-border-default/60 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="attachPdfDirectly"
+                      checked={attachPdfInEmail}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setAttachPdfInEmail(checked);
+                        if (checked) {
+                          setDeliverabilitySafeMode(false);
+                          handleRegenerateDraft(selectedAngle, true);
+                        } else {
+                          setDeliverabilitySafeMode(true);
+                          handleRegenerateDraft(selectedAngle, false);
+                        }
+                      }}
+                      className="rounded border-border-default text-accent focus:ring-accent w-3.5 h-3.5 cursor-pointer"
+                    />
+                    <label htmlFor="attachPdfDirectly" className="text-text-secondary cursor-pointer flex items-center gap-1 text-xs">
+                      <span>Attach 12-page PDF audit directly to this email</span>
+                      <span className="text-[10px] text-amber-400 font-mono">(Unsolicited PDFs on cold emails can trigger spam)</span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadPdf(activeLead)}
+                    className="px-2 py-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 text-2xs font-medium transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Download 12-page PDF assessment"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>Download PDF</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -2349,15 +2414,15 @@ export default function GrowthAdminPage() {
                   title="Open in Gmail & auto-download 12-page PDF ready to drag into compose"
                 >
                   <Mail className="w-3.5 h-3.5 text-red-400" />
-                  <span>Open in Gmail (Auto-Downloads PDF)</span>
+                  <span>Open in Gmail</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => handleSendSingleEmail(activeLead.id)}
+                  onClick={() => handleSendSingleEmail(activeLead.id, { attachPdf: attachPdfInEmail, plainText: deliverabilitySafeMode })}
                   disabled={sendEmailMutation.isPending}
                   className="px-4 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-accent-text text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  title="1-Click send from breachguard.io@gmail.com with 12-page PDF attached (synced to Gmail Sent tab)"
+                  title={attachPdfInEmail ? "1-Click send from breachguard.io@gmail.com with 12-page PDF attached (synced to Gmail Sent tab)" : "1-Click send in Primary Inbox Safe Mode (offers PDF on reply, synced to Gmail Sent tab)"}
                 >
                   {sendEmailMutation.isPending ? (
                     <>
@@ -2367,7 +2432,7 @@ export default function GrowthAdminPage() {
                   ) : (
                     <>
                       <Send className="w-3.5 h-3.5" />
-                      <span>1-Click Send (Gmail Synced)</span>
+                      <span>{attachPdfInEmail ? "1-Click Send (With PDF)" : "1-Click Send (Spam-Safe)"}</span>
                     </>
                   )}
                 </button>

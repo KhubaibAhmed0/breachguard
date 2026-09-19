@@ -3,6 +3,7 @@ import json
 import httpx
 import asyncio
 import logging
+import dns.resolver
 from typing import Dict, Any, List, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -12,6 +13,40 @@ from services.growth_service import run_passive_reconnaissance, generate_cold_em
 from services.report_service import generate_lead_pdf_report
 
 logger = logging.getLogger("breachguard.hunter")
+
+# ==============================================================================
+# AUTHORITATIVE MX PRE-FLIGHT VERIFIER
+# ==============================================================================
+
+async def check_domain_has_mx(domain: str) -> bool:
+    """
+    Directly checks whether the domain has routable, legitimate corporate MX mail servers.
+    Rejects parked domains (e.g. secureserver.net forwarding, sedo, parking) and domains without MX.
+    """
+    def _resolve_mx():
+        try:
+            resolver = dns.resolver.Resolver()
+            resolver.nameservers = ['8.8.8.8', '1.1.1.1']
+            resolver.timeout = 3.0
+            resolver.lifetime = 3.0
+            answers = resolver.resolve(domain, 'MX')
+            mx_hosts = [str(r.exchange).rstrip('.').lower() for r in answers]
+            
+            if not mx_hosts:
+                return False
+                
+            # Filter out known parked / forward-only mail handlers that bounce
+            bad_indicators = ['secureserver.net', 'parking', 'parklogic', 'bodis', 'sedoparking']
+            for mx in mx_hosts:
+                if any(bad in mx for bad in bad_indicators):
+                    logger.warning(f"[MX Guard] Rejected parked/forwarder MX: {mx} for domain {domain}")
+                    return False
+            return True
+        except Exception as e:
+            logger.warning(f"[MX Guard] Domain {domain} failed MX lookup: {e}")
+            return False
+
+    return await asyncio.to_thread(_resolve_mx)
 
 # ==============================================================================
 # TARGET INDUSTRY SPECIFICATIONS
@@ -33,7 +68,6 @@ INDUSTRY_CONFIGS = {
             {"company": "Allen, Allen, Allen & Allen", "domain": "allenandallen.com", "contact_name": "Edward Allen", "title": "Firm President", "email": "contactus@allenandallen.com"},
             {"company": "Spector Gadon Rosen Vinci", "domain": "smbb.com", "contact_name": "Paul Rosen", "title": "Chairman & Partner", "email": "info@smbb.com"},
             {"company": "Bernstein-Burkley", "domain": "bernsteinlaw.com", "contact_name": "Kirk Burkley", "title": "Managing Partner", "email": "info@bernsteinlaw.com"},
-            {"company": "Lieff Cabraser Heimann & Bernstein", "domain": "lieffcabraser.com", "contact_name": "Steven Fineman", "title": "Managing Partner", "email": "info@lieffcabraser.com"},
             {"company": "Panish Shea Ravipudi", "domain": "panish.law", "contact_name": "Brian Panish", "title": "Managing Partner", "email": "info@panish.law"},
         ]
     },
@@ -45,10 +79,10 @@ INDUSTRY_CONFIGS = {
         "apollo_titles": ["Managing Partner", "Partner", "Owner", "Chief Executive Officer", "IT Director"],
         "real_targets": [
             {"company": "Grassi Advisors & Accountants", "domain": "grassiadvisors.com", "contact_name": "Beth More", "title": "Chief Marketing Officer", "email": "response@grassiadvisors.com"},
-            {"company": "The Bonadio Group", "domain": "bonadiogroup.com", "contact_name": "Bruce Zicari", "title": "Managing Partner & CEO", "email": "info@bonadiogroup.com"},
+            {"company": "The Bonadio Group", "domain": "bonadio.com", "contact_name": "Bruce Zicari", "title": "Managing Partner & CEO", "email": "info@bonadio.com"},
             {"company": "Belfint Lyons & Shuman", "domain": "belfint.com", "contact_name": "Michael French", "title": "Managing Director", "email": "info@belfint.com"},
             {"company": "Miller Kaplan", "domain": "millerkaplan.com", "contact_name": "Michael Kaplan", "title": "Managing Partner", "email": "info@millerkaplan.com"},
-            {"company": "Deming Malone Livesay & Ostroff", "domain": "demingmalone.com", "contact_name": "Mark Durbin", "title": "Managing Director", "email": "cpa@demingmalone.com"},
+            {"company": "Deming Malone Livesay & Ostroff", "domain": "dmlo.com", "contact_name": "Mark Durbin", "title": "Managing Director", "email": "cpa@dmlo.com"},
             {"company": "Schellman & Company", "domain": "schellman.com", "contact_name": "Avani Desai", "title": "CEO", "email": "info@schellman.com"},
             {"company": "Kerkering, Barberio & Co.", "domain": "kbgrp.com", "contact_name": "Robert Lane", "title": "Managing Shareholder", "email": "info@kbgrp.com"},
             {"company": "HHM CPAs", "domain": "hhmcpas.com", "contact_name": "Donnie Hutcherson", "title": "Managing Partner", "email": "info@hhmcpas.com"},
@@ -324,6 +358,12 @@ async def run_autonomous_client_hunt(
         company = item["company_name"]
         contact_name = item.get("contact_name")
         contact_email = item.get("contact_email")
+
+        # Step 2a: Strict Authoritative MX Check (reject unroutable/parked domains before touching database)
+        has_mx = await check_domain_has_mx(domain)
+        if not has_mx:
+            logger.warning(f"[Hunt Skipper] Domain {domain} has no valid MX records or is parked. Skipping.")
+            continue
 
         # Enrich contact email via Hunter.io if available
         if hunter_key and (not contact_email or contact_email.startswith("contact@")):

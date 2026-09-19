@@ -209,6 +209,7 @@ RESEND_API_KEY=your_resend_api_key
 
 | Timestamp | Scope | Change Summary (2-Line Description) |
 | :--- | :--- | :--- |
+| **2026-09-19** | **Batch 1 Prospect Seeding (50 Verified CPAs & MSPs)** | Staged 50 pre-audited B2B targets with confirmed enterprise MX mail servers into PostgreSQL database.<br>Completed passive DNS/DMARC reconnaissance, calculated risk scores, and generated personalized executive cold copy. |
 | **2026-09-19** | **DNS MX Pre-Flight Gate & Target Sanitization** | Implemented authoritative DNS MX resolution filter and parked domain rejector (`check_domain_has_mx`) in autonomous hunter.<br>Pruned dead forwarding/parked domains (boydlawlosangeles, lieffcabraser) and verified live enterprise MX across all 30 B2B targets. |
 | **2026-09-17** | **Mailbox Deliverability & Target Curation** | Updated client hunter targets with verified active published mailboxes and attorney addresses.<br>Added recipient editing in email inspector so prospects with non-generic mailboxes can be reached without 550 bounces. |
 | **2026-09-17** | **Autonomous B2B Client Hunter** | Built Way 1 autonomous client hunter with Apollo.io API, Hunter.io, and live authoritative DNS recon.<br>Automates zero-fake company lookup, passive DMARC/port qualification, 12-page PDF generation, and outreach staging. |
